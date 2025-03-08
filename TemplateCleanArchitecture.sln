@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.Application", "Src
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{2B21A206-EC75-4458-9A20-0A9A503DC705}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.Infrastructure.Resources", "Template.Resources\Template.Infrastructure.Resources.csproj", "{76F684EB-2ABB-4F30-A3E4-EE7C133C162E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.Infrastructure.Resources", "Src\Infrastructure\Template.Infrastructure.Resources\Template.Infrastructure.Resources.csproj", "{4F40580A-1F7F-4C4A-A6AA-C3166A98F2FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +31,10 @@ Global
 		{8999AD90-6CD2-4E7A-BB78-AA55C6296871}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8999AD90-6CD2-4E7A-BB78-AA55C6296871}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8999AD90-6CD2-4E7A-BB78-AA55C6296871}.Release|Any CPU.Build.0 = Release|Any CPU
-		{76F684EB-2ABB-4F30-A3E4-EE7C133C162E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{76F684EB-2ABB-4F30-A3E4-EE7C133C162E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{76F684EB-2ABB-4F30-A3E4-EE7C133C162E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{76F684EB-2ABB-4F30-A3E4-EE7C133C162E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F40580A-1F7F-4C4A-A6AA-C3166A98F2FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F40580A-1F7F-4C4A-A6AA-C3166A98F2FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F40580A-1F7F-4C4A-A6AA-C3166A98F2FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F40580A-1F7F-4C4A-A6AA-C3166A98F2FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,7 +44,7 @@ Global
 		{B77A8A57-82FD-4401-B35D-5A3941CC4F4D} = {E6BFBA5E-B429-4F40-8BAB-67C8F25BB900}
 		{8999AD90-6CD2-4E7A-BB78-AA55C6296871} = {E6BFBA5E-B429-4F40-8BAB-67C8F25BB900}
 		{2B21A206-EC75-4458-9A20-0A9A503DC705} = {2A70429C-3396-4723-8E25-F5950C3AB3C8}
-		{76F684EB-2ABB-4F30-A3E4-EE7C133C162E} = {2B21A206-EC75-4458-9A20-0A9A503DC705}
+		{4F40580A-1F7F-4C4A-A6AA-C3166A98F2FC} = {2B21A206-EC75-4458-9A20-0A9A503DC705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EAA39664-2B9F-4786-9FB4-5A29B8504F76}
