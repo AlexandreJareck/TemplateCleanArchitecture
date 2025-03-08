@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.Infrastructure.Res
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.Infrastructure.Persistence", "Src\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj", "{4EAF6194-CE31-4F44-8AEA-68D457B2D8DA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.Infrastructure.Identity", "Src\Infrastructure\Template.Infrastructure.Identity\Template.Infrastructure.Identity.csproj", "{28259943-FB08-4F71-89E0-A84E1ACE4643}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,10 @@ Global
 		{4EAF6194-CE31-4F44-8AEA-68D457B2D8DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EAF6194-CE31-4F44-8AEA-68D457B2D8DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4EAF6194-CE31-4F44-8AEA-68D457B2D8DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28259943-FB08-4F71-89E0-A84E1ACE4643}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28259943-FB08-4F71-89E0-A84E1ACE4643}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28259943-FB08-4F71-89E0-A84E1ACE4643}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28259943-FB08-4F71-89E0-A84E1ACE4643}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -52,6 +58,7 @@ Global
 		{2B21A206-EC75-4458-9A20-0A9A503DC705} = {2A70429C-3396-4723-8E25-F5950C3AB3C8}
 		{4F40580A-1F7F-4C4A-A6AA-C3166A98F2FC} = {2B21A206-EC75-4458-9A20-0A9A503DC705}
 		{4EAF6194-CE31-4F44-8AEA-68D457B2D8DA} = {2B21A206-EC75-4458-9A20-0A9A503DC705}
+		{28259943-FB08-4F71-89E0-A84E1ACE4643} = {2B21A206-EC75-4458-9A20-0A9A503DC705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EAA39664-2B9F-4786-9FB4-5A29B8504F76}
