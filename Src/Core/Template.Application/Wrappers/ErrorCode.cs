@@ -1,12 +1,10 @@
-﻿namespace Template.Application.Wrappers
+﻿namespace Template.Application.Wrappers;
+public enum ErrorCode : short
 {
-    public enum ErrorCode : short
-    {
-        ModelStateNotValid = 0,
-        FieldDataInvalid = 1,
-        NotFound = 2,
-        AccessDenied = 3,
-        ErrorInIdentity = 4,
-        Exception = 5,
-    }
+    ModelStateNotValid = 0,
+    FieldDataInvalid = 1,
+    NotFound = 2,
+    AccessDenied = 3,
+    ErrorInIdentity = 4,
+    Exception = 5,
 }

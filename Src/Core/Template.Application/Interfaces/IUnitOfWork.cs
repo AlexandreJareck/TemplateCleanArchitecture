@@ -1,7 +1,5 @@
-﻿namespace Template.Application.Interfaces
+﻿namespace Template.Application.Interfaces;
+public interface IUnitOfWork
 {
-    public interface IUnitOfWork
-    {
-        Task<bool> SaveChangesAsync();
-    }
+    Task<bool> SaveChangesAsync();
 }
