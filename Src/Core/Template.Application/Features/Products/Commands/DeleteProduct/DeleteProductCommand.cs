@@ -1,10 +1,8 @@
 ﻿using MediatR;
 using Template.Application.Wrappers;
 
-namespace Template.Application.Features.Products.Commands.DeleteProduct
+namespace Template.Application.Features.Products.Commands.DeleteProduct;
+public class DeleteProductCommand : IRequest<BaseResult>
 {
-    public class DeleteProductCommand : IRequest<BaseResult>
-    {
-        public Guid Id { get; set; }
-    }
+    public Guid Id { get; set; }
 }

@@ -2,10 +2,8 @@
 using Template.Application.Wrappers;
 using Template.Domain.Products.DTOs;
 
-namespace Template.Application.Features.Products.Queries.GetProductById
+namespace Template.Application.Features.Products.Queries.GetProductById;
+public class GetProductByIdQuery : IRequest<BaseResult<ProductDto>>
 {
-    public class GetProductByIdQuery : IRequest<BaseResult<ProductDto>>
-    {
-        public Guid Id { get; set; }
-    }
+    public Guid Id { get; set; }
 }
