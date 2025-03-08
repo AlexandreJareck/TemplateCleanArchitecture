@@ -1,12 +1,10 @@
-﻿namespace Template.Domain.Common
+﻿namespace Template.Domain.Common;
+public abstract class AuditableBaseEntity<TKey> : BaseEntity<TKey>  
 {
-    public abstract class AuditableBaseEntity<TKey> : BaseEntity<TKey>  
-    {
-        public Guid CreatedBy { get; set; }
-        public DateTime Created { get; set; }
-        public Guid? LastModifiedBy { get; set; }
-        public DateTime? LastModified { get; set; }
-    }
-
-    public abstract class AuditableBaseEntity : AuditableBaseEntity<Guid> { }
+    public Guid CreatedBy { get; set; }
+    public DateTime Created { get; set; }
+    public Guid? LastModifiedBy { get; set; }
+    public DateTime? LastModified { get; set; }
 }
+
+public abstract class AuditableBaseEntity : AuditableBaseEntity<Guid> { }

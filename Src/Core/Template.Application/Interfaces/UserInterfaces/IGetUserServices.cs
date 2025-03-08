@@ -2,10 +2,8 @@
 using Template.Application.DTOs.Account.Response;
 using Template.Application.Wrappers;
 
-namespace Template.Application.Interfaces.UserInterfaces
+namespace Template.Application.Interfaces.UserInterfaces;
+public interface IGetUserServices
 {
-    public interface IGetUserServices
-    {
-        Task<PagedResponse<UserDto>> GetPagedUsers(GetAllUsersRequest model);
-    }
+    Task<PagedResponse<UserDto>> GetPagedUsers(GetAllUsersRequest model);
 }

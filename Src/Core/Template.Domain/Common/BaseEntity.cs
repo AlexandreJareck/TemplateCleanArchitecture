@@ -1,11 +1,9 @@
-﻿namespace Template.Domain.Common
+﻿namespace Template.Domain.Common;
+public abstract class BaseEntity<TKey>
 {
-    public abstract class BaseEntity<TKey>
-    {
-        public TKey Id { get; set; } = default!;
+    public TKey Id { get; set; } = default!;
 
-    }
-    public abstract class BaseEntity : BaseEntity<Guid>
-    {
-    }
+}
+public abstract class BaseEntity : BaseEntity<Guid>
+{
 }

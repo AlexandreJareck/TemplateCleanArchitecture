@@ -1,8 +1,6 @@
-﻿namespace Template.Application.Interfaces
+﻿namespace Template.Application.Interfaces;
+public interface IAuthenticatedUserService
 {
-    public interface IAuthenticatedUserService
-    {
-        string UserId { get; }
-        string UserName { get; }
-    }
+    string UserId { get; }
+    string UserName { get; }
 }
