@@ -1,10 +1,19 @@
-﻿using MediatR;
+﻿using FluentValidation;
+using MediatR;
 using Template.Application.Helpers;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
 
-namespace Template.Application.Features.Products.Commands.UpdateProduct;
+namespace Template.Application.Features.Products.Commands;
+public class UpdateProductCommand : IRequest<BaseResult>
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+    public double Price { get; set; }
+    public string BarCode { get; set; }
+}
+
 public class UpdateProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork, ITranslator translator) : IRequestHandler<UpdateProductCommand, BaseResult>
 {
     public async Task<BaseResult> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
@@ -20,5 +29,23 @@ public class UpdateProductCommandHandler(IProductRepository productRepository, I
         await unitOfWork.SaveChangesAsync();
 
         return BaseResult.Ok();
+    }
+}
+
+public class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
+{
+    public UpdateProductCommandValidator(ITranslator translator)
+    {
+        RuleFor(p => p.Name)
+            .NotNull()
+            .NotEmpty()
+            .MaximumLength(100)
+            .WithName(p => translator[nameof(p.Name)]);
+
+        RuleFor(x => x.BarCode)
+            .NotNull()
+            .NotEmpty()
+            .MaximumLength(50)
+            .WithName(p => translator[nameof(p.BarCode)]);
     }
 }
