@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Template.Application.Features.Products.Commands.CreateProduct;
-using Template.Application.Features.Products.Commands.DeleteProduct;
-using Template.Application.Features.Products.Commands.UpdateProduct;
-using Template.Application.Features.Products.Queries.GetPagedListProduct;
-using Template.Application.Features.Products.Queries.GetProductById;
+using Template.Application.Features.Products.Commands;
+using Template.Application.Features.Products.Queries;
 using Template.Application.Wrappers;
 using Template.Domain.Products.DTOs;
 

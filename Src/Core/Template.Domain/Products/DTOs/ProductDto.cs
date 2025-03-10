@@ -1,25 +1,28 @@
-﻿using Template.Domain.Products.Entities;
+using Template.Domain.Products.Entities;
+using System;
 
-namespace Template.Domain.Products.DTOs;
-public class ProductDto
+namespace Template.Domain.Products.DTOs
 {
-    public ProductDto()
+    public class ProductDto
     {
-            
-    }
+#pragma warning disable
+        public ProductDto()
+        {
 
-    public ProductDto(ProductEntity product)
-    {
-        Id = product.Id;
-        Name = product.Name;
-        Price = product.Price;
-        BarCode = product.BarCode;
-        CreatedDateTime = product.Created;
+        }
+#pragma warning restore 
+        public ProductDto(ProductEntity product)
+        {
+            Id = product.Id;
+            Name = product.Name;
+            Price = product.Price;
+            BarCode = product.BarCode;
+            CreatedDateTime = product.Created;
+        }
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public double Price { get; set; }
+        public string BarCode { get; set; }
+        public DateTime CreatedDateTime { get; set; }
     }
-
-    public Guid Id { get; set; }
-    public string Name { get; set; }
-    public double Price { get; set; }
-    public string BarCode { get; set; }
-    public DateTime CreatedDateTime { get; set; }
 }

@@ -1,10 +1,15 @@
 ﻿using MediatR;
 using Template.Application.Helpers;
-using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
+using Template.Application.Interfaces;
 using Template.Application.Wrappers;
 
-namespace Template.Application.Features.Products.Commands.DeleteProduct;
+namespace Template.Application.Features.Products.Commands;
+public class DeleteProductCommand : IRequest<BaseResult>
+{
+    public Guid Id { get; set; }
+}
+
 public class DeleteProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork, ITranslator translator) : IRequestHandler<DeleteProductCommand, BaseResult>
 {
     public async Task<BaseResult> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
