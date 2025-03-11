@@ -1,10 +1,9 @@
+using System;
+
 namespace Template.Domain.Common
 {
-    public abstract class BaseEntity<TKey>
+    public abstract class BaseEntity
     {
-        public TKey Id { get; set; } = default!;
-    }
-    public abstract class BaseEntity : BaseEntity<long>
-    {
+        public Guid Id { get; set; } = Guid.NewGuid();
     }
 }
