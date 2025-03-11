@@ -1,14 +1,13 @@
+#nullable disable
 using Template.Domain.Common;
 
 namespace Template.Domain.Products.Entities
 {
     public class ProductEntity : AuditableBaseEntity
     {
-#pragma warning disable
         private ProductEntity()
         {
         }
-#pragma warning disable
         public ProductEntity(string name, double price, string barCode)
         {
             Name = name;

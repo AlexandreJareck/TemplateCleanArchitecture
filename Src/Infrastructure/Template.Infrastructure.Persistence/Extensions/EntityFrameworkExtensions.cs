@@ -25,7 +25,7 @@ public static class EntityFrameworkExtensions
 
             if (typeof(AuditableBaseEntity).IsAssignableFrom(entityType) ||
                 (entityType.BaseType?.IsGenericType ?? false) &&
-                entityType.BaseType.GetGenericTypeDefinition() == typeof(AuditableBaseEntity<>))
+                entityType.BaseType.GetGenericTypeDefinition() == typeof(AuditableBaseEntity))
             {
                 dynamic auditableEntity = entry.Entity;
 
