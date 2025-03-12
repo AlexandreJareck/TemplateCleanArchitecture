@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestPlatform.TestHost;
-using Shouldly;
+﻿using Shouldly;
 using Template.Application.Features.Products.Commands;
 using Template.Application.Wrappers;
 using Template.Domain.Products.DTOs;
@@ -86,7 +85,7 @@ public class ProductFunctionalTests(CustomWebApplicationFactory<Program> factory
     public async Task DeleteProduct_ShouldSucceed()
     {
         // Arrange
-        var url = ApiRoutes.V1.Product.DeleteProduct.AddQueryString("id", "c9770569-499d-4b25-59af-08dd5e76cb62");
+        var url = ApiRoutes.V1.Product.DeleteProduct.AddQueryString("id", "818d3815-269a-4ed8-59b3-08dd5e76cb62");
         var ghostAccount = await client.GetGhostAccount();
 
         // Act
