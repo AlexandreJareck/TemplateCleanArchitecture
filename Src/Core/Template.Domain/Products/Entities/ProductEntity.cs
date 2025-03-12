@@ -1,4 +1,5 @@
 #nullable disable
+using System;
 using Template.Domain.Common;
 
 namespace Template.Domain.Products.Entities
@@ -10,6 +11,14 @@ namespace Template.Domain.Products.Entities
         }
         public ProductEntity(string name, double price, string barCode)
         {
+            Name = name;
+            Price = price;
+            BarCode = barCode;
+        }
+
+        public ProductEntity(Guid id, string name, double price, string barCode)
+        {
+            Id = id;
             Name = name;
             Price = price;
             BarCode = barCode;
