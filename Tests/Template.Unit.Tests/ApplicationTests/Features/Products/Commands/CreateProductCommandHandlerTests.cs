@@ -4,7 +4,8 @@ using Template.Application.Features.Products.Commands;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
 
-namespace Template.Unit.Tests.Features.Products.Commands;
+namespace Template.Unit.Tests.ApplicationTests.Features.Products.Commands;
+
 public class CreateProductCommandHandlerTests
 {
     [Fact]

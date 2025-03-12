@@ -6,7 +6,7 @@ using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
 using Template.Domain.Products.Entities;
 
-namespace Template.Unit.Tests.Features.Products.Commands;
+namespace Template.Unit.Tests.ApplicationTests.Features.Products.Commands;
 
 public class DeleteProductCommandHandlerTests
 {
