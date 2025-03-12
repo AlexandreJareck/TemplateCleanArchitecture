@@ -6,7 +6,7 @@ using Shouldly;
 using Template.Domain.Products.Entities;
 using Template.Application.Wrappers;
 
-namespace Template.UnitTests.ApplicationTests.Features.Products.Commands;
+namespace Template.UnitTests.Application.Tests.Features.Products.Commands;
 
 public class UpdateProductCommandHandlerTests
 {

@@ -2,9 +2,9 @@
 using Template.Application.DTOs.Account.Request;
 using Template.Application.DTOs.Account.Response;
 using Template.Application.Wrappers;
-using Template.FunctionalTests.Common;
+using Template.Functional.Tests.Common;
 
-namespace Template.FunctionalTests.ApiEndpoints;
+namespace Template.Functional.Tests.ApiEndpoints;
 
 [Collection("AccountFunctionalTests")]
 public class AccountFunctionalTests(CustomWebApplicationFactory<Program> factory) : IClassFixture<CustomWebApplicationFactory<Program>>

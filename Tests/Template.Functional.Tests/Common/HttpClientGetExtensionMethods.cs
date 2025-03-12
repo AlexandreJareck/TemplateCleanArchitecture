@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 
-namespace Template.FunctionalTests.Common
+namespace Template.Functional.Tests.Common
 {
     public static class HttpClientGetExtensionMethods
     {

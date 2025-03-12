@@ -6,7 +6,7 @@ using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
 using Template.Domain.Products.Entities;
 
-namespace Template.UnitTests.ApplicationTests.Features.Products.Queries;
+namespace Template.UnitTests.Application.Tests.Features.Products.Queries;
 
 public class GetProductByIdQueryHandlerTests
 {

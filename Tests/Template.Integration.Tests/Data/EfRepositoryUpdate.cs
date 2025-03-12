@@ -1,12 +1,11 @@
 ﻿using Shouldly;
 using Template.Domain.Products.Entities;
 
-namespace Template.IntegrationTests.Data;
-
-public class EfRepositoryDelete : BaseEfRepoTestFixture
+namespace Template.Integration.Tests.Data;
+public class EfRepositoryUpdate : BaseEfRepoTestFixture
 {
     [Fact]
-    public async Task DeleteProduct_ShouldDeleteProductSuccessfully()
+    public async Task UpdateProduct_ShouldUpdateProductSuccessfully()
     {
         // Arrange
         var productName = "Test Product";
@@ -23,17 +22,21 @@ public class EfRepositoryDelete : BaseEfRepoTestFixture
         var newProduct = await repository.GetByIdAsync(product.Id);
         newProduct.ShouldNotBeNull();
 
-        repository.Delete(newProduct);
+        newProduct.Update("Updated Product", 1500, "987654123");
+
         await unitOfWork.SaveChangesAsync();
 
         // Assert
-        var deletedProduct = (await repository.GetAllAsync()).FirstOrDefault();
+        var updatedProduct = (await repository.GetAllAsync()).FirstOrDefault();
 
-        deletedProduct.ShouldBeNull();
+        updatedProduct.ShouldNotBeNull();
+        updatedProduct.Name.ShouldBe("Updated Product");
+        updatedProduct.Price.ShouldBe(1500);
+        updatedProduct.BarCode.ShouldBe("987654123");
     }
 
     [Fact]
-    public async Task DeleteProductWithoutSaving_ShouldNotPersistDeletion()
+    public async Task UpdateProductWithoutSaving_ShouldNotPersistUpdate()
     {
         // Arrange
         var productName = "Test Product";
@@ -50,11 +53,14 @@ public class EfRepositoryDelete : BaseEfRepoTestFixture
         var newProduct = await repository.GetByIdAsync(product.Id);
         newProduct.ShouldNotBeNull();
 
-        repository.Delete(newProduct);
+        newProduct.Update("Updated Product", 1500, "987654123");
 
         // Assert
-        var deletedProduct = (await repository.GetAllAsync()).FirstOrDefault();
+        var updatedProduct = (await repository.GetAllAsync()).FirstOrDefault();
 
-        deletedProduct.ShouldNotBeNull();
+        updatedProduct.ShouldNotBeNull();
+        updatedProduct.Name.ShouldBe(productName);
+        updatedProduct.Price.ShouldBe(productPrice);
+        updatedProduct.BarCode.ShouldBe(productBarCode);
     }
 }

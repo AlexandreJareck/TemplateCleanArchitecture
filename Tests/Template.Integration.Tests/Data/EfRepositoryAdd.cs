@@ -1,7 +1,7 @@
 ﻿using Shouldly;
 using Template.Domain.Products.Entities;
 
-namespace Template.IntegrationTests.Data;
+namespace Template.Integration.Tests.Data;
 public class EfRepositoryAdd : BaseEfRepoTestFixture
 {
     [Fact]

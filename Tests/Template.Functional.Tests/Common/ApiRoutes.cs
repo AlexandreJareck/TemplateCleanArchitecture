@@ -1,4 +1,4 @@
-﻿namespace Template.FunctionalTests.Common;
+﻿namespace Template.Functional.Tests.Common;
 
 internal static class ApiRoutes
 {

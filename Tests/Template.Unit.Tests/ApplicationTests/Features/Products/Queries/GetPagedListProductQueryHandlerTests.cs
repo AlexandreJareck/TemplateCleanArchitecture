@@ -5,7 +5,7 @@ using Template.Application.Features.Products.Queries;
 using Template.Application.Interfaces.Repositories;
 using Template.Domain.Products.DTOs;
 
-namespace Template.UnitTests.ApplicationTests.Features.Products.Queries;
+namespace Template.UnitTests.Application.Tests.Features.Products.Queries;
 public class GetPagedListProductQueryHandlerTests
 {
     [Fact]
