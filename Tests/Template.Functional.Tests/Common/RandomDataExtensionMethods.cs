@@ -1,4 +1,4 @@
-﻿namespace Template.FunctionalTests.Common;
+﻿namespace Template.Functional.Tests.Common;
 public static class RandomDataExtensionMethods
 {
     public static string RandomString(int length)

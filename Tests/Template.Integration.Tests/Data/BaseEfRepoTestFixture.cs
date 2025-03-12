@@ -4,7 +4,7 @@ using Template.Application.Interfaces;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Repositories;
 
-namespace Template.IntegrationTests.Data;
+namespace Template.Integration.Tests.Data;
 
 public abstract class BaseEfRepoTestFixture
 {

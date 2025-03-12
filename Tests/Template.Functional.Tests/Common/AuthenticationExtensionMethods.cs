@@ -1,7 +1,7 @@
 ﻿using Template.Application.DTOs.Account.Response;
 using Template.Application.Wrappers;
 
-namespace Template.FunctionalTests.Common;
+namespace Template.Functional.Tests.Common;
 public static class AuthenticationExtensionMethods
 {
     public static async Task<AuthenticationResponse> GetGhostAccount(this HttpClient client)

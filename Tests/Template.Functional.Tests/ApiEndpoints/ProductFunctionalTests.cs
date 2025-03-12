@@ -3,9 +3,9 @@ using Shouldly;
 using Template.Application.Features.Products.Commands;
 using Template.Application.Wrappers;
 using Template.Domain.Products.DTOs;
-using Template.FunctionalTests.Common;
+using Template.Functional.Tests.Common;
 
-namespace Template.FunctionalTests.ApiEndpoints;
+namespace Template.Functional.Tests.ApiEndpoints;
 
 [Collection("ProductFunctionalTests")]
 public class ProductFunctionalTests(CustomWebApplicationFactory<Program> factory) : IClassFixture<CustomWebApplicationFactory<Program>>

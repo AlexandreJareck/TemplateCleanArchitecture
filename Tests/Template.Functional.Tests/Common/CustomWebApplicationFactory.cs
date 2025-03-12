@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Hosting;
 
-namespace Template.FunctionalTests.Common;
+namespace Template.Functional.Tests.Common;
 public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
 {
     protected override IHost CreateHost(IHostBuilder builder)
