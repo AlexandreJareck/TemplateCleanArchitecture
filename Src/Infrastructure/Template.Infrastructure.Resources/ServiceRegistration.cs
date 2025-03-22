@@ -7,7 +7,7 @@ namespace Template.Infrastructure.Resources
     public static class ServiceRegistration
     {
         public static IServiceCollection AddResourcesInfrastructure(this IServiceCollection services)
-        {
+        {            
             services.AddSingleton<ITranslator, Translator>();
 
             return services;

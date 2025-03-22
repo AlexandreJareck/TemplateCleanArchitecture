@@ -1,4 +1,5 @@
 ﻿#nullable disable
+using FluentValidation;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using System.Globalization;
@@ -12,12 +13,16 @@ public static class LocalizationExtensions
         var supportedCultures = configuration.GetSection("Localization:SupportedCultures")
             .Get<List<string>>().Select(p => new CultureInfo(p)).ToArray();
 
+        var defaultCulture = configuration["Localization:DefaultRequestCulture"];
+
         services.Configure<RequestLocalizationOptions>(options =>
         {
             options.DefaultRequestCulture = new RequestCulture(configuration["Localization:DefaultRequestCulture"]);
             options.SupportedCultures = supportedCultures;
             options.SupportedUICultures = supportedCultures;
         });
+
+        ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo(defaultCulture);
 
         return services;
     }
