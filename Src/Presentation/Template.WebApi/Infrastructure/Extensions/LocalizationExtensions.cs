@@ -3,26 +3,26 @@ using FluentValidation;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using Template.WebApi.Infrastructure.Settings;
 
 namespace Template.WebApi.Infrastructure.Extensions;
 
 public static class LocalizationExtensions
 {
-    public static IServiceCollection AddCustomLocalization(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddCustomLocalization(this IServiceCollection services)
     {
-        var supportedCultures = configuration.GetSection("Localization:SupportedCultures")
-            .Get<List<string>>().Select(p => new CultureInfo(p)).ToArray();
-
-        var defaultCulture = configuration["Localization:DefaultRequestCulture"];
+        var serviceProvider = services.BuildServiceProvider();
+        var localizationSettings = serviceProvider.GetService<IOptions<LocalizationSettings>>().Value;
+        var supportedCultures = localizationSettings.SupportedCultures.Select(p => new CultureInfo(p)).ToArray();
 
         services.Configure<RequestLocalizationOptions>(options =>
         {
-            options.DefaultRequestCulture = new RequestCulture(configuration["Localization:DefaultRequestCulture"]);
+            options.DefaultRequestCulture = new RequestCulture(localizationSettings.DefaultRequestCulture);
             options.SupportedCultures = supportedCultures;
             options.SupportedUICultures = supportedCultures;
         });
 
-        ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo(defaultCulture);
+        ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo(localizationSettings.DefaultRequestCulture);
 
         return services;
     }

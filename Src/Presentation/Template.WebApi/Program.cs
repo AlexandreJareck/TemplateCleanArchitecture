@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Template.Application;
 using Template.Application.Interfaces;
+using Template.Infrastructure.Identity;
 using Template.Infrastructure.Identity.Contexts;
 using Template.Infrastructure.Identity.Models;
 using Template.Infrastructure.Identity.Seeds;
@@ -11,14 +12,16 @@ using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Seeds;
 using Template.Infrastructure.Resources;
-using Template.Infrastructure.Identity;
 using Template.WebApi.Infrastructure.Extensions;
 using Template.WebApi.Infrastructure.Middlewares;
 using Template.WebApi.Infrastructure.Services;
+using Template.WebApi.Infrastructure.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
 bool useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
+
+builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSection(nameof(LocalizationSettings)));
 
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
@@ -29,7 +32,8 @@ builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddSwaggerWithVersioning();
 builder.Services.AddAnyCors();
-builder.Services.AddCustomLocalization(builder.Configuration);
+
+builder.Services.AddCustomLocalization();
 builder.Services.AddHealthChecks();
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
@@ -45,10 +49,13 @@ using (var scope = app.Services.CreateScope())
         await services.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
     }
 
-    //Seed Data
-    await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
-    await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
-    await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
+    if (useInMemoryDatabase)
+    {
+        //Seed Data
+        await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
+        await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
+        await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
+    }
 }
 
 app.UseCustomLocalization();

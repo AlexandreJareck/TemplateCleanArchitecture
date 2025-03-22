@@ -36,10 +36,9 @@ public static class ServiceRegistration
         services.AddTransient<IAccountServices, AccountServices>();
 
         var identitySettings = configuration.GetSection(nameof(IdentitySettings)).Get<IdentitySettings>();
-
         var jwtSettings = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
-        services.AddSingleton(jwtSettings);
 
+        services.AddSingleton(jwtSettings);
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         {
             options.SignIn.RequireConfirmedAccount = false;
