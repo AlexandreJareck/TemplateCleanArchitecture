@@ -4,9 +4,10 @@ using Template.Application.Helpers;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
+using Template.Domain.Products.DTOs;
 
 namespace Template.Application.Features.Products.Commands;
-public class UpdateProductCommand : IRequest<BaseResult>
+public class UpdateProductCommand : IRequest<BaseResult<ProductDto>>
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
@@ -14,9 +15,12 @@ public class UpdateProductCommand : IRequest<BaseResult>
     public string BarCode { get; set; }
 }
 
-public class UpdateProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork, ITranslator translator) : IRequestHandler<UpdateProductCommand, BaseResult>
+public class UpdateProductCommandHandler(
+    IProductRepository productRepository,
+    IUnitOfWork unitOfWork,
+    ITranslator translator) : IRequestHandler<UpdateProductCommand, BaseResult<ProductDto>>
 {
-    public async Task<BaseResult> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    public async Task<BaseResult<ProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         var product = await productRepository.GetByIdAsync(request.Id);
 
@@ -28,7 +32,14 @@ public class UpdateProductCommandHandler(IProductRepository productRepository, I
         product.Update(request.Name, request.Price, request.BarCode);
         await unitOfWork.SaveChangesAsync();
 
-        return BaseResult.Ok();
+        return new ProductDto
+        {
+            Id = product.Id,
+            BarCode = product.BarCode,
+            CreatedDateTime = product.Created,
+            Name = product.Name,
+            Price = product.Price,
+        };
     }
 }
 
