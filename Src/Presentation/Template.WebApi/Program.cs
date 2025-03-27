@@ -49,13 +49,9 @@ using (var scope = app.Services.CreateScope())
         await services.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
     }
 
-    if (useInMemoryDatabase)
-    {
-        //Seed Data
-        await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
-        await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
-        await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
-    }
+    await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
+    await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
+    await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
 }
 
 app.UseCustomLocalization();

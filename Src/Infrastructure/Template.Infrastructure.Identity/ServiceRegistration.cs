@@ -29,7 +29,7 @@ public static class ServiceRegistration
         else
         {
             services.AddDbContext<IdentityContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("IdentityConnection")));
+                options.UseNpgsql(configuration.GetConnectionString("IdentityConnection")));
         }
 
         services.AddTransient<IGetUserServices, GetUserServices>();

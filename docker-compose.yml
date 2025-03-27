@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Src/Presentation/Template.WebApi/Dockerfile
+    container_name: my_dotnet_app
+    depends_on:
+      - db
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Username=postgres;Password=Minas8gerais@;Database=TemplateCleanArch;SearchPath=public
+      - ConnectionStrings__IdentityConnection=Host=db;Port=5432;Username=postgres;Password=Minas8gerais@;Database=TemplateCleanArchIdentity;SearchPath=public
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+
+  db:
+    image: postgres:16
+    container_name: my_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Minas8gerais@
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+
+volumes:
+  postgres_data:
