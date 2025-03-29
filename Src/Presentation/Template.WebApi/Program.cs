@@ -19,6 +19,10 @@ using Template.WebApi.Infrastructure.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
 bool useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
 builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSection(nameof(LocalizationSettings)));
@@ -33,9 +37,10 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddSwaggerWithVersioning();
 builder.Services.AddAnyCors();
 
+builder.Host.UseSerilog();
 builder.Services.AddCustomLocalization();
-builder.Services.AddHealthChecks();
-builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
+builder.Services.AddHealthChecksService();
+builder.Host.ConfigureLog();
 
 var app = builder.Build();
 
@@ -54,6 +59,8 @@ using (var scope = app.Services.CreateScope())
     await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
 }
 
+app.ConfigureHealthCheck();
+
 app.UseCustomLocalization();
 app.UseAnyCors();
 app.UseRouting();
@@ -61,12 +68,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSwaggerWithVersioning();
 app.UseMiddleware<ErrorHandlerMiddleware>();
-app.UseHealthChecks("/health");
 app.MapControllers();
-app.UseSerilogRequestLogging();
 
 app.Run();
 
+app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
 public partial class Program
 {
 }

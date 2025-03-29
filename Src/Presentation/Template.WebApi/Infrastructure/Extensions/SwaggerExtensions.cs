@@ -75,7 +75,7 @@ public static class SwaggerExtensions
 
         return services;
     }
-    public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : IConfigureNamedOptions<SwaggerGenOptions>
+    private class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : IConfigureNamedOptions<SwaggerGenOptions>
     {
         public void Configure(SwaggerGenOptions options)
         {
