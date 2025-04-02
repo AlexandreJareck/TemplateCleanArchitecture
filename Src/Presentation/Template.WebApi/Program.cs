@@ -12,6 +12,7 @@ using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Seeds;
 using Template.Infrastructure.Resources;
+using Template.WebApi.Elastic;
 using Template.WebApi.Infrastructure.Extensions;
 using Template.WebApi.Infrastructure.Middlewares;
 using Template.WebApi.Infrastructure.Services;
@@ -32,6 +33,10 @@ builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemory
 builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
+
+builder.Services.Configure<ElasticSearchSettings>(builder.Configuration.GetSection("ElasticSearchSettings"));
+builder.Services.AddSingleton<IElasticService, ElasticService>();
+
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddSwaggerWithVersioning();
