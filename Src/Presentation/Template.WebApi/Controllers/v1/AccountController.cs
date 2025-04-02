@@ -8,7 +8,7 @@ using Template.Application.Wrappers;
 namespace Template.WebApi.Controllers.v1;
 
 [ApiVersion("1")]
-public class AccountController(IAccountServices accountServices) : BaseApiController
+public class AccountController(IAccountServices accountServices, ILogger<AccountController> logger) : BaseApiController
 {
     [HttpPost]
     public async Task<BaseResult<AuthenticationResponse>> Authenticate(AuthenticationRequest request)
@@ -25,6 +25,13 @@ public class AccountController(IAccountServices accountServices) : BaseApiContro
     [HttpPost]
     public async Task<BaseResult<AuthenticationResponse>> Start()
     {
+        logger.LogTrace("Log TRACE capturado!");
+        logger.LogDebug("Log DEBUG capturado!");
+        logger.LogInformation("Log INFORMATION capturado!");
+        logger.LogWarning("Log WARNING capturado!");
+        logger.LogError("Log ERROR capturado!");
+        logger.LogCritical("Log CRITICAL capturado!");
+
         var ghostUsername = await accountServices.RegisterGhostAccount();
         return await accountServices.AuthenticateByUserName(ghostUsername.Data);
     }
