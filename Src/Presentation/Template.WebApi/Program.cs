@@ -12,11 +12,13 @@ using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Seeds;
 using Template.Infrastructure.Resources;
+using Template.WebApi.Consumers;
 using Template.WebApi.Elastic;
 using Template.WebApi.Infrastructure.Extensions;
 using Template.WebApi.Infrastructure.Middlewares;
 using Template.WebApi.Infrastructure.Services;
 using Template.WebApi.Infrastructure.Settings;
+using Template.WebApi.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +48,9 @@ builder.Host.UseSerilog();
 builder.Services.AddCustomLocalization();
 builder.Services.AddHealthChecksService();
 builder.Host.ConfigureLog();
+
+builder.Services.AddSingleton<RabbitMqService>();
+builder.Services.AddHostedService<OrderConsumer>(); 
 
 var app = builder.Build();
 
