@@ -69,10 +69,32 @@ services:
       - 5601:5601
     networks:
       - nw
-
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:latest
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: kalo
+      RABBITMQ_DEFAULT_PASS: kalo
+    configs:
+      - source: rabbitmq-plugins
+        target: /etc/rabbitmq/enabled_plugins
+    volumes:
+      - rabbitmq-lib:/var/lib/rabbitmq/
+      - rabbitmq-log:/var/log/rabbitmq
+    networks:
+      - nw
+      
 volumes:
   postgres_data:
   v01:
+    driver: local
+  rabbitmq-lib:
+    driver: local
+  rabbitmq-log:
     driver: local
 
 networks:
