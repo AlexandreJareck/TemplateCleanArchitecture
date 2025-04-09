@@ -15,11 +15,27 @@ public class MessageController : BaseApiController
         _rabbitService = rabbitService;
     }
 
-    [HttpPost("create-order")]
-    public IActionResult Post([FromBody] Order order)
+    [HttpPost("create-order-fanout")]
+    public IActionResult PostFanout([FromBody] Order order)
     {
         order.Id = Guid.NewGuid();
-        _rabbitService.PublishPedido(order);
-        return Ok($"order {order.Id} send for queue.");
+        _rabbitService.PublishOrderFanout(order);
+        return Ok($"FANOUT - Order {order.Id} sent to queue.");
+    }
+
+    [HttpPost("create-order-direct")]
+    public IActionResult PostDirect([FromBody] Order order, [FromQuery] string routingKey)
+    {
+        order.Id = Guid.NewGuid();
+        _rabbitService.PublishOrderDirect(order, routingKey);
+        return Ok($"DIRECT - Order {order.Id} sent with routing key '{routingKey}'.");
+    }
+
+    [HttpPost("create-order-topic")]
+    public IActionResult PostTopic([FromBody] Order order, [FromQuery] string routingKey)
+    {
+        order.Id = Guid.NewGuid();
+        _rabbitService.PublishOrderTopic(order, routingKey);
+        return Ok($" TOPIC - Order {order.Id} sent with routing key '{routingKey}'.");
     }
 }
