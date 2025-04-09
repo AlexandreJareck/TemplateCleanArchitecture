@@ -50,7 +50,10 @@ builder.Services.AddHealthChecksService();
 builder.Host.ConfigureLog();
 
 builder.Services.AddSingleton<RabbitMqService>();
-builder.Services.AddHostedService<OrderConsumer>(); 
+builder.Services.AddHostedService<OrderConsumerDirect>(); 
+builder.Services.AddHostedService<OrderConsumerFanoutA>(); 
+builder.Services.AddHostedService<OrderConsumerFanoutB>();
+builder.Services.AddHostedService<OrderConsumerTopic>();
 
 var app = builder.Build();
 
