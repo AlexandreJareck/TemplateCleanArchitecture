@@ -87,15 +87,65 @@ services:
       - rabbitmq-log:/var/log/rabbitmq
     networks:
       - nw
-      
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - nw
+    volumes:
+      - redis-volume-data:/data
+    command:
+      - --requirepass password
+
+  redis-insight:
+    image: redislabs/redisinsight:1.14.0
+    container_name: redis-insight
+    restart: always
+    depends_on:
+      - redis
+      - redis-graph
+      - redis-search
+      - redis-timeseries
+    ports:
+      - 6380:8001
+    networks:
+      - nw
+    volumes:
+      - redis-insight-volume_data:/db
+
+  redis-graph:
+    image: redislabs/redisgraph
+    ports:
+      - 6381:6379
+    restart: always
+    networks:
+      - nw
+
+  redis-search:
+    image: redislabs/redisearch:latest
+    ports:
+      - 6382:6379
+    restart: always
+    networks:
+      - nw
+
+  redis-timeseries:
+    image: redislabs/redistimeseries
+    ports:
+      - 6383:6379
+    restart: always
+    networks:
+      - nw
 volumes:
   postgres_data:
   v01:
-    driver: local
   rabbitmq-lib:
-    driver: local
   rabbitmq-log:
-    driver: local
+  redis-volume-data:
+  redis-insight-volume_data:
 
 networks:
   nw:
