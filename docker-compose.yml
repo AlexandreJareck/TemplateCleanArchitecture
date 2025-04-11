@@ -30,7 +30,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     networks:
       - nw
@@ -140,7 +140,7 @@ services:
     networks:
       - nw
 volumes:
-  postgres_data:
+  postgres-data:
   v01:
   rabbitmq-lib:
   rabbitmq-log:
