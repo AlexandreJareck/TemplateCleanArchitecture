@@ -33,8 +33,10 @@ builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSectio
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDatabase);
+builder.Services.AddRedis(builder.Configuration);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
+builder.Services.AddScoped<IItemService, ItemService>();
 
 builder.Services.Configure<ElasticSearchSettings>(builder.Configuration.GetSection("ElasticSearchSettings"));
 builder.Services.AddSingleton<IElasticService, ElasticService>();
@@ -54,6 +56,7 @@ builder.Services.AddHostedService<OrderConsumerDirect>();
 builder.Services.AddHostedService<OrderConsumerFanoutA>(); 
 builder.Services.AddHostedService<OrderConsumerFanoutB>();
 builder.Services.AddHostedService<OrderConsumerTopic>();
+
 
 var app = builder.Build();
 
