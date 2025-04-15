@@ -17,7 +17,6 @@ public static class ServiceRegistration
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IRabbitMqService, RabbitMqService>();
         services.AddSingleton<IElasticService, ElasticService>();
-        services.AddSingleton<RabbitMqService>();
         services.AddHostedService<OrderConsumerDirect>();
         services.AddHostedService<OrderConsumerFanoutA>();
         services.AddHostedService<OrderConsumerFanoutB>();

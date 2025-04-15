@@ -1,0 +1,3 @@
+- build: docker compose -f "docker-compose.yml" -f "docker-compose.override.yml" build --no-cache
+- up: docker compose -f "docker-compose.yml" -f "docker-compose.override.yml" up -d
+- down: docker compose down
