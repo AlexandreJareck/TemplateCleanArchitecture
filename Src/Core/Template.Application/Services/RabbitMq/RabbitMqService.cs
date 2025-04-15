@@ -1,11 +1,12 @@
-﻿using RabbitMQ.Client;
+﻿using Microsoft.Extensions.Configuration;
+using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
-using Template.WebApi.Models;
+using Template.Domain.Order;
 
-namespace Template.WebApi.Service;
+namespace Template.Application.Services.RabbitMq;
 
-public class RabbitMqService
+public class RabbitMqService : IRabbitMqService
 {
     private readonly ConnectionFactory _factory;
 

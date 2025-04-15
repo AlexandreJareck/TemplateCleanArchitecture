@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Template.WebApi.Models;
-using Template.WebApi.Service;
+using Template.Application.Services.RabbitMq;
+using Template.Domain.Order;
 
 namespace Template.WebApi.Controllers.v1;
 
 [ApiController]
 [ApiVersion("1")]
-public class MessageController : BaseApiController  
+public class MessageController : BaseApiController
 {
     private readonly RabbitMqService _rabbitService;
 

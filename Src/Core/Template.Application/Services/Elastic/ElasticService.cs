@@ -1,10 +1,10 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
 using Microsoft.Extensions.Options;
-using Template.WebApi.Infrastructure.Settings;
-using Template.WebApi.Models;
+using Template.Application.Settings;
+using Template.Domain.Person;
 
-namespace Template.WebApi.Elastic
+namespace Template.Application.Services.Elastic
 {
     public class ElasticService : IElasticService
     {

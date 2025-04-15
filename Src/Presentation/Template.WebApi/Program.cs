@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Template.Application;
 using Template.Application.Interfaces;
+using Template.Application.Settings;
 using Template.Infrastructure.Identity;
 using Template.Infrastructure.Identity.Contexts;
 using Template.Infrastructure.Identity.Models;
@@ -12,13 +13,9 @@ using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Seeds;
 using Template.Infrastructure.Resources;
-using Template.WebApi.Consumers;
-using Template.WebApi.Elastic;
 using Template.WebApi.Infrastructure.Extensions;
 using Template.WebApi.Infrastructure.Middlewares;
 using Template.WebApi.Infrastructure.Services;
-using Template.WebApi.Infrastructure.Settings;
-using Template.WebApi.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +26,7 @@ Log.Logger = new LoggerConfiguration()
 bool useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
 builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSection(nameof(LocalizationSettings)));
+builder.Services.Configure<ElasticSearchSettings>(builder.Configuration.GetSection(nameof(ElasticSearchSettings)));
 
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
@@ -36,10 +34,6 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDat
 builder.Services.AddRedis(builder.Configuration);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
-builder.Services.AddScoped<IItemService, ItemService>();
-
-builder.Services.Configure<ElasticSearchSettings>(builder.Configuration.GetSection("ElasticSearchSettings"));
-builder.Services.AddSingleton<IElasticService, ElasticService>();
 
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
@@ -50,13 +44,6 @@ builder.Host.UseSerilog();
 builder.Services.AddCustomLocalization();
 builder.Services.AddHealthChecksService();
 builder.Host.ConfigureLog();
-
-builder.Services.AddSingleton<RabbitMqService>();
-builder.Services.AddHostedService<OrderConsumerDirect>(); 
-builder.Services.AddHostedService<OrderConsumerFanoutA>(); 
-builder.Services.AddHostedService<OrderConsumerFanoutB>();
-builder.Services.AddHostedService<OrderConsumerTopic>();
-
 
 var app = builder.Build();
 
