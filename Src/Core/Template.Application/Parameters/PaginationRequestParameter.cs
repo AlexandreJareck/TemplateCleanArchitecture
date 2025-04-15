@@ -1,6 +1,7 @@
 ﻿namespace Template.Application.Parameters;
 public class PaginationRequestParameter
-{    public int PageNumber { get; set; }
+{
+    public int PageNumber { get; set; }
     public int PageSize { get; set; }
     public PaginationRequestParameter()
     {

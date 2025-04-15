@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Template.Application.Helpers;
-using Template.Application.Interfaces.Repositories;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
 
 namespace Template.Application.Features.Products.Commands;

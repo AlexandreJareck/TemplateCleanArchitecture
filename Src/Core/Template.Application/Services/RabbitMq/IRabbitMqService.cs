@@ -1,5 +1,4 @@
-﻿using Template.Application.Consumers;
-using Template.Domain.Order;
+﻿using Template.Domain.Order;
 
 namespace Template.Application.Services.RabbitMq;
 
