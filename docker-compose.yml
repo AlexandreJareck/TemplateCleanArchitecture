@@ -147,5 +147,9 @@ volumes:
   redis-volume-data:
   redis-insight-volume_data:
 
+configs:
+  rabbitmq-plugins:
+    content: "[rabbitmq_management]."
+
 networks:
   nw:
