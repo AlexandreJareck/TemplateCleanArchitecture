@@ -3,7 +3,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Template.Application.Features.Products.Queries;
-using Template.Application.Services.Product;
 using Template.Application.Wrappers;
 using Template.Domain.Products.DTOs;
 
@@ -52,7 +51,7 @@ namespace Template.Application.Services.Product
         {
             return await _mediator.Send(new GetProductByIdQuery
             {
-                Id = productId,                
+                Id = productId,
             }, cancellationToken);
         }
     }
