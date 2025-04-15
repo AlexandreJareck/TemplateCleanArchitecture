@@ -1,0 +1,6 @@
+
+- Application:
+	Add-Migration NomeMigration -Context ApplicationDbContext -Project Template.Infrastructure.Persistence
+
+- Identity
+	Add-Migration NomeMigration -Context IdentityDbContext -Project Template.Infrastructure.Identity
