@@ -3,8 +3,7 @@ using Elastic.Ingest.Elasticsearch.DataStreams;
 using Elastic.Serilog.Sinks;
 using Microsoft.Extensions.Options;
 using Serilog;
-using Template.WebApi.Infrastructure.Settings;
-
+using Template.Application.Settings;
 namespace Template.WebApi.Infrastructure.Extensions;
 
 public static class ElasticExtensions
@@ -22,7 +21,6 @@ public static class ElasticExtensions
 
         return services;
     }
-
     public static IHostBuilder ConfigureLog(this IHostBuilder hostBuilder)
     {
         hostBuilder.UseSerilog((context, configuration) =>
@@ -47,7 +45,6 @@ public static class ElasticExtensions
 
         return hostBuilder;
     }
-
     public static IApplicationBuilder ConfigureHealthCheck(this IApplicationBuilder builder)
     {
         builder.UseHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions

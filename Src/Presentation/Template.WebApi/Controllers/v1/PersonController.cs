@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Template.WebApi.Elastic;
-using Template.WebApi.Models;
+using Template.Application.Services.Elastic;
+using Template.Domain.Person;
 
 namespace Template.WebApi.Controllers.v1;
 

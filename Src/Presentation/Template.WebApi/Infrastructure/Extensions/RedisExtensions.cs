@@ -1,5 +1,4 @@
-﻿
-namespace Template.WebApi.Infrastructure.Extensions
+﻿namespace Template.WebApi.Infrastructure.Extensions
 {
     public static class RedisExtensions
     {
@@ -9,7 +8,7 @@ namespace Template.WebApi.Infrastructure.Extensions
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = redisSettings;
-                options.InstanceName = "redis";
+                options.InstanceName = "redis-local";
             });
             return services;
         }

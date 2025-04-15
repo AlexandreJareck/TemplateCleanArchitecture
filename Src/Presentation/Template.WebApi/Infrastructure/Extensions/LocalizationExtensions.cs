@@ -3,7 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using System.Globalization;
-using Template.WebApi.Infrastructure.Settings;
+using Template.Application.Settings;
 
 namespace Template.WebApi.Infrastructure.Extensions;
 

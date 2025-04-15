@@ -1,10 +1,12 @@
-﻿using RabbitMQ.Client.Events;
+﻿using Microsoft.Extensions.Logging;
+using RabbitMQ.Client.Events;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
-using Template.WebApi.Models;
+using Microsoft.Extensions.Hosting;
+using Template.Domain.Order;
 
-namespace Template.WebApi.Consumers;
+namespace Template.Application.Consumers;
 
 public class OrderConsumerTopic : BackgroundService
 {
@@ -204,3 +206,4 @@ public class OrderConsumerFanoutB : BackgroundService
         base.Dispose();
     }
 }
+
