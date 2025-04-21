@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using Template.Application.Settings;
 using Template.Domain.Order;
 
 namespace Template.Application.Consumers;
@@ -13,15 +15,18 @@ public class OrderConsumerTopic : BackgroundService
     private IConnection _connection;
     private IModel _channel;
     private readonly ILogger<OrderConsumerTopic> _logger;
+    private readonly RabbitMqSettings _rabbitMqSettings;
 
-    public OrderConsumerTopic(ILogger<OrderConsumerTopic> logger)
+    public OrderConsumerTopic(IOptions<RabbitMqSettings> options, ILogger<OrderConsumerTopic> logger)
     {
+        _rabbitMqSettings = options.Value;
         _logger = logger;
         var factory = new ConnectionFactory
         {
-            HostName = "localhost",
-            UserName = "kalo",
-            Password = "kalo"
+            HostName = _rabbitMqSettings.HostName,
+            UserName = _rabbitMqSettings.UserName,
+            Password = _rabbitMqSettings.Password,
+            Port = _rabbitMqSettings.Port
         };
 
         _connection = factory.CreateConnection();
@@ -64,15 +69,18 @@ public class OrderConsumerDirect : BackgroundService
     private IConnection _connection;
     private IModel _channel;
     private readonly ILogger<OrderConsumerDirect> _logger;
+    private readonly RabbitMqSettings _rabbitMqSettings;
 
-    public OrderConsumerDirect(ILogger<OrderConsumerDirect> logger)
+    public OrderConsumerDirect(IOptions<RabbitMqSettings> options, ILogger<OrderConsumerDirect> logger)
     {
         _logger = logger;
+        _rabbitMqSettings = options.Value;
         var factory = new ConnectionFactory
         {
-            HostName = "localhost",
-            UserName = "kalo",
-            Password = "kalo"
+            HostName = _rabbitMqSettings.HostName,
+            UserName = _rabbitMqSettings.UserName,
+            Password = _rabbitMqSettings.Password,
+            Port = _rabbitMqSettings.Port
         };
 
         _connection = factory.CreateConnection();
@@ -115,15 +123,18 @@ public class OrderConsumerFanoutA : BackgroundService
     private readonly IConnection _connection;
     private readonly IModel _channel;
     private readonly ILogger<OrderConsumerFanoutA> _logger;
+    private readonly RabbitMqSettings _rabbitMqSettings;
 
-    public OrderConsumerFanoutA(ILogger<OrderConsumerFanoutA> logger)
+    public OrderConsumerFanoutA(IOptions<RabbitMqSettings> options, ILogger<OrderConsumerFanoutA> logger)
     {
         _logger = logger;
+        _rabbitMqSettings = options.Value;
         var factory = new ConnectionFactory
         {
-            HostName = "localhost",
-            UserName = "kalo",
-            Password = "kalo"
+            HostName = _rabbitMqSettings.HostName,
+            UserName = _rabbitMqSettings.UserName,
+            Password = _rabbitMqSettings.Password,
+            Port = _rabbitMqSettings.Port
         };
 
         _connection = factory.CreateConnection();
@@ -163,15 +174,18 @@ public class OrderConsumerFanoutB : BackgroundService
     private readonly IConnection _connection;
     private readonly IModel _channel;
     private readonly ILogger<OrderConsumerFanoutB> _logger;
+    private readonly RabbitMqSettings _rabbitMqSettings;
 
-    public OrderConsumerFanoutB(ILogger<OrderConsumerFanoutB> logger)
+    public OrderConsumerFanoutB(IOptions<RabbitMqSettings> options, ILogger<OrderConsumerFanoutB> logger)
     {
         _logger = logger;
+        _rabbitMqSettings = options.Value;
         var factory = new ConnectionFactory
         {
-            HostName = "localhost",
-            UserName = "kalo",
-            Password = "kalo"
+            HostName = _rabbitMqSettings.HostName,
+            UserName = _rabbitMqSettings.UserName,
+            Password = _rabbitMqSettings.Password,
+            Port = _rabbitMqSettings.Port
         };
 
         _connection = factory.CreateConnection();

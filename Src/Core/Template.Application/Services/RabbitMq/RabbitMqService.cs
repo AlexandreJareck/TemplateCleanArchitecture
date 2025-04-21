@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+using Template.Application.Settings;
 using Template.Domain.Order;
 
 namespace Template.Application.Services.RabbitMq;
@@ -9,14 +10,18 @@ namespace Template.Application.Services.RabbitMq;
 public class RabbitMqService : IRabbitMqService
 {
     private readonly ConnectionFactory _factory;
+    private readonly RabbitMqSettings _rabbitMqSettings;
 
-    public RabbitMqService(IConfiguration config)
+    public RabbitMqService(IOptions<RabbitMqSettings> options)
     {
+        _rabbitMqSettings = options.Value;
+
         _factory = new ConnectionFactory
         {
-            HostName = "localhost",
-            UserName = "kalo",
-            Password = "kalo"
+            HostName = _rabbitMqSettings.HostName,
+            UserName = _rabbitMqSettings.UserName,
+            Password = _rabbitMqSettings.Password,
+            Port = _rabbitMqSettings.Port,
         };
     }
 
