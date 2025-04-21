@@ -1,13 +1,49 @@
-
 services:
   webapi:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production      
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
+      - ASPNETCORE_HTTP_PORTS=${WEBAPI_HTTP_PORT}
+      - ASPNETCORE_HTTPS_PORTS=${WEBAPI_HTTPS_PORT}
     ports:
-      - 8080:8080
-      - 8081:8081
+      - ${WEBAPI_HTTP_PORT}:${WEBAPI_HTTP_PORT}
+      - ${WEBAPI_HTTPS_PORT}:${WEBAPI_HTTPS_PORT}
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
-      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+      - ${APPDATA}/ASP.NET/Https:/https:ro
+
+  db:
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+  elasticsearch:
+    ports:
+      - ${ELASTICSEARCH_PORT}:9200
+
+  kibana:
+    ports:
+      - ${KIBANA_PORT}:5601
+
+  rabbitmq:
+    ports:
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_MANAGEMENT_PORT}:15672
+
+  redis:
+    ports:
+      - ${REDIS_PORT}:6379
+
+  redis-insight:
+    ports:
+      - ${REDIS_INSIGHT_PORT}:8001
+
+  redis-graph:
+    ports:
+      - ${REDIS_GRAPH_PORT}:6379
+
+  redis-search:
+    ports:
+      - ${REDIS_SEARCH_PORT}:6379
+
+  redis-timeseries:
+    ports:
+      - ${REDIS_TIMESERIES_PORT}:6379

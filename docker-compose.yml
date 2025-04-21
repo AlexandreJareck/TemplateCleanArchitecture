@@ -12,19 +12,14 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Username=postgres;Password=Minas8gerais@;Database=TemplateCleanArch;SearchPath=public
-      - ConnectionStrings__IdentityConnection=Host=db;Port=5432;Username=postgres;Password=Minas8gerais@;Database=TemplateCleanArchIdentity;SearchPath=public
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB_NAME};SearchPath=public
+      - ConnectionStrings__IdentityConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_IDENTITY_DB_NAME};SearchPath=public
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetcore.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=senhaSegura
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_CERTIFICATE_PASSWORD}
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__Username=kalo
-      - RabbitMQ__Password=kalo
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-    volumes:
-      - C:/Users/User/.aspnet/https:/https:ro
+      - RabbitMQ__Port=${RABBITMQ_PORT}
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
     networks:
       - nw
 
@@ -33,10 +28,8 @@ services:
     container_name: my_postgres_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Minas8gerais@
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
@@ -54,8 +47,6 @@ services:
       - xpack.security.enabled=false
     volumes:
       - v01:/usr/share/elasticsearch/data
-    ports:
-      - 9200:9200
     networks:
       - nw
     healthcheck: 
@@ -73,20 +64,16 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
-    ports:
-      - 5601:5601
     networks:
       - nw
+
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:latest
     restart: always
-    ports:
-      - 5672:5672
-      - 15672:15672
     environment:
-      RABBITMQ_DEFAULT_USER: kalo
-      RABBITMQ_DEFAULT_PASS: kalo
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     configs:
       - source: rabbitmq-plugins
         target: /etc/rabbitmq/enabled_plugins
@@ -100,18 +87,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
   redis:
     image: redis:latest
     container_name: redis
     restart: always
-    ports:
-      - 6379:6379
     networks:
       - nw
     volumes:
       - redis-volume-data:/data
     command:
-      - --requirepass password
+      - --requirepass ${REDIS_PASSWORD}
 
   redis-insight:
     image: redislabs/redisinsight:1.14.0
@@ -122,8 +108,6 @@ services:
       - redis-graph
       - redis-search
       - redis-timeseries
-    ports:
-      - 6380:8001
     networks:
       - nw
     volumes:
@@ -131,27 +115,22 @@ services:
 
   redis-graph:
     image: redislabs/redisgraph
-    ports:
-      - 6381:6379
     restart: always
     networks:
       - nw
 
   redis-search:
     image: redislabs/redisearch:latest
-    ports:
-      - 6382:6379
     restart: always
     networks:
       - nw
 
   redis-timeseries:
     image: redislabs/redistimeseries
-    ports:
-      - 6383:6379
     restart: always
     networks:
       - nw
+
 volumes:
   postgres-data:
   v01:
