@@ -19,6 +19,7 @@ namespace Template.Application.Services.Elastic
                 .DefaultIndex(_elasticSettings.DefaultIndex);
             _client = new ElasticsearchClient(settings);
         }
+
         public async Task CreateIndexIfNotExistsAsync(string indexName)
         {
             if (!_client.Indices.Exists(indexName).Exists)
