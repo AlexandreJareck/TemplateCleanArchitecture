@@ -31,7 +31,12 @@ namespace Template.Application.Services.Product
                 return JsonConvert.DeserializeObject<ProductDto>(cachedItem);
             }
 
-            var product = await FetchProductFromDatabase(productId, cancellationToken);
+            var product = await GetProductByIdQuery(productId, cancellationToken);
+
+            if (product is null)
+            {
+                return new Error(ErrorCode.NotFound, "Product not found", nameof(productId));
+            }
 
             await _cache.SetStringAsync(
                 cacheKey,
@@ -47,7 +52,7 @@ namespace Template.Application.Services.Product
             return product;
         }
 
-        private async Task<BaseResult<ProductDto>> FetchProductFromDatabase(Guid productId, CancellationToken cancellationToken)
+        private async Task<BaseResult<ProductDto>> GetProductByIdQuery(Guid productId, CancellationToken cancellationToken)
         {
             return await _mediator.Send(new GetProductByIdQuery
             {

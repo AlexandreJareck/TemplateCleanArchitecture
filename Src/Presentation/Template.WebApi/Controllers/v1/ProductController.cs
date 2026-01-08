@@ -9,26 +9,17 @@ using Template.Domain.Products.DTOs;
 namespace Template.WebApi.Controllers.v1;
 
 [ApiVersion("1")]
-public class ProductController : BaseApiController
+public class ProductController(IProductService productService) : BaseApiController
 {
-    private readonly IProductService _productService;
-    public ProductController(IProductService productService)
-    {
-        _productService = productService;
-    }
+    [HttpGet("{id}/cache")]
+    public async Task<BaseResult<ProductDto>> Get([FromRoute] Guid id, CancellationToken cancellationToken)
+        => await productService.GetProductAsync(id, cancellationToken);
 
-    [HttpGet("{id}/GetWithCache")]
-    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
-    {
-        var product = await _productService.GetProductAsync(id, cancellationToken);
-        return Ok(product);
-    }
-
-    [HttpGet]
+    [HttpGet("get-paged-list")]
     public async Task<PagedResponse<ProductDto>> GetPagedListProduct([FromQuery] GetPagedListProductQuery model)
         => await Mediator.Send(model);
 
-    [HttpGet]
+    [HttpGet("get-by-id")]
     public async Task<BaseResult<ProductDto>> GetProductById([FromQuery] GetProductByIdQuery model)
         => await Mediator.Send(model);
 

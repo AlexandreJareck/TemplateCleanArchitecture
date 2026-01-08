@@ -46,6 +46,12 @@ builder.Services.AddCustomLocalization();
 builder.Services.AddHealthChecksService();
 builder.Host.ConfigureLog();
 
+builder.Services.AddRouting(options =>
+{
+    options.LowercaseUrls = true;
+    options.LowercaseQueryStrings = true;
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
