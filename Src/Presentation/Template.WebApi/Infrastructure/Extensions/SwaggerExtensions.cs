@@ -1,4 +1,5 @@
 ﻿#nullable disable
+using Elastic.Clients.Elasticsearch.IndexLifecycleManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Options;
@@ -54,6 +55,7 @@ public static class SwaggerExtensions
                 BearerFormat = "JWT",
                 Description = "Input your Bearer token in this format - Bearer {your token here} to access this API",
             });
+
             setup.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {

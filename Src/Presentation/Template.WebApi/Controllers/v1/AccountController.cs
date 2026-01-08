@@ -10,19 +10,19 @@ namespace Template.WebApi.Controllers.v1;
 [ApiVersion("1")]
 public class AccountController(IAccountServices accountServices, ILogger<AccountController> logger) : BaseApiController
 {
-    [HttpPost]
+    [HttpPost("authenticate")]
     public async Task<BaseResult<AuthenticationResponse>> Authenticate(AuthenticationRequest request)
         => await accountServices.Authenticate(request);
 
-    [HttpPut, Authorize]
+    [HttpPut("change-user-name"), Authorize]
     public async Task<BaseResult> ChangeUserName(ChangeUserNameRequest model)
         => await accountServices.ChangeUserName(model);
 
-    [HttpPut, Authorize]
+    [HttpPut("change-password"), Authorize]
     public async Task<BaseResult> ChangePassword(ChangePasswordRequest model)
         => await accountServices.ChangePassword(model);
 
-    [HttpPost]
+    [HttpPost("start")]
     public async Task<BaseResult<AuthenticationResponse>> Start()
     {
         logger.LogTrace("Log TRACE capturado!");
