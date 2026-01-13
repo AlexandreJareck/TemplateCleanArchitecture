@@ -8,9 +8,9 @@ namespace Template.WebApi.Controllers.v1;
 [ApiVersion("1")]
 public class MessageController : BaseApiController
 {
-    private readonly RabbitMqService _rabbitService;
+    private readonly IRabbitMqService _rabbitService;
 
-    public MessageController(RabbitMqService rabbitService)
+    public MessageController(IRabbitMqService rabbitService)
     {
         _rabbitService = rabbitService;
     }

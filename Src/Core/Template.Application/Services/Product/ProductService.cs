@@ -11,9 +11,9 @@ namespace Template.Application.Services.Product
     public class ProductService : IProductService
     {
         private readonly IDistributedCache _cache;
-        private readonly ILogger<IProductService> _logger;
+        private readonly ILogger<ProductService> _logger;
         private readonly IMediator _mediator;
-        public ProductService(IDistributedCache cache, ILogger<IProductService> logger, IMediator mediator)
+        public ProductService(IDistributedCache cache, ILogger<ProductService> logger, IMediator mediator)
         {
             _cache = cache;
             _logger = logger;

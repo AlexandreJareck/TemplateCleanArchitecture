@@ -103,7 +103,7 @@ public class OrderConsumerDirect : BackgroundService
 
             _logger.LogInformation($"DIRECT - Order: {order?.Id} - {order?.ProductName}");
 
-            _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+            _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false); 
         };
 
         _channel.BasicConsume(queue: "urgent_orders", autoAck: false, consumer: consumer);

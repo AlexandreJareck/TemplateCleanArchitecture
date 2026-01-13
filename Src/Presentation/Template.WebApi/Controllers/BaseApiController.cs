@@ -52,7 +52,7 @@ public abstract class BaseApiController : ControllerBase
         return error.ErrorCode switch
         {
             ErrorCode.ModelStateNotValid => BadRequest(ToProblemDetails(result)),
-            ErrorCode.FieldDataInvalid => UnprocessableEntity(ToProblemDetails(result)),
+            ErrorCode.FieldDataInvalid => BadRequest(ToProblemDetails(result)),
             ErrorCode.NotFound => NotFound(ToProblemDetails(result)),
             ErrorCode.AccessDenied => Forbid(),
             ErrorCode.ErrorInIdentity => Unauthorized(ToProblemDetails(result)),

@@ -3,7 +3,7 @@ using Elastic.Clients.Elasticsearch.IndexLifecycleManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 
@@ -46,31 +46,17 @@ public static class SwaggerExtensions
 
         services.AddSwaggerGen(setup =>
         {
-            setup.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            setup.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
             {
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
                 BearerFormat = "JWT",
-                Description = "Input your Bearer token in this format - Bearer {your token here} to access this API",
+                Description = "JWT Authorization header using the Bearer scheme."
             });
 
-            setup.AddSecurityRequirement(new OpenApiSecurityRequirement
+            setup.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer",
-                        },
-                        Scheme = "Bearer",
-                        Name = "Bearer",
-                        In = ParameterLocation.Header,
-                    }, new List<string>()
-                },
+                [new OpenApiSecuritySchemeReference("bearer", document)] = []
             });
         });
         services.ConfigureOptions<ConfigureSwaggerOptions>();
