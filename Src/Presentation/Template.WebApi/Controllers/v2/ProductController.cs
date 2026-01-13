@@ -39,7 +39,7 @@ public class ProductController : BaseApiController
         CancellationToken cancellationToken)
     {
         var result = await _productService.GetProductAsync(id, cancellationToken);
-        return FromResult(result);
+        return CustomResponse(result);
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class ProductController : BaseApiController
         [FromQuery] GetPagedListProductQuery query)
     {
         var result = await _mediator.Send(query);
-        return FromPagedResult(result);
+        return CustomResponse(result);
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ public class ProductController : BaseApiController
         [FromRoute] Guid id)
     {
         var result = await _mediator.Send(new GetProductByIdQuery { Id = id });
-        return FromResult(result);
+        return CustomResponse(result);
     }
 
     /// <summary>
@@ -88,7 +88,7 @@ public class ProductController : BaseApiController
         [FromBody] CreateProductCommand command)
     {
         var result = await _mediator.Send(command);
-        return FromResult(result);
+        return CustomResponse(result);
     }
 
     /// <summary>
@@ -106,7 +106,7 @@ public class ProductController : BaseApiController
     {
         command.Id = id;
         var result = await _mediator.Send(command);
-        return FromResult(result);
+        return CustomResponse(result);
     }
 
     /// <summary>
@@ -126,7 +126,7 @@ public class ProductController : BaseApiController
             Id = id
         });
 
-        return FromResult(result);
+        return CustomResponse(result);
     }
 
 }
