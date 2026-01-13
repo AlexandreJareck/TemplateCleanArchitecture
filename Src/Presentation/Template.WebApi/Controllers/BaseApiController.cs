@@ -12,34 +12,27 @@ public abstract class BaseApiController : ControllerBase
     private IMediator _mediator;
     protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
 
-    protected IActionResult FromResult(BaseResult result)
+    protected IActionResult CustomResponse(BaseResult result)
     {
         if (result.Success)
-            return Ok();
+            return Ok(result);
 
         return MapError(result);
     }
 
-    protected IActionResult FromResult<T>(BaseResult<T> result)
+    protected IActionResult CustomResponse<T>(BaseResult<T> result)
     {
         if (result.Success)
-            return Ok(result.Data);
+            return Ok(result);
 
         return MapError(result);
     }
 
-    protected IActionResult FromPagedResult<T>(PagedResponse<T> result)
+    protected IActionResult CustomResponse<T>(PagedResponse<T> result)
     {
         if (result.Success)
         {
-            return Ok(new
-            {
-                result.Data,
-                result.PageNumber,
-                result.PageSize,
-                result.TotalPages,
-                result.TotalItems
-            });
+            return Ok(result);
         }
 
         return MapError(result);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using Template.Application.DTOs.Account.Response;
@@ -47,9 +48,18 @@ namespace Template.Functional.Tests.Common
 
             if (!response.IsSuccessStatusCode)
             {
-                return (T)(object)BaseResult<AuthenticationResponse>.Failure(
-                    new Error(ErrorCode.ModelStateNotValid)
-                );
+                var errorCode = response.StatusCode switch
+                {
+                    HttpStatusCode.NotFound => ErrorCode.NotFound,
+                    HttpStatusCode.BadRequest => ErrorCode.ModelStateNotValid,
+                    _ => ErrorCode.NotFound
+                };
+
+                var result = Activator.CreateInstance(typeof(T)) as BaseResult;
+
+                result!.AddError(new Error(errorCode));
+
+                return (T)(object)result;
             }
 
             string text = await response.Content.ReadAsStringAsync();

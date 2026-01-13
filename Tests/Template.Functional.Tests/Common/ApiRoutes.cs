@@ -21,6 +21,25 @@ internal static class ApiRoutes
             internal const string DeleteProduct = "/api/v1/product";
         }
     }
+    internal static class V2
+    {
+        internal static class Account
+        {
+            internal const string Authenticate = "/api/v2/account/authenticate";
+            internal const string ChangeUserName = "/api/v2/account/change-user-name";
+            internal const string ChangePassword = "/api/v2/account/change-password";
+            internal const string Start = "/api/v2/account/start";
+        }
+
+        internal static class Product
+        {
+            internal const string GetPagedListProduct = "/api/v2/product/get-paged-list";
+            internal const string GetProductById = "/api/v2/product/get-by-id";
+            internal const string CreateProduct = "/api/v2/product";
+            internal const string UpdateProduct = "/api/v2/product";
+            internal const string DeleteProduct = "/api/v2/product";
+        }
+    }
     internal static string AddQueryString(this string url, string key, string value)
     {
         var separator = url.Contains("?") ? "&" : "?";
