@@ -22,7 +22,8 @@ namespace Template.Application.Services.Elastic
 
         public async Task CreateIndexIfNotExistsAsync(string indexName)
         {
-            if (!_client.Indices.Exists(indexName).Exists)
+            var existsResponse = await _client.Indices.ExistsAsync(indexName);
+            if (!existsResponse.Exists)
             {
                 await _client.Indices.CreateAsync(indexName);
             }

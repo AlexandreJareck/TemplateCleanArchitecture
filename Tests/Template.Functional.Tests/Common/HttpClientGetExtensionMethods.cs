@@ -1,5 +1,8 @@
-﻿using System.Text;
+﻿using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+using System.Text;
 using System.Text.Json;
+using Template.Application.DTOs.Account.Response;
+using Template.Application.Wrappers;
 
 namespace Template.Functional.Tests.Common
 {
@@ -42,6 +45,13 @@ namespace Template.Functional.Tests.Common
 
             HttpResponseMessage response = await client.SendAsync(request);
 
+            if (!response.IsSuccessStatusCode)
+            {
+                return (T)(object)BaseResult<AuthenticationResponse>.Failure(
+                    new Error(ErrorCode.ModelStateNotValid)
+                );
+            }
+
             string text = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<T>(text, DefaultJsonOptions)!;
         }
@@ -61,6 +71,13 @@ namespace Template.Functional.Tests.Common
             }
 
             HttpResponseMessage response = await client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return (T)(object)BaseResult<AuthenticationResponse>.Failure(
+                    new Error(ErrorCode.ModelStateNotValid)
+                );
+            }
 
             string text = await response.Content.ReadAsStringAsync();
 

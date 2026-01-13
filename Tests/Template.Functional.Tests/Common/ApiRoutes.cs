@@ -6,19 +6,19 @@ internal static class ApiRoutes
     {
         internal static class Account
         {
-            internal const string Authenticate = "/api/v1/Account/Authenticate";
-            internal const string ChangeUserName = "/api/v1/Account/ChangeUserName";
-            internal const string ChangePassword = "/api/v1/Account/ChangePassword";
-            internal const string Start = "/api/v1/Account/Start";
+            internal const string Authenticate = "/api/v1/account/authenticate";
+            internal const string ChangeUserName = "/api/v1/account/change-user-name";
+            internal const string ChangePassword = "/api/v1/account/change-password";
+            internal const string Start = "/api/v1/account/start";
         }
 
         internal static class Product
         {
-            internal const string GetPagedListProduct = "/api/v1/Product/GetPagedListProduct";
-            internal const string GetProductById = "/api/v1/Product/GetProductById";
-            internal const string CreateProduct = "/api/v1/Product/CreateProduct";
-            internal const string UpdateProduct = "/api/v1/Product/UpdateProduct";
-            internal const string DeleteProduct = "/api/v1/Product/DeleteProduct";
+            internal const string GetPagedListProduct = "/api/v1/product/get-paged-list";
+            internal const string GetProductById = "/api/v1/product/get-by-id";
+            internal const string CreateProduct = "/api/v1/product";
+            internal const string UpdateProduct = "/api/v1/product";
+            internal const string DeleteProduct = "/api/v1/product";
         }
     }
     internal static string AddQueryString(this string url, string key, string value)
