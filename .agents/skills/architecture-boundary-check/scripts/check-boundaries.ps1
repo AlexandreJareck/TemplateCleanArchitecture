@@ -6,9 +6,7 @@ if ($domainProject -match '<PackageReference|<ProjectReference') { $violations.A
 
 $applicationProject = [xml](Get-Content -Raw 'Src/Core/Template.Application/Template.Application.csproj')
 $allowedTemporaryPackages = @(
-    'Elastic.Clients.Elasticsearch', # Phase 10
-    'Microsoft.Extensions.Hosting.Abstractions', # Phase 9
-    'RabbitMQ.Client' # Phase 9
+    'Elastic.Clients.Elasticsearch' # Phase 10
 )
 $forbiddenPattern = 'EntityFrameworkCore|StackExchangeRedis|RabbitMQ|Elastic|Serilog|AspNetCore|Hosting.Abstractions'
 $actualTemporaryPackages = @($applicationProject.Project.ItemGroup.PackageReference |
@@ -16,7 +14,15 @@ $actualTemporaryPackages = @($applicationProject.Project.ItemGroup.PackageRefere
     Where-Object { $_ -match $forbiddenPattern } |
     Sort-Object)
 if (Compare-Object $allowedTemporaryPackages $actualTemporaryPackages) {
-    $violations.Add('Application implementation package exceptions differ from the exact Phase 9-10 allowlist.')
+    $violations.Add('Application implementation package exceptions differ from the exact Phase 10 allowlist.')
+}
+
+$coreFiles = Get-ChildItem 'Src/Core' -Recurse -Filter *.cs | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
+foreach ($file in $coreFiles) {
+    $source = Get-Content -Raw -LiteralPath $file.FullName
+    if ($source -match 'RabbitMQ|BackgroundService|IHostedService|ConnectionFactory|CreateChannel|QueueDeclare|ExchangeDeclare|RabbitMqSettings') {
+        $violations.Add("Core contains messaging plumbing in $($file.FullName).")
+    }
 }
 
 $applicationPorts = Get-ChildItem 'Src/Core/Template.Application/Interfaces' -Recurse -Filter *.cs

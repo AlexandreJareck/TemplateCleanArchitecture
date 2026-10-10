@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Template.Functional.Tests.Common;
@@ -7,6 +10,14 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 {
     /// <summary>Extra configuration applied on top of appsettings.Test.json.</summary>
     protected virtual IReadOnlyDictionary<string, string?> AdditionalConfiguration { get; } = new Dictionary<string, string?>();
+
+    /// <summary>Service overrides applied after the application's own registrations.</summary>
+    protected virtual void ConfigureTestServices(IServiceCollection services)
+    {
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder) =>
+        builder.ConfigureTestServices(ConfigureTestServices);
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
