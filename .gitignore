@@ -364,3 +364,6 @@ FodyWeavers.xsd
 # Local environment secrets (use .env.example as template)
 .env
 !.env.example
+
+# Claude Code view of .agents/skills (local link created by scripts/link-agent-skills.ps1)
+/.claude/skills
