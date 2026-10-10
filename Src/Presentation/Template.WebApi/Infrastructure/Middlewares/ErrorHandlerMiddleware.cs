@@ -1,12 +1,14 @@
-﻿using FluentValidation;
-using System.Net;
-using System.Text.Json;
+using FluentValidation;
 using Template.Application.Wrappers;
+using Template.WebApi.Infrastructure.Http;
 
 namespace Template.WebApi.Infrastructure.Middlewares;
-public class ErrorHandlerMiddleware(RequestDelegate next)
+
+public sealed class ErrorHandlerMiddleware(
+    RequestDelegate next,
+    ILogger<ErrorHandlerMiddleware> logger)
 {
-    public async Task Invoke(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, ApiResultMapper resultMapper)
     {
         try
         {
@@ -14,37 +16,31 @@ public class ErrorHandlerMiddleware(RequestDelegate next)
         }
         catch (Exception error)
         {
-            var response = context.Response;
-            response.ContentType = "application/json";
-            var responseModel = BaseResult.Failure();
-
+            BaseResult responseModel;
             switch (error)
             {
-                case ValidationException e:
-                    // validation error
-                    response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    foreach (var validationFailure in e.Errors)
-                    {
-                        responseModel.AddError(new Error(ErrorCode.ModelStateNotValid, validationFailure.ErrorMessage, validationFailure.PropertyName));
-                    }
+                case ValidationException validationException:
+                    responseModel = BaseResult.Failure(validationException.Errors.Select(validationFailure =>
+                        new Error(
+                            ErrorCode.ModelStateNotValid,
+                            validationFailure.ErrorMessage,
+                            validationFailure.PropertyName)));
                     break;
-                case KeyNotFoundException e:
-                    // not found error
-                    response.StatusCode = (int)HttpStatusCode.NotFound;
-                    responseModel.AddError(new Error(ErrorCode.NotFound, e.Message));
+                case KeyNotFoundException keyNotFoundException:
+                    responseModel = BaseResult.Failure(
+                        new Error(ErrorCode.NotFound, keyNotFoundException.Message));
                     break;
                 default:
-                    // unhandled error
-                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    responseModel.AddError(new Error(ErrorCode.Exception, error.Message));
+                    logger.LogError(
+                        error,
+                        "Unhandled exception while processing {Method} {Path}",
+                        context.Request.Method,
+                        context.Request.Path);
+                    responseModel = BaseResult.Failure(new Error(ErrorCode.Exception));
                     break;
             }
-            var result = JsonSerializer.Serialize(responseModel, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
 
-            await response.WriteAsync(result);
+            await resultMapper.WriteAsync(context, resultMapper.FromResult(responseModel, context));
         }
     }
 }

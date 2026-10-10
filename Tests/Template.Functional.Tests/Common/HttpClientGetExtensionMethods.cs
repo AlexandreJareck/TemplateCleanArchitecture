@@ -24,8 +24,9 @@ namespace Template.Functional.Tests.Common
             }
 
             HttpResponseMessage response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
             string text = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException($"GET {requestUri} returned {(int)response.StatusCode}: {text}");
 
             return JsonSerializer.Deserialize<T>(text, DefaultJsonOptions)!;
         }

@@ -1,0 +1,12 @@
+# Normalize line endings: text files are stored with LF in the repository
+# and checked out with the platform default.
+* text=auto
+
+# Scripts executed inside Linux containers must keep LF.
+*.sh text eol=lf
+
+# Windows-only files keep CRLF on checkout.
+*.sln text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

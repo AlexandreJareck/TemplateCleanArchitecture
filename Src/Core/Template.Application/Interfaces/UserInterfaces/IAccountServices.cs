@@ -5,9 +5,9 @@ using Template.Application.Wrappers;
 namespace Template.Application.Interfaces.UserInterfaces;
 public interface IAccountServices
 {
-    Task<BaseResult<string>> RegisterGhostAccount();
-    Task<BaseResult> ChangePassword(ChangePasswordRequest model);
-    Task<BaseResult> ChangeUserName(ChangeUserNameRequest model);
-    Task<BaseResult<AuthenticationResponse>> Authenticate(AuthenticationRequest request);
-    Task<BaseResult<AuthenticationResponse>> AuthenticateByUserName(string username);
+    Task<BaseResult<string>> RegisterGhostAccount(CancellationToken cancellationToken = default);
+    Task<BaseResult> ChangePassword(ChangePasswordRequest model, CancellationToken cancellationToken = default);
+    Task<BaseResult> ChangeUserName(ChangeUserNameRequest model, CancellationToken cancellationToken = default);
+    Task<BaseResult<AuthenticationResponse>> Authenticate(AuthenticationRequest request, CancellationToken cancellationToken = default);
+    Task<BaseResult<AuthenticationResponse>> AuthenticateByUserName(string username, CancellationToken cancellationToken = default);
 }

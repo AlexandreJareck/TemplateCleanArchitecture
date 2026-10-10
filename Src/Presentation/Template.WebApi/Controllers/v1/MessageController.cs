@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Template.Application.Services.RabbitMq;
+using Asp.Versioning;
 using Template.Domain.Order;
 
 namespace Template.WebApi.Controllers.v1;
 
 [ApiController]
-[ApiVersion("1")]
+[ApiVersion("1", Deprecated = true)]
 public class MessageController : BaseApiController
 {
     private readonly IRabbitMqService _rabbitService;
@@ -16,24 +17,27 @@ public class MessageController : BaseApiController
     }
 
     [HttpPost("create-order-fanout")]
-    public IActionResult PostFanout([FromBody] Order order)
+    public IActionResult PostFanout([FromBody] Order order, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         order.Id = Guid.NewGuid();
         _rabbitService.PublishOrderFanout(order);
         return Ok($"FANOUT - Order {order.Id} sent to queue.");
     }
 
     [HttpPost("create-order-direct")]
-    public IActionResult PostDirect([FromBody] Order order, [FromQuery] string routingKey)
+    public IActionResult PostDirect([FromBody] Order order, [FromQuery] string routingKey, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         order.Id = Guid.NewGuid();
         _rabbitService.PublishOrderDirect(order, routingKey);
         return Ok($"DIRECT - Order {order.Id} sent with routing key '{routingKey}'.");
     }
 
     [HttpPost("create-order-topic")]
-    public IActionResult PostTopic([FromBody] Order order, [FromQuery] string routingKey)
+    public IActionResult PostTopic([FromBody] Order order, [FromQuery] string routingKey, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         order.Id = Guid.NewGuid();
         _rabbitService.PublishOrderTopic(order, routingKey);
         return Ok($" TOPIC - Order {order.Id} sent with routing key '{routingKey}'.");
