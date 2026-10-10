@@ -1,13 +1,13 @@
 # Graph Report - TemplateCleanArchNET  (2026-10-10)
 
 ## Corpus Check
-- 196 files · ~39,789 words
+- 206 files · ~46,372 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 14 file(s) not represented in the graph (top: (none) 4, .resx 4, .jsonl 2)
 
 ## Summary
-- 1463 nodes · 2804 edges · 117 communities (67 shown, 50 thin omitted)
-- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 264 edges (avg confidence: 0.87)
+- 1643 nodes · 3244 edges · 107 communities (66 shown, 41 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 303 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -17,72 +17,68 @@
 
 ## Community Hubs (Navigation)
 - Template.Application.Interfaces
-- ResourceMessages
+- ResourceGeneral
 - Person
 - Container (Dockerfile)
 - .ToActionResult
 - .Handle
-- .Failure
+- ErrorCategoryTests
 - Order
-- ProductFunctionalTests
+- IProductCache
 - system
 - Template.Infrastructure.Identity/ServiceRegistration.cs
 - UpdateProductCommand
-- .GetRepository
+- ProductEntity
 - ValidationBehavior
 - ApplicationDbContext
 - Template.WebApi.csproj
-- GetPagedListProductQuery
-- ChangePasswordRequest
+- PagedResponse
+- DistributedProductCacheTests
 - ProductRepository
 - Template.Application/ServiceRegistration.cs
 - ElasticSearchSettings
 - ProductController
 - IAuthenticatedUserService
 - ArchitectureRulesTests
-- .GetProductAsync
+- ProductDto
 - Template.Application.Wrappers
-- GetProductByIdQueryHandler
-- GetAllUsersRequest
+- GetProductByIdQuery
+- Phase 9 Execution Handoff
 - Phase 3 — Incremental implementation plan
 - Template.Application.csproj
-- AuthenticationResponse
-- CreateProductCommand
 - BaseResult
-- AccountServices
+- CreateProductCommand
+- ProductServiceTests
+- Template.Application.DTOs.Products
 - .BuildModel
-- LocalizationExtensions.cs
+- .AddCustomLocalization
 - Program.cs
-- TranslatorMessageDto
+- ErrorCategory
 - ConfigureSwaggerOptions
-- ProductEntity
+- .AddApplicationLayer
 - OrderConsumer.cs
-- .OnModelCreating
+- ApplicationUser
 - TemplateCleanArchitecture.sln
 - 5. Target code standards
 - microsoft_entityframeworkcore
 - Template.Functional.Tests.csproj
-- PaginationResponseDto
-- shouldly
+- TemplateCleanArchNET agent guide
+- Template.Domain.Products.Entities
 - IdentitySettings
 - HttpClientGetExtensionMethods
 - Template.Infrastructure.Identity
-- ApiErrorItem
+- Relatório das Fases 6–7 — 2026-10-10
 - UnitOfWork
 - Contexto técnico relevante
-- AccountController
+- Current configuration names
 - Template.Infrastructure.Persistence.csproj
 - Template.Unit.Tests.csproj
-- UserDto
+- Required tests
 - Product
-- ProductDto
-- InitialPostgresMigration
-- PagedResponse
-- Template.WebApi.Infrastructure.Extensions
+- ApiResultFilterAttribute
 - Template.Integration.Tests.csproj
-- .UnitOfWork_SaveChangesAsync_HonorsCancelledToken
 - InitialPostgresMigration
-- Template.Functional.Tests.Common
+- shouldly
 - ProductPriceDecimal
 - Phase6HttpContractFunctionalTests
 - Template.Architecture.Tests.csproj
@@ -90,7 +86,7 @@
 - Fases 6–7 — bloqueio de pré-condições (2026-10-10)
 - CorsExtensions
 - Phase 0 baseline — 2026-10-10
-- .AddApplicationLayer
+- RabbitMqSettings
 - contract-checklist.md
 - boundaries.md
 - verification-matrix.md
@@ -107,60 +103,54 @@
 - Presentation/AGENTS.md
 - Tests/AGENTS.md
 - GenericRepository
-- IGenericRepository
 - ErrorCode
-- ResourceGeneral
 - IClock
-- .AddIdentityInfrastructure
+- JwtSettings
 - Relatório das Fases 0–5 — 2026-10-10
 - Template.PostgreSql.Integration.Tests.csproj
-- IAccountServices
-- .GetPagedUsers
-- Error
 - ElasticExtensions
-- Template.Domain.Common
 - api-v1-lifecycle.md
 
 ## God Nodes (most connected - your core abstractions)
-1. `BaseResult` - 72 edges
-2. `ProductEntity` - 39 edges
-3. `ProductDto` - 38 edges
-4. `Template.Application.Wrappers` - 35 edges
+1. `BaseResult` - 76 edges
+2. `ProductDto` - 49 edges
+3. `ProductEntity` - 40 edges
+4. `Template.Application.Wrappers` - 36 edges
 5. `Template.Application.Interfaces` - 30 edges
 6. `ArchitectureRulesTests` - 26 edges
 7. `Phase 3 — Incremental implementation plan` - 25 edges
 8. `AuthenticationResponse` - 24 edges
-9. `ApplicationDbContext` - 21 edges
-10. `Template.Domain.Products.Entities` - 19 edges
+9. `UpdateProductCommand` - 21 edges
+10. `ApplicationDbContext` - 21 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Phase 13 — Standardize observability, health, and localization` --references--> `ITranslator`  [INFERRED]
-  docs/fase-3-plano-implementacao.md → Src/Core/Template.Application/Interfaces/ITranslator.cs
+- `Phase 4 — Clean the Domain model` --references--> `ProductDto`  [INFERRED]
+  docs/fase-3-plano-implementacao.md → Src/Core/Template.Application/DTOs/Products/ProductDto.cs
+- `Riscos, pendências e rollback` --references--> `IUnitOfWork`  [INFERRED]
+  docs/refactoring/phases-6-7-report.md → Src/Core/Template.Application/Interfaces/IUnitOfWork.cs
 - `Errors and API results` --references--> `BaseResult`  [INFERRED]
   docs/fase-2-workspace.md → Src/Core/Template.Application/Wrappers/BaseResult.cs
 - `Phase 5 — Standardize application use cases and results` --references--> `BaseResult`  [INFERRED]
   docs/fase-3-plano-implementacao.md → Src/Core/Template.Application/Wrappers/BaseResult.cs
 - `Fase 7 — persistência e PostgreSQL (somente depois da Fase 6 aprovada)` --references--> `ProductPriceDecimal`  [INFERRED]
   docs/refactoring/handoff-fases-6-7.md → Src/Infrastructure/Template.Infrastructure.Persistence/Migrations/20261010151729_ProductPriceDecimal.Designer.cs
-- `Current implementation conventions` --references--> `ValidationBehavior`  [INFERRED]
-  AGENTS.md → Src/Core/Template.Application/Behaviors/ValidationBehavior.cs
 
 ## Import Cycles
 - None detected.
 
-## Communities (117 total, 50 thin omitted)
+## Communities (107 total, 41 thin omitted)
 
 ### Community 0 - "Template.Application.Interfaces"
-Cohesion: 0.20
-Nodes (8): Template.Unit.Tests.ApplicationTests.Features.Products.Queries, Template.Application.Interfaces, Template.Application.Features.Products.Queries, Template.Unit.Tests.ApplicationTests.Features.Products.Commands, Template.Application.Helpers, Template.Application.Features.Products.Commands, Template.Application.Interfaces.Repositories, Regexs
+Cohesion: 0.22
+Nodes (7): Template.Unit.Tests.ApplicationTests.Features.Products.Queries, Template.Application.Interfaces, Template.Unit.Tests.ApplicationTests.Features.Products.Commands, Template.Application.Helpers, Template.Application.Features.Products.Commands, Template.Application.Interfaces.Repositories, Regexs
 
-### Community 1 - "ResourceMessages"
-Cohesion: 0.17
-Nodes (8): Template.Infrastructure.Resources.ProjectResources, ResourceMessages, Account_NotFound_with_UserName, Culture, Invalid_password, Product_NotFound_with_id, ResourceManager, Username_is_already_taken
+### Community 1 - "ResourceGeneral"
+Cohesion: 0.09
+Nodes (17): Template.Infrastructure.Resources.ProjectResources, ResourceGeneral, BarCode, ConfirmPassword, Culture, Id, Name, Password (+9 more)
 
 ### Community 2 - "Person"
 Cohesion: 0.07
-Nodes (17): Template.WebApi.Infrastructure.Enums, Template.Application.Services.Elastic, Template.Domain.Person, ElasticService, IElasticService, Person, FirstName, Id (+9 more)
+Nodes (16): Template.WebApi.Infrastructure.Enums, Template.Domain.Person, ElasticService, IElasticService, Person, FirstName, Id, LastName (+8 more)
 
 ### Community 3 - "Container (Dockerfile)"
 Cohesion: 0.05
@@ -171,160 +161,172 @@ Cohesion: 0.08
 Nodes (3): ProductController, ApiResultMapper, ProblemDetailsAuthorizationMiddlewareResultHandler
 
 ### Community 5 - ".Handle"
-Cohesion: 0.27
+Cohesion: 0.28
 Nodes (4): DeleteProductCommand, Id, DeleteProductCommandHandler, DeleteProductCommandHandlerTests
 
 ### Community 7 - "Order"
-Cohesion: 0.17
-Nodes (8): IRabbitMqService, RabbitMqService, Order, Id, Price, ProductName, Quantity, MessageController
+Cohesion: 0.18
+Nodes (5): Order, Id, Price, ProductName, Quantity
+
+### Community 8 - "IProductCache"
+Cohesion: 0.05
+Nodes (16): Phase 8 — Move Redis caching behind an infrastructure adapter, IProductCache, NoOpProductCache, ServiceRegistration, Program, ExternalServicesUnavailableTests, CacheDisabledFactory, AdditionalConfiguration (+8 more)
 
 ### Community 9 - "system"
-Cohesion: 0.33
-Nodes (3): Template.Infrastructure.Identity.Migrations, Template.Infrastructure.Identity.Contexts, Template.Infrastructure.Persistence.Migrations
+Cohesion: 0.22
+Nodes (5): Template.Infrastructure.Identity.Migrations, Template.Infrastructure.Identity.Contexts, Template.Domain.Common, Template.Infrastructure.Persistence.Migrations, InitialPostgresMigration
+
+### Community 10 - "Template.Infrastructure.Identity/ServiceRegistration.cs"
+Cohesion: 0.14
+Nodes (4): Template.Infrastructure.Identity, Template.Integration.Tests.Caching, Template.Infrastructure.Caching, Template.Infrastructure.Caching.Products
 
 ### Community 11 - "UpdateProductCommand"
-Cohesion: 0.18
+Cohesion: 0.22
 Nodes (7): UpdateProductCommand, BarCode, Id, Name, Price, UpdateProductCommandHandler, UpdateProductCommandHandlerTests
 
-### Community 12 - ".GetRepository"
-Cohesion: 0.17
-Nodes (5): BaseEfRepoTestFixture, EfRepositoryAdd, EfRepositoryDelete, EfRepositoryUpdate, ProductPersistencePrecisionTests
+### Community 12 - "ProductEntity"
+Cohesion: 0.08
+Nodes (13): Template.Unit.Tests.DomainTests.Products.Entities, ProductEntity, BarCode, Name, Price, ProductConfiguration, BaseEfRepoTestFixture, EfCancellationPropagationTests (+5 more)
 
 ### Community 13 - "ValidationBehavior"
 Cohesion: 0.15
 Nodes (10): ValidationBehavior, AuthenticationRequestValidator, CreateProductCommandValidator, UpdateProductCommandValidator, NameRequiredValidator, SampleRequest, Name, TokenCapturingValidator (+2 more)
 
 ### Community 14 - "ApplicationDbContext"
-Cohesion: 0.10
-Nodes (5): ApplicationDbContext, Products, ApplicationDbContextFactory, DefaultData, ServiceRegistration
+Cohesion: 0.12
+Nodes (4): ApplicationDbContext, Products, ApplicationDbContextFactory, DefaultData
 
 ### Community 15 - "Template.WebApi.csproj"
 Cohesion: 0.12
 Nodes (16): Asp.Versioning.Mvc.ApiExplorer, AspNetCore.HealthChecks.Elasticsearch, AspNetCore.HealthChecks.UI.Client, Elastic.Serilog.Sinks, Microsoft.AspNetCore.OpenApi, Microsoft.EntityFrameworkCore.Tools, Microsoft.VisualStudio.Azure.Containers.Tools.Targets, Serilog.AspNetCore (+8 more)
 
-### Community 16 - "GetPagedListProductQuery"
-Cohesion: 0.26
-Nodes (4): GetPagedListProductQuery, Name, GetPagedListProductQueryHandler, GetPagedListProductQueryHandlerTests
+### Community 16 - "PagedResponse"
+Cohesion: 0.05
+Nodes (27): Template.Application.Parameters, GetAllUsersRequest, Name, UserDto, Created, Email, Id, Name (+19 more)
 
-### Community 17 - "ChangePasswordRequest"
-Cohesion: 0.21
-Nodes (5): ChangePasswordRequest, ConfirmPassword, Password, ChangePasswordRequestValidator, AccountController
+### Community 17 - "DistributedProductCacheTests"
+Cohesion: 0.06
+Nodes (9): CacheSettings, AbsoluteExpiration, Enabled, OperationTimeout, SlidingExpiration, DistributedProductCache, DistributedProductCacheTests, FailingDistributedCache (+1 more)
 
 ### Community 18 - "ProductRepository"
-Cohesion: 0.18
-Nodes (4): ProductRepository, PostgreSqlCollection, PostgreSqlFixture, PostgreSqlPersistenceTests
+Cohesion: 0.15
+Nodes (7): ProductRepository, PostgreSqlCollection, PostgreSqlFixture, TestAuthenticatedUser, UserId, UserName, PostgreSqlPersistenceTests
 
 ### Community 19 - "Template.Application/ServiceRegistration.cs"
-Cohesion: 0.16
-Nodes (6): Template.Application, Template.Unit.Tests.ApplicationTests.Services, Template.Unit.Tests.ApplicationTests.Behaviors, Template.Application.Behaviors, Template.Application.Services.Time, Template.Unit.Tests.ApplicationTests
+Cohesion: 0.15
+Nodes (7): Template.Application.Consumers, Template.Application, Template.Unit.Tests.ApplicationTests.Services, Template.Unit.Tests.ApplicationTests.Behaviors, Template.Application.Behaviors, Template.Application.Services.Time, Template.Unit.Tests.ApplicationTests
 
 ### Community 20 - "ElasticSearchSettings"
 Cohesion: 0.29
 Nodes (7): ElasticSearchSettings, DataSet, DefaultIndex, Name, Namespace, Type, Url
 
 ### Community 22 - "IAuthenticatedUserService"
+Cohesion: 0.15
+Nodes (11): IAuthenticatedUserService, UserId, UserName, DesignTimeAuthenticatedUser, Instance, UserId, UserName, AuthenticatedUserService (+3 more)
+
+### Community 24 - "ProductDto"
 Cohesion: 0.12
-Nodes (14): IAuthenticatedUserService, UserId, UserName, DesignTimeAuthenticatedUser, Instance, UserId, UserName, AuthenticatedUserService (+6 more)
+Nodes (6): ProductDto, BarCode, CreatedDateTime, Id, Name, Price
 
 ### Community 25 - "Template.Application.Wrappers"
-Cohesion: 0.27
-Nodes (6): Template.Application.Wrappers, Template.Functional.Tests.ApiEndpoints.v2, Template.Infrastructure.Identity.Services, Template.Application.DTOs.Account.Request, Template.Application.DTOs.Account.Response, Template.Application.Interfaces.UserInterfaces
+Cohesion: 0.17
+Nodes (9): Template.Application.Wrappers, Template.WebApi.Infrastructure.Filters, Template.WebApi.Controllers.v2, Template.Infrastructure.Identity.Services, Template.Application.Services.Elastic, Template.Application.DTOs.Account.Request, Template.Application.DTOs.Account.Response, Template.WebApi.Controllers.v1 (+1 more)
 
-### Community 26 - "GetProductByIdQueryHandler"
-Cohesion: 0.20
+### Community 26 - "GetProductByIdQuery"
+Cohesion: 0.24
 Nodes (4): GetProductByIdQuery, Id, GetProductByIdQueryHandler, GetProductByIdQueryHandlerTests
 
-### Community 27 - "GetAllUsersRequest"
-Cohesion: 0.29
-Nodes (6): Template.Application.Parameters, GetAllUsersRequest, Name, PaginationRequestParameter, PageNumber, PageSize
+### Community 27 - "Phase 9 Execution Handoff"
+Cohesion: 0.12
+Nodes (15): Acceptance criteria, Asynchronous publishing, Availability and startup, Consumption, acknowledgements, and delivery, Documentation and delivery, Event contracts, Feature flag and rollback, Phase 9 Execution Handoff (+7 more)
 
 ### Community 28 - "Phase 3 — Incremental implementation plan"
-Cohesion: 0.08
-Nodes (24): Decisions (recorded 2026-10-10), Global execution rules, Phase 0 — Freeze a reproducible baseline, Phase 10 — Move Elastic concerns behind infrastructure boundaries, Phase 11 — Upgrade the Elastic client and server stack, Phase 12 — Harden identity and JWT boundaries, Phase 13 — Standardize observability, health, and localization, Phase 14 — Establish a reproducible Compose baseline (+16 more)
+Cohesion: 0.05
+Nodes (33): Decisions (recorded 2026-10-10), Global execution rules, Phase 0 — Freeze a reproducible baseline, Phase 10 — Move Elastic concerns behind infrastructure boundaries, Phase 11 — Upgrade the Elastic client and server stack, Phase 12 — Harden identity and JWT boundaries, Phase 13 — Standardize observability, health, and localization, Phase 14 — Establish a reproducible Compose baseline (+25 more)
 
 ### Community 29 - "Template.Application.csproj"
-Cohesion: 0.15
-Nodes (12): Elastic.Clients.Elasticsearch, FluentValidation.DependencyInjectionExtensions, MediatR, Microsoft.Extensions.Caching.StackExchangeRedis, Newtonsoft.Json, RabbitMQ.Client, net10.0, Microsoft.Extensions.Hosting.Abstractions (+4 more)
-
-### Community 30 - "AuthenticationResponse"
 Cohesion: 0.14
-Nodes (9): AuthenticationResponse, Email, Id, IsVerified, JwToken, Roles, UserName, AccountFunctionalTests (+1 more)
+Nodes (13): Elastic.Clients.Elasticsearch, FluentValidation.DependencyInjectionExtensions, MediatR, RabbitMQ.Client, net10.0, Microsoft.Extensions.Hosting.Abstractions, Microsoft.NET.Sdk, Template.Domain (+5 more)
+
+### Community 30 - "BaseResult"
+Cohesion: 0.05
+Nodes (28): AuthenticationRequest, Password, UserName, ChangePasswordRequest, ConfirmPassword, Password, ChangePasswordRequestValidator, ChangeUserNameRequest (+20 more)
 
 ### Community 31 - "CreateProductCommand"
-Cohesion: 0.26
+Cohesion: 0.23
 Nodes (6): CreateProductCommand, BarCode, Name, Price, CreateProductCommandHandler, CreateProductCommandHandlerTests
 
-### Community 32 - "BaseResult"
-Cohesion: 0.20
-Nodes (8): AuthenticationRequest, Password, UserName, BaseResult, Data, Errors, Success, AccountFunctionalTests
-
-### Community 33 - "AccountServices"
-Cohesion: 0.14
-Nodes (7): ITranslator, ApplicationUser, Created, Name, AccountServices, ServiceRegistration, Translator
+### Community 33 - "Template.Application.DTOs.Products"
+Cohesion: 0.30
+Nodes (4): Template.Application.Features.Products.Queries, Template.Application.DTOs.Products, Template.Application.Interfaces.Caching, Template.Application.Services.Product
 
 ### Community 36 - "Program.cs"
-Cohesion: 0.12
-Nodes (8): Template.Infrastructure.Persistence, Template.WebApi.Infrastructure.Middlewares, Template.WebApi.Controllers.v2, Template.Application.DTOs.Products, Template.WebApi.Infrastructure.Http, Template.Infrastructure.Persistence.Seeds, Template.WebApi.Controllers.v1, Template.Application.Services.Product
+Cohesion: 0.08
+Nodes (6): Template.Infrastructure.Persistence, Template.WebApi.Infrastructure.Middlewares, Template.WebApi.Infrastructure.Http, Template.Infrastructure.Persistence.Seeds, Template.WebApi.Infrastructure.Extensions, Template.WebApi.Infrastructure.Services
 
-### Community 37 - "TranslatorMessageDto"
-Cohesion: 0.20
-Nodes (6): TranslatorMessageDto, Args, Text, AccountMessages, ProductMessages, TranslatorMessages
+### Community 37 - "ErrorCategory"
+Cohesion: 0.18
+Nodes (7): ErrorCategory, Conflict, Forbidden, NotFound, Unauthorized, Unexpected, Validation
 
-### Community 39 - "ProductEntity"
-Cohesion: 0.14
-Nodes (7): Template.Infrastructure.Persistence.Contexts.Configurations, ProductEntity, BarCode, Name, Price, ProductConfiguration, ProductTests
+### Community 39 - ".AddApplicationLayer"
+Cohesion: 0.29
+Nodes (7): Current state to characterize, HTTP compatibility, Ports and boundaries, ServiceRegistration, IRabbitMqService, RabbitMqService, MessageController
 
 ### Community 40 - "OrderConsumer.cs"
-Cohesion: 0.18
-Nodes (4): Template.Application.Consumers, Template.Domain.Order, Template.Application.Services.RabbitMq, Template.Application.Settings
+Cohesion: 0.15
+Nodes (3): Template.Domain.Order, Template.Application.Services.RabbitMq, Template.Application.Settings
 
-### Community 41 - ".OnModelCreating"
-Cohesion: 0.08
-Nodes (6): Template.Infrastructure.Identity.Seeds, Template.Infrastructure.Identity.Models, IdentityContext, ApplicationRole, DefaultBasicUser, DefaultRoles
+### Community 41 - "ApplicationUser"
+Cohesion: 0.06
+Nodes (12): Template.Infrastructure.Identity.Seeds, Template.Infrastructure.Identity.Models, IGetUserServices, IdentityContext, ApplicationRole, ApplicationUser, Created, Name (+4 more)
 
 ### Community 42 - "TemplateCleanArchitecture.sln"
-Cohesion: 0.15
-Nodes (6): Template, Microsoft.VisualStudio.SDK, Microsoft.VSSDK.BuildTools, Template.Infrastructure.Resources, net10.0, Microsoft.NET.Sdk
+Cohesion: 0.20
+Nodes (3): Template, Microsoft.VisualStudio.SDK, Microsoft.VSSDK.BuildTools
 
 ### Community 43 - "5. Target code standards"
 Cohesion: 0.08
 Nodes (23): 1. Evidence and assumptions, 2. Proposed AI workspace, 3. Dependency and integration update matrix, 4. Target Clean Architecture, 5. Target code standards, Application use cases, Controllers, Design principles (+15 more)
 
 ### Community 44 - "microsoft_entityframeworkcore"
-Cohesion: 0.17
+Cohesion: 0.18
 Nodes (4): Template.Infrastructure.Persistence.Repositories, Template.PostgreSql.Integration.Tests, Template.Infrastructure.Persistence.Contexts, Template.Infrastructure.Persistence.Extensions
 
 ### Community 45 - "Template.Functional.Tests.csproj"
 Cohesion: 0.20
 Nodes (9): Microsoft.AspNetCore.Mvc.Testing, net10.0, coverlet.collector, Microsoft.Extensions.Hosting.Abstractions, Microsoft.NET.Test.Sdk, Shouldly, xunit, xunit.runner.visualstudio (+1 more)
 
-### Community 46 - "PaginationResponseDto"
-Cohesion: 0.18
-Nodes (5): PaginationResponseDto, Count, Data, PageNumber, PageSize
-
-### Community 47 - "shouldly"
+### Community 46 - "TemplateCleanArchNET agent guide"
 Cohesion: 0.29
-Nodes (4): Template.Unit.Tests.DomainTests.Products.Entities, Template.Unit.Tests.ApplicationTests.Wrappers, Template.Domain.Products.Entities, Template.Integration.Tests.Data
+Nodes (6): Change and validation rules, Current solution structure, Execution status, Repository purpose, TemplateCleanArchNET agent guide, Verified commands (2026-10-10, Phase 7 checkpoint)
+
+### Community 47 - "Template.Domain.Products.Entities"
+Cohesion: 0.25
+Nodes (3): Template.Domain.Products.Entities, Template.Infrastructure.Persistence.Contexts.Configurations, Template.Integration.Tests.Data
 
 ### Community 48 - "IdentitySettings"
-Cohesion: 0.14
-Nodes (11): Current configuration names, Template.Infrastructure.Identity.Settings, LocalizationSettings, DefaultRequestCulture, SupportedCultures, IdentitySettings, PasswordRequireDigit, PasswordRequiredLength (+3 more)
+Cohesion: 0.33
+Nodes (6): IdentitySettings, PasswordRequireDigit, PasswordRequiredLength, PasswordRequireLowercase, PasswordRequireNonAlphanumeric, PasswordRequireUppercase
 
 ### Community 50 - "Template.Infrastructure.Identity"
 Cohesion: 0.25
 Nodes (8): Microsoft.AspNetCore.Authentication.JwtBearer, Microsoft.AspNetCore.Identity.EntityFrameworkCore, System.IdentityModel.Tokens.Jwt, Template.Infrastructure.Identity, net10.0, Microsoft.EntityFrameworkCore.InMemory, Npgsql.EntityFrameworkCore.PostgreSQL, Microsoft.NET.Sdk
 
-### Community 51 - "ApiErrorItem"
-Cohesion: 0.29
-Nodes (6): ApiErrorItem, Code, Field, Message, ApiErrorResponse, Errors
+### Community 51 - "Relatório das Fases 6–7 — 2026-10-10"
+Cohesion: 0.11
+Nodes (17): Arquivos alterados nesta execução, Automação e documentação, Comandos e resultados, Confirmação de escopo, Contrato e WebApi, Diff de contrato e baseline, Migrations e SQL, Persistência e testes (+9 more)
+
+### Community 52 - "UnitOfWork"
+Cohesion: 0.16
+Nodes (3): IUnitOfWork, UnitOfWork, ServiceRegistration
 
 ### Community 53 - "Contexto técnico relevante"
-Cohesion: 0.15
-Nodes (13): Contexto técnico relevante, Fase 5 em detalhe, IProductRepository, ErrorCategory, Conflict, Forbidden, NotFound, Unauthorized (+5 more)
+Cohesion: 0.26
+Nodes (6): Contexto técnico relevante, Fase 5 em detalhe, IProductRepository, ErrorCategoryExtensions, EntityFrameworkExtensions, ErrorHandlerMiddleware
 
-### Community 54 - "AccountController"
-Cohesion: 0.24
-Nodes (4): ChangeUserNameRequest, UserName, ChangeUserNameRequestValidator, AccountController
+### Community 54 - "Current configuration names"
+Cohesion: 0.40
+Nodes (4): Current configuration names, LocalizationSettings, DefaultRequestCulture, SupportedCultures
 
 ### Community 55 - "Template.Infrastructure.Persistence.csproj"
 Cohesion: 0.22
@@ -334,40 +336,28 @@ Nodes (8): Microsoft.EntityFrameworkCore, Microsoft.Extensions.Configuration, Mi
 Cohesion: 0.22
 Nodes (8): Moq, net10.0, coverlet.collector, Microsoft.NET.Test.Sdk, Shouldly, xunit, xunit.runner.visualstudio, Microsoft.NET.Sdk
 
-### Community 57 - "UserDto"
-Cohesion: 0.20
-Nodes (7): UserDto, Created, Email, Id, Name, PhoneNumber, UserName
+### Community 57 - "Required tests"
+Cohesion: 0.40
+Nodes (5): Architecture tests, Functional tests, Required tests, Tests with a real broker, Unit tests
 
 ### Community 58 - "Product"
-Cohesion: 0.25
+Cohesion: 0.24
 Nodes (5): Account, ApiRoutes, Product, V1, V2
 
-### Community 59 - "ProductDto"
-Cohesion: 0.22
-Nodes (7): Phase 4 — Clean the Domain model, ProductDto, BarCode, CreatedDateTime, Id, Name, Price
-
-### Community 61 - "PagedResponse"
-Cohesion: 0.22
-Nodes (5): PagedResponse, PageNumber, PageSize, TotalItems, TotalPages
-
 ### Community 63 - "Template.Integration.Tests.csproj"
-Cohesion: 0.25
-Nodes (7): net10.0, coverlet.collector, Microsoft.NET.Test.Sdk, Shouldly, xunit, xunit.runner.visualstudio, Microsoft.NET.Sdk
+Cohesion: 0.14
+Nodes (12): Microsoft.Extensions.Caching.Memory, Microsoft.Extensions.Caching.StackExchangeRedis, Microsoft.Extensions.Options.ConfigurationExtensions, net10.0, Microsoft.NET.Sdk, net10.0, coverlet.collector, Microsoft.NET.Test.Sdk (+4 more)
 
-### Community 66 - "Template.Functional.Tests.Common"
-Cohesion: 0.21
-Nodes (3): Template.Functional.Tests.ApiEndpoints, Template.WebApi.Infrastructure.Filters, Template.Functional.Tests.Common
-
-### Community 68 - "Phase6HttpContractFunctionalTests"
-Cohesion: 0.09
-Nodes (5): Program, ExternalServicesUnavailableTests, Phase6HttpContractFunctionalTests, ProductValidationFunctionalTests, CustomWebApplicationFactory
+### Community 66 - "shouldly"
+Cohesion: 0.22
+Nodes (4): Template.Functional.Tests.ApiEndpoints, Template.Unit.Tests.ApplicationTests.Wrappers, Template.Functional.Tests.ApiEndpoints.v2, Template.Functional.Tests.Common
 
 ### Community 69 - "Template.Architecture.Tests.csproj"
 Cohesion: 0.29
 Nodes (6): net10.0, Microsoft.NET.Test.Sdk, Shouldly, xunit, xunit.runner.visualstudio, Microsoft.NET.Sdk
 
 ### Community 70 - "Template.Application.DTOs"
-Cohesion: 0.22
+Cohesion: 0.17
 Nodes (3): Template.Infrastructure.Resources, Template.Application.DTOs, Template.Infrastructure.Resources.Services
 
 ### Community 71 - "Fases 6–7 — bloqueio de pré-condições (2026-10-10)"
@@ -378,33 +368,33 @@ Nodes (5): Causa do bloqueio, Como desbloquear, Estado do Git registrado, Fases 
 Cohesion: 0.25
 Nodes (5): Baseline validation before refactoring, Dependency and vulnerability baseline, Phase 0 baseline — 2026-10-10, Source state, Toolchain
 
-### Community 74 - ".AddApplicationLayer"
-Cohesion: 0.18
-Nodes (10): OrderConsumerDirect, OrderConsumerFanoutA, OrderConsumerFanoutB, OrderConsumerTopic, ServiceRegistration, RabbitMqSettings, HostName, Password (+2 more)
+### Community 74 - "RabbitMqSettings"
+Cohesion: 0.19
+Nodes (10): Configuration and security, OrderConsumerDirect, OrderConsumerFanoutA, OrderConsumerFanoutB, OrderConsumerTopic, RabbitMqSettings, HostName, Password (+2 more)
 
 ### Community 81 - "AuditableBaseEntity"
-Cohesion: 0.12
-Nodes (14): Change and validation rules, Current implementation conventions, Current solution structure, Execution status, Repository purpose, TemplateCleanArchNET agent guide, Verified commands (2026-10-10, Phase 5 checkpoint), AuditableBaseEntity (+6 more)
+Cohesion: 0.20
+Nodes (8): Current implementation conventions, AuditableBaseEntity, Created, CreatedBy, LastModified, LastModifiedBy, BaseEntity, Id
 
 ### Community 85 - "handoff-fases-6-7.md"
-Cohesion: 0.17
-Nodes (9): Template.WebApi.Controllers, Entrega, Estado de partida (verificado em 2026-10-10 às 14:26), Execução de comandos, Fase 6 — controllers e contratos HTTP, Fase 7 — persistência e PostgreSQL (somente depois da Fase 6 aprovada), Fontes obrigatórias (ler antes de alterar qualquer arquivo), Regras gerais (+1 more)
+Cohesion: 0.14
+Nodes (11): Template.WebApi.Controllers, Entrega, Estado de partida (verificado em 2026-10-10 às 14:26), Execução de comandos, Fase 6 — controllers e contratos HTTP, Fase 7 — persistência e PostgreSQL (somente depois da Fase 6 aprovada), Fontes obrigatórias (ler antes de alterar qualquer arquivo), Regras gerais (+3 more)
+
+### Community 100 - "GenericRepository"
+Cohesion: 0.14
+Nodes (3): IGenericRepository, GenericRepository, DbContext
 
 ### Community 102 - "ErrorCode"
-Cohesion: 0.18
-Nodes (7): ErrorCode, AccessDenied, ErrorInIdentity, Exception, FieldDataInvalid, ModelStateNotValid, NotFound
-
-### Community 103 - "ResourceGeneral"
-Cohesion: 0.18
-Nodes (9): ResourceGeneral, BarCode, ConfirmPassword, Culture, Id, Name, Password, ResourceManager (+1 more)
+Cohesion: 0.14
+Nodes (11): Error, Description, ErrorCode, FieldName, ErrorCode, AccessDenied, ErrorInIdentity, Exception (+3 more)
 
 ### Community 104 - "IClock"
 Cohesion: 0.20
 Nodes (5): IClock, UtcNow, SystemClock, UtcNow, SystemClockTests
 
-### Community 105 - ".AddIdentityInfrastructure"
-Cohesion: 0.20
-Nodes (6): ServiceRegistration, JwtSettings, Audience, DurationInMinutes, Issuer, Key
+### Community 105 - "JwtSettings"
+Cohesion: 0.25
+Nodes (6): Template.Infrastructure.Identity.Settings, JwtSettings, Audience, DurationInMinutes, Issuer, Key
 
 ### Community 106 - "Relatório das Fases 0–5 — 2026-10-10"
 Cohesion: 0.22
@@ -414,29 +404,25 @@ Nodes (8): Comparação de contrato, Confirmação, Mudanças por fase, Relatór
 Cohesion: 0.25
 Nodes (7): Testcontainers.PostgreSql, net10.0, Microsoft.NET.Test.Sdk, Shouldly, xunit, xunit.runner.visualstudio, Microsoft.NET.Sdk
 
-### Community 112 - "Error"
-Cohesion: 0.33
-Nodes (4): Error, Description, ErrorCode, FieldName
-
 ## Knowledge Gaps
-- **340 isolated node(s):** `Microsoft.VisualStudio.SDK`, `Microsoft.VSSDK.BuildTools`, `UserName`, `Password`, `Password` (+335 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 624 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **50 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **373 isolated node(s):** `Microsoft.VisualStudio.SDK`, `Microsoft.VSSDK.BuildTools`, `UserName`, `Password`, `Password` (+368 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 689 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **41 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `BaseResult` connect `BaseResult` to `.ToActionResult`, `.Handle`, `.Failure`, `ProductFunctionalTests`, `UpdateProductCommand`, `ChangePasswordRequest`, `ProductController`, `.GetProductAsync`, `GetProductByIdQueryHandler`, `Phase 3 — Incremental implementation plan`, `AuthenticationResponse`, `CreateProductCommand`, `AccountServices`, `5. Target code standards`, `Contexto técnico relevante`, `PagedResponse`, `Phase6HttpContractFunctionalTests`, `AuditableBaseEntity`, `IAccountServices`, `Error`?**
-  _High betweenness centrality (0.163) - this node is a cross-community bridge._
+- **Why does `BaseResult` connect `BaseResult` to `.ToActionResult`, `.Handle`, `ErrorCode`, `ErrorCategoryTests`, `Phase6HttpContractFunctionalTests`, `IProductCache`, `5. Target code standards`, `UpdateProductCommand`, `PagedResponse`, `AuditableBaseEntity`, `Contexto técnico relevante`, `ProductController`, `ProductDto`, `GetProductByIdQuery`, `Phase 3 — Incremental implementation plan`, `CreateProductCommand`?**
+  _High betweenness centrality (0.179) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `BaseResult` (e.g. with `Current implementation conventions` and `Errors and API results`) actually correct?**
   _`BaseResult` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Microsoft.VisualStudio.SDK`, `Microsoft.VSSDK.BuildTools`, `UserName` to the rest of the system?**
-  _340 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _373 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `ResourceGeneral` be split into smaller, more focused modules?**
+  _Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected._
+- **Why does `ProductDto` connect `ProductDto` to `ProductServiceTests`, `Phase6HttpContractFunctionalTests`, `IProductCache`, `Relatório das Fases 0–5 — 2026-10-10`, `5. Target code standards`, `UpdateProductCommand`, `Template.Domain.Products.Entities`, `PagedResponse`, `DistributedProductCacheTests`, `ProductRepository`, `ProductController`, `GetProductByIdQuery`, `Phase 3 — Incremental implementation plan`, `CreateProductCommand`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
+- **Are the 5 inferred relationships involving `ProductDto` (e.g. with `Immediate boundary corrections` and `Phase 4 — Clean the Domain model`) actually correct?**
+  _`ProductDto` has 5 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Person` be split into smaller, more focused modules?**
-  _Cohesion score 0.07017543859649122 - nodes in this community are weakly interconnected._
-- **Why does `ProductDto` connect `ProductDto` to `Program.cs`, `Phase6HttpContractFunctionalTests`, `ProductFunctionalTests`, `Relatório das Fases 0–5 — 2026-10-10`, `UpdateProductCommand`, `5. Target code standards`, `PaginationResponseDto`, `GetPagedListProductQuery`, `ProductRepository`, `ProductController`, `.GetProductAsync`, `GetProductByIdQueryHandler`, `CreateProductCommand`?**
-  _High betweenness centrality (0.077) - this node is a cross-community bridge._
-- **Are the 14 inferred relationships involving `ProductEntity` (e.g. with `.Handle()` and `.SeedAsync()`) actually correct?**
-  _`ProductEntity` has 14 INFERRED edges - model-reasoned connections that need verification._
-- **Should `Container (Dockerfile)` be split into smaller, more focused modules?**
-  _Cohesion score 0.048625792811839326 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07207792207792207 - nodes in this community are weakly interconnected._

@@ -120,9 +120,9 @@
     "semantic_hash": "997d75f3852ce74e382ae049f33dc24b"
   },
   "Src/Core/Template.Application/Interfaces/IUnitOfWork.cs": {
-    "mtime": 1791651410.471104,
-    "seen": 1791651757.7408216,
-    "ast_hash": "fadfe08df06937d7592864cbbcc6fdf3",
+    "mtime": 1791656971.0554376,
+    "seen": 1791657626.345365,
+    "ast_hash": "d702a4b700c4eed1bb8717e7cbca9e52",
     "semantic_hash": ""
   },
   "Src/Core/Template.Application/Interfaces/Repositories/IGenericRepository.cs": {
@@ -138,10 +138,10 @@
     "semantic_hash": ""
   },
   "Src/Core/Template.Application/Interfaces/UserInterfaces/IAccountServices.cs": {
-    "mtime": 1791475589.5320446,
-    "seen": 1791476064.8475084,
-    "ast_hash": "ce7a012c6e8e6c10e64c98bd2e48b09c",
-    "semantic_hash": "ce7a012c6e8e6c10e64c98bd2e48b09c"
+    "mtime": 1791654837.0169938,
+    "seen": 1791657626.347615,
+    "ast_hash": "87a0ecd4034bd318cc51e37c23ce5800",
+    "semantic_hash": ""
   },
   "Src/Core/Template.Application/Interfaces/UserInterfaces/IGetUserServices.cs": {
     "mtime": 1791475589.5320446,
@@ -342,10 +342,10 @@
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Identity/Services/AccountServices.cs": {
-    "mtime": 1791475589.5434272,
-    "seen": 1791476064.8475401,
-    "ast_hash": "224d49ba2edc0d95fa23e654ab822ef8",
-    "semantic_hash": "224d49ba2edc0d95fa23e654ab822ef8"
+    "mtime": 1791654837.5498335,
+    "seen": 1791657626.380481,
+    "ast_hash": "98ade1770d86228cf936b6fb9850db47",
+    "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Identity/Services/GetUserServices.cs": {
     "mtime": 1791475589.5434272,
@@ -384,9 +384,9 @@
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Persistence/Contexts/UnitOfWork.cs": {
-    "mtime": 1791651411.0311925,
-    "seen": 1791651757.7437465,
-    "ast_hash": "230ca77a90efcf79864f11ab10d9a988",
+    "mtime": 1791656980.6139119,
+    "seen": 1791657626.3828337,
+    "ast_hash": "0332022f40af254a4b73c36232942c11",
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Persistence/Extensions/EntityFrameworkExtensions.cs": {
@@ -414,15 +414,15 @@
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Persistence/Repositories/GenericRepository.cs": {
-    "mtime": 1791651607.6742184,
-    "seen": 1791651757.7440617,
-    "ast_hash": "adca4a9b3685c04834e17e1a43197ee2",
+    "mtime": 1791657120.3776143,
+    "seen": 1791657626.3854353,
+    "ast_hash": "cc25c380aea3f5ba50b242f3e9921cfd",
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Persistence/Repositories/ProductRepository.cs": {
-    "mtime": 1791651410.9947388,
-    "seen": 1791651757.7440624,
-    "ast_hash": "3d6430b43d70a27e518121522cc4841a",
+    "mtime": 1791657114.5082874,
+    "seen": 1791657626.385438,
+    "ast_hash": "35c7d0fbbc9d574d4152acfaa03169db",
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Persistence/Seeds/DefaultData.cs": {
@@ -432,9 +432,9 @@
     "semantic_hash": "250cb0813112ac79db11cef70dd1955f"
   },
   "Src/Infrastructure/Template.Infrastructure.Persistence/ServiceRegistration.cs": {
-    "mtime": 1791643647.745619,
-    "seen": 1791651757.7441564,
-    "ast_hash": "c0fb642d35f03177a04d3d7ad9202131",
+    "mtime": 1791656969.4249854,
+    "seen": 1791657626.3857322,
+    "ast_hash": "1d656a459b01b9b17114aec3c71dd0fa",
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Persistence/Template.Infrastructure.Persistence.csproj": {
@@ -474,45 +474,45 @@
     "semantic_hash": "c85c9bad7fdb4f20d7f0c21ed7baf3ee"
   },
   "Src/Presentation/Template.WebApi/Controllers/BaseApiController.cs": {
-    "mtime": 1791475589.5568776,
-    "seen": 1791476064.8475602,
-    "ast_hash": "c30f7777ac91fdf8a36ecbb294c71519",
-    "semantic_hash": "c30f7777ac91fdf8a36ecbb294c71519"
+    "mtime": 1791654765.5152557,
+    "seen": 1791657626.3889153,
+    "ast_hash": "feffcdfd5bbcb14b1e206e63e037057f",
+    "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v1/AccountController.cs": {
-    "mtime": 1791475589.5568776,
-    "seen": 1791476064.8475611,
-    "ast_hash": "0b5e8652b068084142df76a16d5a8295",
-    "semantic_hash": "0b5e8652b068084142df76a16d5a8295"
+    "mtime": 1791656809.362267,
+    "seen": 1791657626.3889186,
+    "ast_hash": "a246193f4b46080e732500cf5b358474",
+    "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v1/MessageController.cs": {
-    "mtime": 1791475589.5568776,
-    "seen": 1791476064.847562,
-    "ast_hash": "e73e64fee6acf391a09da8cc0c350703",
-    "semantic_hash": "e73e64fee6acf391a09da8cc0c350703"
+    "mtime": 1791654978.5357041,
+    "seen": 1791657626.3889203,
+    "ast_hash": "8b56b4eac26e98b392c6f57bd72b45d7",
+    "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v1/PersonController.cs": {
-    "mtime": 1791475589.5568776,
-    "seen": 1791476064.847563,
-    "ast_hash": "f39b2b896935f29405171423a13aa959",
-    "semantic_hash": "f39b2b896935f29405171423a13aa959"
+    "mtime": 1791654979.0734582,
+    "seen": 1791657626.3889217,
+    "ast_hash": "f40c141efc8aa16327467e57dce1b103",
+    "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v1/ProductController.cs": {
-    "mtime": 1791651423.224432,
-    "seen": 1791651757.745164,
-    "ast_hash": "9603dd055172447098827a0934b8267d",
+    "mtime": 1791654974.8763964,
+    "seen": 1791657626.3889232,
+    "ast_hash": "ea505440fbc5317f6b5a7a48cec4141e",
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v2/AccountController.cs": {
-    "mtime": 1791475589.5568776,
-    "seen": 1791476064.8475647,
-    "ast_hash": "ea2bbb60739f66279bd0749b4dd76a53",
-    "semantic_hash": "ea2bbb60739f66279bd0749b4dd76a53"
+    "mtime": 1791656809.545395,
+    "seen": 1791657626.3889246,
+    "ast_hash": "7560ae3e56e3f5d1f3a20fa61abd243e",
+    "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v2/ProductController.cs": {
-    "mtime": 1791651423.3605857,
-    "seen": 1791651757.745255,
-    "ast_hash": "f26a1d1cc728833e3ab3880f0177f95a",
+    "mtime": 1791655750.8826187,
+    "seen": 1791657626.388926,
+    "ast_hash": "831cbed5882a2f2940b6db904c1c23dc",
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Infrastructure/Enums/ErrorCodeEnum.cs": {
@@ -546,10 +546,10 @@
     "semantic_hash": "1bd26c59ca718ab7f4b532bdee0ee1f5"
   },
   "Src/Presentation/Template.WebApi/Infrastructure/Extensions/SwaggerExtensions.cs": {
-    "mtime": 1791475589.5588837,
-    "seen": 1791476064.8475726,
-    "ast_hash": "f77ffb3e408e5a69ec439bdcf16d0cf4",
-    "semantic_hash": "f77ffb3e408e5a69ec439bdcf16d0cf4"
+    "mtime": 1791656923.6487916,
+    "seen": 1791657626.3904696,
+    "ast_hash": "7a16c0e9ab44dd6eb7138e71f766d850",
+    "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Infrastructure/Filters/ApiResultFilterAttribute.cs": {
     "mtime": 1791475589.5588837,
@@ -558,10 +558,10 @@
     "semantic_hash": "1bd96788fe5266d6c51b892f9cd22f1d"
   },
   "Src/Presentation/Template.WebApi/Infrastructure/Middlewares/ErrorHandlerMiddleware.cs": {
-    "mtime": 1791475589.5588837,
-    "seen": 1791476064.8475742,
-    "ast_hash": "6828cd4da4704cc07626e5e5558b53a7",
-    "semantic_hash": "6828cd4da4704cc07626e5e5558b53a7"
+    "mtime": 1791654809.2953007,
+    "seen": 1791657626.3907535,
+    "ast_hash": "2dec536e417005da033966ed3c42a1b8",
+    "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Infrastructure/Services/AuthenticatedUserService.cs": {
     "mtime": 1791475589.5588837,
@@ -570,9 +570,9 @@
     "semantic_hash": "03ae6b7f371f2f73a4e95140f1ec8da4"
   },
   "Src/Presentation/Template.WebApi/Program.cs": {
-    "mtime": 1791643715.313714,
-    "seen": 1791651757.7460375,
-    "ast_hash": "080cd46aa11685a11004098536fbea3f",
+    "mtime": 1791656907.5973716,
+    "seen": 1791657626.3910286,
+    "ast_hash": "14d0f9b87b6040d8adfc0a99ef03369e",
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Properties/launchSettings.json": {
@@ -582,9 +582,9 @@
     "semantic_hash": "370d75719c44470f844d564114ef0507"
   },
   "Src/Presentation/Template.WebApi/Template.WebApi.csproj": {
-    "mtime": 1791643908.4490318,
-    "seen": 1791651757.7461336,
-    "ast_hash": "284eef24c604e814077b5a4789092266",
+    "mtime": 1791654760.0899482,
+    "seen": 1791657626.3936005,
+    "ast_hash": "1c8ebaa17ce21b3c5c000fe361c2a4c4",
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/appsettings.Development.json": {
@@ -612,9 +612,9 @@
     "semantic_hash": "bf12c2e3200da08301037d92ecc77ea2"
   },
   "TemplateCleanArchitecture.sln": {
-    "mtime": 1791644937.6300592,
-    "seen": 1791651757.7464232,
-    "ast_hash": "7559f8c3d4e3d8a74e0e0f22c61a7af9",
+    "mtime": 1791657050.0495124,
+    "seen": 1791657626.3948388,
+    "ast_hash": "4be94086d64afa4d4fe8728667121c8e",
     "semantic_hash": ""
   },
   "Tests/Template.Functional.Tests/ApiEndpoints/AccountFunctionalTests.cs": {
@@ -636,10 +636,10 @@
     "semantic_hash": "6048541415e298d11253d44f9dadd05f"
   },
   "Tests/Template.Functional.Tests/Common/ApiRoutes.cs": {
-    "mtime": 1791475589.5651312,
-    "seen": 1791476064.8475854,
-    "ast_hash": "ac8036ef8af5b8159cd633fe3b3f56e0",
-    "semantic_hash": "ac8036ef8af5b8159cd633fe3b3f56e0"
+    "mtime": 1791655528.5840938,
+    "seen": 1791657626.4009633,
+    "ast_hash": "2d7a3a9a168242d8245296a22af7574e",
+    "semantic_hash": ""
   },
   "Tests/Template.Functional.Tests/Common/AuthenticationExtensionMethods.cs": {
     "mtime": 1791475589.5651312,
@@ -648,8 +648,8 @@
     "semantic_hash": "936fbd0bc705d0196590ce350299183f"
   },
   "Tests/Template.Functional.Tests/Common/CustomWebApplicationFactory.cs": {
-    "mtime": 1791643607.4348216,
-    "seen": 1791651757.7468123,
+    "mtime": 1791656866.376811,
+    "seen": 1791657626.4012573,
     "ast_hash": "0e3258670188a26d315220c4300c8012",
     "semantic_hash": ""
   },
@@ -768,9 +768,9 @@
     "semantic_hash": ""
   },
   ".agents/skills/architecture-boundary-check/scripts/check-boundaries.ps1": {
-    "mtime": 1791642533.9640307,
-    "seen": 1791651757.739211,
-    "ast_hash": "e4960c80ad7fad43c7eac6fcdcfbcba5",
+    "mtime": 1791657336.8175728,
+    "seen": 1791657626.3217824,
+    "ast_hash": "fd92a59b5eb5fffb073c9029098abcb8",
     "semantic_hash": ""
   },
   ".agents/skills/dotnet-change-verification/scripts/select-checks.ps1": {
@@ -834,9 +834,9 @@
     "semantic_hash": ""
   },
   "Tests/Template.Architecture.Tests/ArchitectureRulesTests.cs": {
-    "mtime": 1791651540.252341,
-    "seen": 1791651757.7464247,
-    "ast_hash": "b816fdfd7ea008c82e2a9bf77b47afef",
+    "mtime": 1791657393.6145377,
+    "seen": 1791657626.3948417,
+    "ast_hash": "85fbe6110742dc1179f660bc4083765b",
     "semantic_hash": ""
   },
   "Tests/Template.Architecture.Tests/Template.Architecture.Tests.csproj": {
@@ -852,9 +852,9 @@
     "semantic_hash": ""
   },
   "Tests/Template.Functional.Tests/ApiEndpoints/ProductValidationFunctionalTests.cs": {
-    "mtime": 1791651552.8377304,
-    "seen": 1791651757.7465253,
-    "ast_hash": "626405f0d713ff3cb0905963f450f054",
+    "mtime": 1791655529.2824347,
+    "seen": 1791657626.4006555,
+    "ast_hash": "08278d1d483e332f1591a0534a216508",
     "semantic_hash": ""
   },
   "Tests/Template.Integration.Tests/Data/EfCancellationPropagationTests.cs": {
@@ -942,9 +942,9 @@
     "semantic_hash": ""
   },
   "scripts/run-phase-validation.ps1": {
-    "mtime": 1791652333.4027998,
-    "seen": 1791652862.8175972,
-    "ast_hash": "09062f8316416fe73fd600e57eae5147",
+    "mtime": 1791657421.641006,
+    "seen": 1791657626.4205587,
+    "ast_hash": "1c65840986c3561b1283d552eae09372",
     "semantic_hash": ""
   },
   ".agents/agents/api-contract-reviewer.md": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791637862.0734925,
-    "seen": 1791651757.7473078,
-    "ast_hash": "228e33bcce0afaa4515f1dcfe576bf61",
+    "mtime": 1791653254.0712788,
+    "seen": 1791657626.430645,
+    "ast_hash": "5e0865dcd83c9b294e47b4bb699a596a",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1104,9 +1104,93 @@
     "semantic_hash": ""
   },
   "docs/refactoring/phases-6-7-precondition-block.md": {
-    "mtime": 1791651709.0368717,
-    "seen": 1791651757.7475116,
-    "ast_hash": "eda7e2436e9871e2919986115332b4ab",
+    "mtime": 1791653236.365833,
+    "seen": 1791657626.4360096,
+    "ast_hash": "b7ea89eca19bfe4987a67cbc7cfbbcbf",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/Http/ApiResultMapper.cs": {
+    "mtime": 1791654796.1089506,
+    "seen": 1791657626.3907492,
+    "ast_hash": "559e51369db6ee852c40a7f1e1a4aee8",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/Http/ProblemDetailsAuthorizationMiddlewareResultHandler.cs": {
+    "mtime": 1791654796.5035968,
+    "seen": 1791657626.3907516,
+    "ast_hash": "728b8f6f2378254f4bef40277b1b8ceb",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Functional.Tests/ApiEndpoints/Phase6HttpContractFunctionalTests.cs": {
+    "mtime": 1791655530.2252896,
+    "seen": 1791657626.4003487,
+    "ast_hash": "a48476430f856572968513d3342a8ee2",
+    "semantic_hash": ""
+  },
+  "Tests/Template.PostgreSql.Integration.Tests/PostgreSqlFixture.cs": {
+    "mtime": 1791657041.116515,
+    "seen": 1791657626.4063566,
+    "ast_hash": "c9d75be65bd91d66cd8d88e33ecd6767",
+    "semantic_hash": ""
+  },
+  "Tests/Template.PostgreSql.Integration.Tests/PostgreSqlPersistenceTests.cs": {
+    "mtime": 1791657042.987575,
+    "seen": 1791657626.4063592,
+    "ast_hash": "03760941a43dd19515a09427ada4fac7",
+    "semantic_hash": ""
+  },
+  "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj": {
+    "mtime": 1791657037.4657106,
+    "seen": 1791657626.406361,
+    "ast_hash": "2455c48e7018c2dde7d2ff9eb3ce947b",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/baseline-fase-6/health.json": {
+    "mtime": 1791657312.82333,
+    "seen": 1791657626.4161022,
+    "ast_hash": "353737c5bdb5ba987211745da5d6d0ba",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/baseline-fase-6/openapi-v1.json": {
+    "mtime": 1791657312.6691477,
+    "seen": 1791657626.4161048,
+    "ast_hash": "1f22671733b2412b87afbcc8e68c343c",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/baseline-fase-6/openapi-v2.json": {
+    "mtime": 1791657312.7076352,
+    "seen": 1791657626.4161065,
+    "ast_hash": "0fb3ad9b1beba3ee8fa68baf144c9b56",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/baseline-fase-6/product-v1-get.json": {
+    "mtime": 1791657312.794548,
+    "seen": 1791657626.4161081,
+    "ast_hash": "f924352a855e028f27ac2343f81223cd",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/baseline-fase-6/product-v2-get.json": {
+    "mtime": 1791657312.814543,
+    "seen": 1791657626.4161096,
+    "ast_hash": "f924352a855e028f27ac2343f81223cd",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/api-v1-lifecycle.md": {
+    "mtime": 1791657455.7978072,
+    "seen": 1791657626.4357479,
+    "ast_hash": "cf1443b2c220c145c3575d075358cad1",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fases-6-7.md": {
+    "mtime": 1791653447.8991282,
+    "seen": 1791657626.4360049,
+    "ast_hash": "1b1c6dae990732b4c0984bb51345f771",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/phases-0-5-report.md": {
+    "mtime": 1791653236.3361,
+    "seen": 1791657626.4360075,
+    "ast_hash": "cdfdc655e8ee99987d402677b8c10a07",
     "semantic_hash": ""
   }
 }

@@ -19,6 +19,7 @@ internal static class ApiRoutes
             internal const string CreateProduct = "/api/v1/product";
             internal const string UpdateProduct = "/api/v1/product";
             internal const string DeleteProduct = "/api/v1/product";
+            internal static string GetProductWithCache(Guid id) => $"/api/v1/product/{id}/cache";
         }
     }
     internal static class V2
@@ -38,6 +39,7 @@ internal static class ApiRoutes
             internal static string GetProductById(Guid id) => $"/api/v2/product/{id}";
             internal static string UpdateProduct(Guid id) => $"/api/v2/product/{id}";
             internal static string DeleteProduct(Guid id) => $"/api/v2/product/{id}";
+            internal static string GetProductWithCache(Guid id) => $"/api/v2/product/{id}/cache";
         }
     }
     internal static string AddQueryString(this string url, string key, string value)

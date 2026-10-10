@@ -7,7 +7,6 @@ if ($domainProject -match '<PackageReference|<ProjectReference') { $violations.A
 $applicationProject = [xml](Get-Content -Raw 'Src/Core/Template.Application/Template.Application.csproj')
 $allowedTemporaryPackages = @(
     'Elastic.Clients.Elasticsearch', # Phase 10
-    'Microsoft.Extensions.Caching.StackExchangeRedis', # Phase 8
     'Microsoft.Extensions.Hosting.Abstractions', # Phase 9
     'RabbitMQ.Client' # Phase 9
 )
@@ -17,7 +16,7 @@ $actualTemporaryPackages = @($applicationProject.Project.ItemGroup.PackageRefere
     Where-Object { $_ -match $forbiddenPattern } |
     Sort-Object)
 if (Compare-Object $allowedTemporaryPackages $actualTemporaryPackages) {
-    $violations.Add('Application implementation package exceptions differ from the exact Phase 8-10 allowlist.')
+    $violations.Add('Application implementation package exceptions differ from the exact Phase 9-10 allowlist.')
 }
 
 $applicationPorts = Get-ChildItem 'Src/Core/Template.Application/Interfaces' -Recurse -Filter *.cs
