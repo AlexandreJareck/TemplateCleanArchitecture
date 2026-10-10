@@ -13,6 +13,7 @@ using Template.Infrastructure.Identity;
 using Template.Infrastructure.Identity.Contexts;
 using Template.Infrastructure.Identity.Models;
 using Template.Infrastructure.Identity.Seeds;
+using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Seeds;
@@ -33,12 +34,12 @@ bool useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryData
 
 builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSection(nameof(LocalizationSettings)));
 builder.Services.Configure<ElasticSearchSettings>(builder.Configuration.GetSection(nameof(ElasticSearchSettings)));
-builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection(nameof(RabbitMqSettings)));
 
-builder.Services.AddApplicationLayer(registerIntegrationHostedServices: !isTestEnvironment);
+builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddCachingInfrastructure(builder.Configuration, useInMemoryCache: isTestEnvironment);
+builder.Services.AddMessagingInfrastructure(builder.Configuration, useBroker: !isTestEnvironment);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 

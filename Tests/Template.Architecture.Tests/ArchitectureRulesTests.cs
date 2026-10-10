@@ -31,9 +31,7 @@ public sealed class ArchitectureRulesTests
         var actual = ForbiddenApplicationPackages(References(project, "PackageReference"));
 
         actual.ShouldBe([
-            "Elastic.Clients.Elasticsearch", // Phase 10
-            "Microsoft.Extensions.Hosting.Abstractions", // Phase 9 hosted consumers
-            "RabbitMQ.Client" // Phase 9
+            "Elastic.Clients.Elasticsearch" // Phase 10
         ]);
     }
 
@@ -43,9 +41,7 @@ public sealed class ArchitectureRulesTests
         var actual = SourceViolations("Src/Core/Template.Application", ApplicationMarkers());
 
         actual.ShouldBe([
-            "Src/Core/Template.Application/Consumers/OrderConsumer.cs", // Phase 9
-            "Src/Core/Template.Application/Services/Elastic/ElasticService.cs", // Phase 10
-            "Src/Core/Template.Application/Services/RabbitMq/RabbitMqService.cs" // Phase 9
+            "Src/Core/Template.Application/Services/Elastic/ElasticService.cs" // Phase 10
         ]);
     }
 
@@ -75,8 +71,56 @@ public sealed class ArchitectureRulesTests
         composers.ShouldBe([
             "Src/Presentation/Template.WebApi/Template.WebApi.csproj",
             "Tests/Template.Integration.Tests/Template.Integration.Tests.csproj",
-            "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj"
+            "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj",
+            "Tests/Template.RabbitMq.Integration.Tests/Template.RabbitMq.Integration.Tests.csproj"
         ]);
+    }
+
+    [Fact]
+    public void Core_Has_No_Messaging_Plumbing_Or_Hosted_Services()
+    {
+        SourceViolations("Src/Core", MessagingPlumbingMarkers()).ShouldBeEmpty(); // Phase 9
+        SourceViolations("Src/Core/Template.Domain", ["RabbitMQ", "Microsoft.Extensions.Hosting", "Messaging"]).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Messaging_Vendor_Code_And_Hosted_Services_Live_In_Infrastructure_Messaging()
+    {
+        var rabbitMqProjects = Directory.GetFiles(Path.Combine(Root, "Src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(path => References(XDocument.Load(path), "PackageReference").Contains("RabbitMQ.Client"))
+            .Select(Relative)
+            .ToArray();
+        var hostedServiceSources = SourceViolations("Src", [": BackgroundService", "AddHostedService"]);
+        var rabbitMqSources = SourceViolations("Src", ["using RabbitMQ"]);
+
+        rabbitMqProjects.ShouldBe(["Src/Infrastructure/Template.Infrastructure.Messaging/Template.Infrastructure.Messaging.csproj"]);
+        hostedServiceSources.ShouldAllBe(path => path.StartsWith(MessagingProject, StringComparison.Ordinal));
+        hostedServiceSources.ShouldNotBeEmpty();
+        rabbitMqSources.ShouldAllBe(path => path.StartsWith(MessagingProject, StringComparison.Ordinal));
+        SourceViolations("Src", ["class RabbitMqSettings"]).ShouldBe([$"{MessagingProject}RabbitMqSettings.cs"]);
+    }
+
+    [Fact]
+    public void Infrastructure_Messaging_Implements_Application_Owned_Ports()
+    {
+        var project = LoadProject($"{MessagingProject}Template.Infrastructure.Messaging.csproj");
+
+        References(project, "ProjectReference").ShouldBe([@"..\..\Core\Template.Application\Template.Application.csproj"]);
+        ReadSource($"{MessagingProject}Publishing/RabbitMqOrderEventPublisher.cs").ShouldContain(": IOrderEventPublisher");
+        ReadSource($"{MessagingProject}Publishing/DisabledOrderEventPublisher.cs").ShouldContain(": IOrderEventPublisher");
+        ReadSource($"{MessagingProject}Deduplication/InMemoryProcessedMessageStore.cs").ShouldContain(": IProcessedMessageStore");
+        ReadSource("Src/Core/Template.Application/Interfaces/Messaging/IOrderEventPublisher.cs").ShouldContain("public interface IOrderEventPublisher");
+        SourceViolations("Src/Core/Template.Application/Interfaces/Messaging", ["RabbitMQ", "ReadOnlyMemory<byte>", "IChannel", "IConnection", "BasicDeliverEventArgs", "Json"]).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void WebApi_Only_Composes_Messaging()
+    {
+        var webApi = LoadProject("Src/Presentation/Template.WebApi/Template.WebApi.csproj");
+
+        References(webApi, "PackageReference").ShouldNotContain(package => package.Contains("RabbitMQ", StringComparison.Ordinal));
+        SourceViolations("Src/Presentation", MessagingPlumbingMarkers()).ShouldBeEmpty();
+        ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldContain("AddMessagingInfrastructure(");
     }
 
     [Fact]
@@ -146,6 +190,12 @@ public sealed class ArchitectureRulesTests
         ContainsAny("options.UseSqlServer(connection)", ["UseSqlServer", "Microsoft.EntityFrameworkCore.SqlServer"]).ShouldBeTrue();
         "Assembly.GetAssembly(typeof(IRepository))".ShouldContain("Assembly.GetAssembly");
         IsInfrastructureReference("..\\Infrastructure\\Example.csproj").ShouldBeTrue();
+        ForbiddenApplicationPackages(["Microsoft.Extensions.Hosting.Abstractions"]).ShouldBe(["Microsoft.Extensions.Hosting.Abstractions"]);
+        ContainsAny("public sealed class OrderConsumer : BackgroundService", MessagingPlumbingMarkers()).ShouldBeTrue();
+        ContainsAny("await connection.CreateChannelAsync(ct);", MessagingPlumbingMarkers()).ShouldBeTrue();
+        ContainsAny("await channel.QueueDeclareAsync(\"orders\");", MessagingPlumbingMarkers()).ShouldBeTrue();
+        ContainsAny("public sealed class RabbitMqSettings", MessagingPlumbingMarkers()).ShouldBeTrue();
+        ContainsAny("Task PublishBroadcastAsync(OrderPlacedEvent e, CancellationToken ct);", MessagingPlumbingMarkers()).ShouldBeFalse();
     }
 
     private static string[] ForbiddenApplicationPackages(IEnumerable<string> packages) => packages
@@ -163,6 +213,15 @@ public sealed class ArchitectureRulesTests
     [
         "Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore", "Microsoft.Extensions.Caching",
         "Microsoft.Extensions.Hosting", "RabbitMQ", "Elastic.Clients", "Serilog"
+    ];
+
+    private const string MessagingProject = "Src/Infrastructure/Template.Infrastructure.Messaging/";
+
+    private static string[] MessagingPlumbingMarkers() =>
+    [
+        "RabbitMQ", "BackgroundService", "IHostedService", "AddHostedService", "ConnectionFactory", "CreateConnection",
+        "CreateChannel", "CreateModel", "IModel", "ExchangeDeclare", "QueueDeclare", "QueueBind", "BasicConsume",
+        "BasicPublish", "BasicAck", "BasicNack", "RabbitMqSettings"
     ];
 
     private static string[] SystemClockMarkers() =>
@@ -202,6 +261,8 @@ public sealed class ArchitectureRulesTests
         .Cast<string>()
         .OrderBy(value => value, StringComparer.Ordinal)
         .ToArray();
+
+    private static string ReadSource(string path) => File.ReadAllText(Path.Combine(Root, path));
 
     private static XDocument LoadProject(string path) => XDocument.Load(Path.Combine(Root, path));
 
