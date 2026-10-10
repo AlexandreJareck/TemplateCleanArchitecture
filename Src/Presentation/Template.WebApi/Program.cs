@@ -8,6 +8,7 @@ using Serilog;
 using Template.Application;
 using Template.Application.Interfaces;
 using Template.Application.Settings;
+using Template.Infrastructure.Caching;
 using Template.Infrastructure.Identity;
 using Template.Infrastructure.Identity.Contexts;
 using Template.Infrastructure.Identity.Models;
@@ -37,10 +38,7 @@ builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection(na
 builder.Services.AddApplicationLayer(registerIntegrationHostedServices: !isTestEnvironment);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDatabase);
-if (isTestEnvironment)
-    builder.Services.AddDistributedMemoryCache();
-else
-    builder.Services.AddRedis(builder.Configuration);
+builder.Services.AddCachingInfrastructure(builder.Configuration, useInMemoryCache: isTestEnvironment);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 

@@ -32,7 +32,6 @@ public sealed class ArchitectureRulesTests
 
         actual.ShouldBe([
             "Elastic.Clients.Elasticsearch", // Phase 10
-            "Microsoft.Extensions.Caching.StackExchangeRedis", // Phase 8
             "Microsoft.Extensions.Hosting.Abstractions", // Phase 9 hosted consumers
             "RabbitMQ.Client" // Phase 9
         ]);
@@ -46,7 +45,6 @@ public sealed class ArchitectureRulesTests
         actual.ShouldBe([
             "Src/Core/Template.Application/Consumers/OrderConsumer.cs", // Phase 9
             "Src/Core/Template.Application/Services/Elastic/ElasticService.cs", // Phase 10
-            "Src/Core/Template.Application/Services/Product/ProductService.cs", // Phase 8
             "Src/Core/Template.Application/Services/RabbitMq/RabbitMqService.cs" // Phase 9
         ]);
     }
@@ -64,7 +62,8 @@ public sealed class ArchitectureRulesTests
     {
         var projects = Directory.GetFiles(Root, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
-            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}ExtensionVsix{Path.DirectorySeparatorChar}"));
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}ExtensionVsix{Path.DirectorySeparatorChar}"))
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}.claude{Path.DirectorySeparatorChar}")); // local agent worktrees are not part of this checkout
 
         var composers = projects
             .Where(path => References(XDocument.Load(path), "ProjectReference")

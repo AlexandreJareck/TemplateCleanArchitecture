@@ -2,6 +2,7 @@
 using MediatR;
 using Template.Application.Helpers;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Caching;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
 using Template.Application.DTOs.Products;
@@ -18,7 +19,8 @@ public class UpdateProductCommand : IRequest<BaseResult<ProductDto>>
 public class UpdateProductCommandHandler(
     IProductRepository productRepository,
     IUnitOfWork unitOfWork,
-    ITranslator translator) : IRequestHandler<UpdateProductCommand, BaseResult<ProductDto>>
+    ITranslator translator,
+    IProductCache productCache) : IRequestHandler<UpdateProductCommand, BaseResult<ProductDto>>
 {
     public async Task<BaseResult<ProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
@@ -31,6 +33,7 @@ public class UpdateProductCommandHandler(
 
         product.Update(request.Name, request.Price, request.BarCode);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await productCache.RemoveAsync(product.Id, cancellationToken);
 
         return new ProductDto
         {

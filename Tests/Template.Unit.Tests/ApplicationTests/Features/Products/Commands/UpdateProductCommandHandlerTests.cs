@@ -2,6 +2,7 @@
 using Shouldly;
 using Template.Application.Features.Products.Commands;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Caching;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
 using Template.Domain.Products.Entities;
@@ -25,8 +26,9 @@ public class UpdateProductCommandHandlerTests
 
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         var translatorMock = new Mock<ITranslator>();
+        var productCacheMock = new Mock<IProductCache>();
 
-        var handler = new UpdateProductCommandHandler(productRepositoryMock.Object, unitOfWorkMock.Object, translatorMock.Object);
+        var handler = new UpdateProductCommandHandler(productRepositoryMock.Object, unitOfWorkMock.Object, translatorMock.Object, productCacheMock.Object);
 
         var command = new UpdateProductCommand
         {
@@ -45,6 +47,34 @@ public class UpdateProductCommandHandlerTests
 
         productRepositoryMock.Verify(repo => repo.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
         unitOfWorkMock.Verify(unit => unit.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        productCacheMock.Verify(cache => cache.RemoveAsync(productId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_InvalidatesCacheOnlyAfterSaveChanges()
+    {
+        // Arrange
+        var productId = Guid.Parse("d40d3315-06d0-4ffa-8a52-976fb283cb3e");
+        var calls = new List<string>();
+        var productRepositoryMock = new Mock<IProductRepository>();
+        productRepositoryMock.Setup(repo => repo.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new ProductEntity("Product", 100m, "123456789") { Id = productId });
+        var unitOfWorkMock = new Mock<IUnitOfWork>();
+        unitOfWorkMock.Setup(unit => unit.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                      .Callback(() => calls.Add("save"))
+                      .ReturnsAsync(true);
+        var productCacheMock = new Mock<IProductCache>();
+        productCacheMock.Setup(cache => cache.RemoveAsync(productId, It.IsAny<CancellationToken>()))
+                        .Callback(() => calls.Add("remove"))
+                        .Returns(Task.CompletedTask);
+
+        var handler = new UpdateProductCommandHandler(productRepositoryMock.Object, unitOfWorkMock.Object, new Mock<ITranslator>().Object, productCacheMock.Object);
+
+        // Act
+        await handler.Handle(new UpdateProductCommand { Id = productId, Name = "Name", Price = 1, BarCode = "1" }, CancellationToken.None);
+
+        // Assert
+        calls.ShouldBe(["save", "remove"]);
     }
 
     [Fact]
@@ -58,10 +88,11 @@ public class UpdateProductCommandHandlerTests
 
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         var translatorMock = new Mock<ITranslator>();
+        var productCacheMock = new Mock<IProductCache>();
         translatorMock.Setup(translator => translator.GetString(It.IsAny<string>()))
                       .Returns("Product not found");
 
-        var handler = new UpdateProductCommandHandler(productRepositoryMock.Object, unitOfWorkMock.Object, translatorMock.Object);
+        var handler = new UpdateProductCommandHandler(productRepositoryMock.Object, unitOfWorkMock.Object, translatorMock.Object, productCacheMock.Object);
 
         var command = new UpdateProductCommand { Id = productId };
 
@@ -75,5 +106,6 @@ public class UpdateProductCommandHandlerTests
 
         productRepositoryMock.Verify(repo => repo.Update(It.IsAny<ProductEntity>()), Times.Never);
         unitOfWorkMock.Verify(unit => unit.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        productCacheMock.Verify(cache => cache.RemoveAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

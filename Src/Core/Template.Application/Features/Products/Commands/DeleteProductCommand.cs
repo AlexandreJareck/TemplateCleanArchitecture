@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Template.Application.Helpers;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Caching;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
 
@@ -10,7 +11,7 @@ public class DeleteProductCommand : IRequest<BaseResult>
     public Guid Id { get; set; }
 }
 
-public class DeleteProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork, ITranslator translator) : IRequestHandler<DeleteProductCommand, BaseResult>
+public class DeleteProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork, ITranslator translator, IProductCache productCache) : IRequestHandler<DeleteProductCommand, BaseResult>
 {
     public async Task<BaseResult> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
@@ -23,6 +24,7 @@ public class DeleteProductCommandHandler(IProductRepository productRepository, I
 
         productRepository.Delete(product);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await productCache.RemoveAsync(product.Id, cancellationToken);
 
         return BaseResult.Ok();
     }
