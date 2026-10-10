@@ -30,7 +30,7 @@ Reversible assumptions:
 
 ### Proposed skills
 
-Canonical skill sources should live under `.agents/skills/`. If Claude Code requires `.claude/skills/`, generate a reviewed mirror during workspace setup; do not maintain two divergent hand-written copies.
+Canonical skill sources live under `.agents/skills/`, which Codex reads directly. Claude Code only discovers project skills under `.claude/skills/`, so `scripts/link-agent-skills.ps1` links that path to `.agents/skills/` (a directory junction on Windows, a symbolic link elsewhere). The link is git-ignored and created once per checkout; never copy skills into `.claude/skills/`.
 
 | Skill | Purpose and trigger | Inputs | Outputs | Proposed location |
 |---|---|---|---|---|
