@@ -30,6 +30,8 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
+      POSTGRES_IDENTITY_DB_NAME: ${POSTGRES_IDENTITY_DB_NAME}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
@@ -49,7 +51,7 @@ services:
       - v01:/usr/share/elasticsearch/data
     networks:
       - nw
-    healthcheck: 
+    healthcheck:
       test: ["CMD", "curl", "-f", "http://elasticsearch:9200"]
       interval: 30s
       timeout: 10s
