@@ -1,0 +1,18 @@
+{
+  "solution": {
+    "path": "TemplateCleanArchitecture.sln",
+    "projects": [
+      "Src\\Core\\Template.Application\\Template.Application.csproj",
+      "Src\\Core\\Template.Domain\\Template.Domain.csproj",
+      "Src\\Infrastructure\\Template.Infrastructure.Identity\\Template.Infrastructure.Identity.csproj",
+      "Src\\Infrastructure\\Template.Infrastructure.Persistence\\Template.Infrastructure.Persistence.csproj",
+      "Src\\Infrastructure\\Template.Infrastructure.Resources\\Template.Infrastructure.Resources.csproj",
+      "Src\\Presentation\\Template.WebApi\\Template.WebApi.csproj",
+      "Tests\\Template.Architecture.Tests\\Template.Architecture.Tests.csproj",
+      "Tests\\Template.Functional.Tests\\Template.Functional.Tests.csproj",
+      "Tests\\Template.Integration.Tests\\Template.Integration.Tests.csproj",
+      "Tests\\Template.PostgreSql.Integration.Tests\\Template.PostgreSql.Integration.Tests.csproj",
+      "Tests\\Template.Unit.Tests\\Template.Unit.Tests.csproj"
+    ]
+  }
+}

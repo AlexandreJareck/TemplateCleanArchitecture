@@ -3,7 +3,7 @@ using Template.Application.Helpers;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
 
 namespace Template.Application.Features.Products.Queries;
 public class GetProductByIdQuery : IRequest<BaseResult<ProductDto>>
@@ -15,7 +15,7 @@ public class GetProductByIdQueryHandler(IProductRepository productRepository, IT
 {
     public async Task<BaseResult<ProductDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
     {
-        var product = await productRepository.GetByIdAsync(request.Id);
+        var product = await productRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (product is null)
         {

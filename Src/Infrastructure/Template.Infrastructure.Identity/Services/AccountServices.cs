@@ -21,11 +21,14 @@ public class AccountServices(
     ITranslator translator
     ) : IAccountServices
 {
-    public async Task<BaseResult> ChangePassword(ChangePasswordRequest model)
+    public async Task<BaseResult> ChangePassword(ChangePasswordRequest model, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await userManager.FindByIdAsync(authenticatedUser.UserId);
 
+        cancellationToken.ThrowIfCancellationRequested();
         var token = await userManager.GeneratePasswordResetTokenAsync(user!);
+        cancellationToken.ThrowIfCancellationRequested();
         var identityResult = await userManager.ResetPasswordAsync(user, token, model.Password);
 
         if (identityResult.Succeeded)
@@ -33,12 +36,14 @@ public class AccountServices(
 
         return identityResult.Errors.Select(p => new Error(ErrorCode.ErrorInIdentity, p.Description)).ToList();
     }
-    public async Task<BaseResult> ChangeUserName(ChangeUserNameRequest model)
+    public async Task<BaseResult> ChangeUserName(ChangeUserNameRequest model, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await userManager.FindByIdAsync(authenticatedUser.UserId);
 
         user.UserName = model.UserName;
 
+        cancellationToken.ThrowIfCancellationRequested();
         var identityResult = await userManager.UpdateAsync(user);
 
         if (identityResult.Succeeded)
@@ -46,34 +51,39 @@ public class AccountServices(
 
         return identityResult.Errors.Select(p => new Error(ErrorCode.ErrorInIdentity, p.Description)).ToList();
     }
-    public async Task<BaseResult<AuthenticationResponse>> Authenticate(AuthenticationRequest request)
+    public async Task<BaseResult<AuthenticationResponse>> Authenticate(AuthenticationRequest request, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await userManager.FindByNameAsync(request.UserName);
         if (user is null)
             return new Error(ErrorCode.NotFound, translator.GetString(TranslatorMessages.AccountMessages.Account_NotFound_with_UserName(request.UserName)), nameof(request.UserName));
 
+        cancellationToken.ThrowIfCancellationRequested();
         var signInResult = await signInManager.PasswordSignInAsync(user.UserName, request.Password, false, lockoutOnFailure: false);
         if (!signInResult.Succeeded)
             return new Error(ErrorCode.FieldDataInvalid, translator.GetString(TranslatorMessages.AccountMessages.Invalid_password()), nameof(request.Password));
 
-        return await GetAuthenticationResponse(user);
+        return await GetAuthenticationResponse(user, cancellationToken);
     }
-    public async Task<BaseResult<AuthenticationResponse>> AuthenticateByUserName(string username)
+    public async Task<BaseResult<AuthenticationResponse>> AuthenticateByUserName(string username, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await userManager.FindByNameAsync(username);
         if (user is null)
             return new Error(ErrorCode.NotFound, translator.GetString(TranslatorMessages.AccountMessages.Account_NotFound_with_UserName(username)), nameof(username));
 
-        return await GetAuthenticationResponse(user);
+        return await GetAuthenticationResponse(user, cancellationToken);
     }
-    public async Task<BaseResult<string>> RegisterGhostAccount()
+    public async Task<BaseResult<string>> RegisterGhostAccount(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = new ApplicationUser()
         {
             UserName = GenerateRandomString(7)
         };
 
         var identityResult = await userManager.CreateAsync(user);
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (identityResult.Succeeded)
             return user.UserName;
@@ -88,12 +98,15 @@ public class AccountServices(
                     .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
-    private async Task<AuthenticationResponse> GetAuthenticationResponse(ApplicationUser user)
+    private async Task<AuthenticationResponse> GetAuthenticationResponse(ApplicationUser user, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         await userManager.UpdateSecurityStampAsync(user);
 
+        cancellationToken.ThrowIfCancellationRequested();
         var jwToken = await GenerateJwtToken();
 
+        cancellationToken.ThrowIfCancellationRequested();
         var rolesList = await userManager.GetRolesAsync(user);
 
         return new AuthenticationResponse()

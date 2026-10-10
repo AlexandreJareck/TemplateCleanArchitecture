@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Template.Application.Features.Products.Queries;
 using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
 
 namespace Template.Application.Services.Product
 {
@@ -24,7 +24,7 @@ namespace Template.Application.Services.Product
         {
             string cacheKey = $"Product_{productId}";
 
-            var cachedItem = await _cache.GetStringAsync(cacheKey);
+            var cachedItem = await _cache.GetStringAsync(cacheKey, cancellationToken);
             if (cachedItem != null)
             {
                 _logger.LogInformation("product retrieved from cache!");
@@ -45,7 +45,8 @@ namespace Template.Application.Services.Product
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
                     SlidingExpiration = TimeSpan.FromMinutes(2)
-                }
+                },
+                cancellationToken
             );
 
             _logger.LogInformation("🔄 product added to cache.");

@@ -3,7 +3,7 @@ using Shouldly;
 using Template.Application.DTOs;
 using Template.Application.Features.Products.Queries;
 using Template.Application.Interfaces.Repositories;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
 
 namespace Template.Unit.Tests.ApplicationTests.Features.Products.Queries;
 public class GetPagedListProductQueryHandlerTests
@@ -22,7 +22,7 @@ public class GetPagedListProductQueryHandlerTests
     };
 
         var productRepositoryMock = new Mock<IProductRepository>();
-        productRepositoryMock.Setup(repo => repo.GetPagedListAsync(pageNumber, pageSize, productName))
+        productRepositoryMock.Setup(repo => repo.GetPagedListAsync(pageNumber, pageSize, productName, It.IsAny<CancellationToken>()))
                              .ReturnsAsync(new PaginationResponseDto<ProductDto>(products, 100, pageNumber, pageSize));
 
         var handler = new GetPagedListProductQueryHandler(productRepositoryMock.Object);
@@ -43,5 +43,24 @@ public class GetPagedListProductQueryHandlerTests
         result.Data.ShouldBeEquivalentTo(products);
         result.PageNumber.ShouldBe(pageNumber);
         result.PageSize.ShouldBe(pageSize);
+    }
+
+    [Fact]
+    public async Task Handle_PropagatesCancellationTokenToRepository()
+    {
+        // Arrange
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = cancellationTokenSource.Token;
+        var productRepositoryMock = new Mock<IProductRepository>();
+        productRepositoryMock.Setup(repo => repo.GetPagedListAsync(1, 10, null!, cancellationToken))
+                             .ReturnsAsync(new PaginationResponseDto<ProductDto>([], 0, 1, 10));
+
+        var handler = new GetPagedListProductQueryHandler(productRepositoryMock.Object);
+
+        // Act
+        await handler.Handle(new GetPagedListProductQuery { PageNumber = 1, PageSize = 10 }, cancellationToken);
+
+        // Assert
+        productRepositoryMock.Verify(repo => repo.GetPagedListAsync(1, 10, null!, cancellationToken), Times.Once);
     }
 }

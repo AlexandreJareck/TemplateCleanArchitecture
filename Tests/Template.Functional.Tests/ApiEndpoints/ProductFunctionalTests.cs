@@ -1,7 +1,7 @@
 ﻿using Shouldly;
 using Template.Application.Features.Products.Commands;
 using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
 using Template.Functional.Tests.Common;
 
 namespace Template.Functional.Tests.ApiEndpoints;

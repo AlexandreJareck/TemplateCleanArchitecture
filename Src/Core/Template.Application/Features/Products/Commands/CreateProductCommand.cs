@@ -3,30 +3,30 @@ using MediatR;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
 using Template.Domain.Products.Entities;
 
 namespace Template.Application.Features.Products.Commands;
 public class CreateProductCommand : IRequest<BaseResult<ProductDto>>
 {
     public string Name { get; set; }
-    public double Price { get; set; }
+    public decimal Price { get; set; }
     public string BarCode { get; set; }
 }
-public class CreateProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork) : IRequestHandler<CreateProductCommand, BaseResult<ProductDto>>
+public class CreateProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork, IClock clock) : IRequestHandler<CreateProductCommand, BaseResult<ProductDto>>
 {
     public async Task<BaseResult<ProductDto>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
         var product = new ProductEntity(request.Name, request.Price, request.BarCode);
 
-        await productRepository.AddAsync(product);
-        await unitOfWork.SaveChangesAsync();
+        await productRepository.AddAsync(product, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new ProductDto
         {
             BarCode = product.BarCode,
             Id = product.Id,
-            CreatedDateTime = DateTime.UtcNow,
+            CreatedDateTime = clock.UtcNow,
             Name = product.Name,
             Price = product.Price,
         };

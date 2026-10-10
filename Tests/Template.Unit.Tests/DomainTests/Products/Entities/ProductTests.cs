@@ -10,7 +10,7 @@ namespace Template.Unit.Tests.DomainTests.Products.Entities
         {
             // Arrange
             var name = "Product1";
-            var price = 10.0;
+            var price = 10.0m;
             var barCode = "123456789";
 
             // Act
@@ -26,9 +26,9 @@ namespace Template.Unit.Tests.DomainTests.Products.Entities
         public void Should_Update_Product_Details()
         {
             // Arrange
-            var product = new ProductEntity("Product1", 10.0, "123456789");
+            var product = new ProductEntity("Product1", 10.0m, "123456789");
             var newName = "UpdatedProduct";
-            var newPrice = 20.0;
+            var newPrice = 20.0m;
             var newBarCode = "987654321";
 
             // Act
@@ -38,6 +38,24 @@ namespace Template.Unit.Tests.DomainTests.Products.Entities
             product.Name.ShouldBe(newName);
             product.Price.ShouldBe(newPrice);
             product.BarCode.ShouldBe(newBarCode);
+        }
+
+        [Fact]
+        public void Should_Reject_Blank_Name()
+        {
+            Should.Throw<ArgumentException>(() => new ProductEntity(" ", 10.0m, "123456789"));
+        }
+
+        [Fact]
+        public void Should_Reject_Negative_Price()
+        {
+            Should.Throw<ArgumentOutOfRangeException>(() => new ProductEntity("Product", -0.01m, "123456789"));
+        }
+
+        [Fact]
+        public void Should_Reject_Blank_BarCode()
+        {
+            Should.Throw<ArgumentException>(() => new ProductEntity("Product", 10.0m, " "));
         }
     }
 }

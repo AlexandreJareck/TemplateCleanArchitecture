@@ -8,16 +8,17 @@ namespace Template.WebApi.Infrastructure.Extensions;
 
 public static class ElasticExtensions
 {
-    public static IServiceCollection AddHealthChecksService(this IServiceCollection services)
+    public static IServiceCollection AddHealthChecksService(this IServiceCollection services, bool includeElasticsearch = true)
     {
-        var serviceProvider = services.BuildServiceProvider();
-        var elasticSearchSettings = serviceProvider?.GetService<IOptions<ElasticSearchSettings>>()?.Value;
+        var healthChecks = services.AddHealthChecks();
+        if (!includeElasticsearch)
+            return services;
 
-        services.AddHealthChecks()
-            .AddElasticsearch(
-                elasticSearchSettings?.Url ?? "http://elasticsearch:9200",
-                elasticSearchSettings?.Name ?? "elasticsearch"
-            );
+        using var serviceProvider = services.BuildServiceProvider();
+        var elasticSearchSettings = serviceProvider.GetService<IOptions<ElasticSearchSettings>>()?.Value;
+        healthChecks.AddElasticsearch(
+            elasticSearchSettings?.Url ?? "http://elasticsearch:9200",
+            elasticSearchSettings?.Name ?? "elasticsearch");
 
         return services;
     }
