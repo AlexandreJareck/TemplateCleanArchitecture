@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Caching\Template.Infrastructure.Caching.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
   </ItemGroup>
 
