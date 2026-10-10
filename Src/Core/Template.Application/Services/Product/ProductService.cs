@@ -1,63 +1,32 @@
-﻿using MediatR;
-using Microsoft.Extensions.Caching.Distributed;
+#nullable enable
+using MediatR;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using Template.Application.DTOs.Products;
 using Template.Application.Features.Products.Queries;
+using Template.Application.Interfaces.Caching;
 using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
 
-namespace Template.Application.Services.Product
+namespace Template.Application.Services.Product;
+
+public class ProductService(IProductCache productCache, ILogger<ProductService> logger, IMediator mediator) : IProductService
 {
-    public class ProductService : IProductService
+    public async Task<BaseResult<ProductDto>> GetProductAsync(Guid productId, CancellationToken cancellationToken)
     {
-        private readonly IDistributedCache _cache;
-        private readonly ILogger<ProductService> _logger;
-        private readonly IMediator _mediator;
-        public ProductService(IDistributedCache cache, ILogger<ProductService> logger, IMediator mediator)
+        var cachedProduct = await productCache.GetAsync(productId, cancellationToken);
+        if (cachedProduct is not null)
         {
-            _cache = cache;
-            _logger = logger;
-            _mediator = mediator;
+            logger.LogDebug("Product {ProductId} retrieved from cache.", productId);
+            return cachedProduct;
         }
 
-        public async Task<BaseResult<ProductDto>> GetProductAsync(Guid productId, CancellationToken cancellationToken)
+        var result = await mediator.Send(new GetProductByIdQuery { Id = productId }, cancellationToken);
+
+        if (result.Success && result.Data is not null)
         {
-            string cacheKey = $"Product_{productId}";
-
-            var cachedItem = await _cache.GetStringAsync(cacheKey);
-            if (cachedItem != null)
-            {
-                _logger.LogInformation("product retrieved from cache!");
-                return JsonConvert.DeserializeObject<ProductDto>(cachedItem);
-            }
-
-            var product = await GetProductByIdQuery(productId, cancellationToken);
-
-            if (product is null)
-            {
-                return new Error(ErrorCode.NotFound, "Product not found", nameof(productId));
-            }
-
-            await _cache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(product),
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
-                    SlidingExpiration = TimeSpan.FromMinutes(2)
-                }
-            );
-
-            _logger.LogInformation("🔄 product added to cache.");
-            return product;
+            await productCache.SetAsync(result.Data, cancellationToken);
+            logger.LogDebug("Product {ProductId} added to cache.", productId);
         }
 
-        private async Task<BaseResult<ProductDto>> GetProductByIdQuery(Guid productId, CancellationToken cancellationToken)
-        {
-            return await _mediator.Send(new GetProductByIdQuery
-            {
-                Id = productId,
-            }, cancellationToken);
-        }
+        return result;
     }
 }

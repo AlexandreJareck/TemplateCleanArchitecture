@@ -2,27 +2,29 @@
 using MediatR;
 using Template.Application.Helpers;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Caching;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
 
 namespace Template.Application.Features.Products.Commands;
 public class UpdateProductCommand : IRequest<BaseResult<ProductDto>>
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
-    public double Price { get; set; }
+    public decimal Price { get; set; }
     public string BarCode { get; set; }
 }
 
 public class UpdateProductCommandHandler(
     IProductRepository productRepository,
     IUnitOfWork unitOfWork,
-    ITranslator translator) : IRequestHandler<UpdateProductCommand, BaseResult<ProductDto>>
+    ITranslator translator,
+    IProductCache productCache) : IRequestHandler<UpdateProductCommand, BaseResult<ProductDto>>
 {
     public async Task<BaseResult<ProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await productRepository.GetByIdAsync(request.Id);
+        var product = await productRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (product is null)
         {
@@ -30,7 +32,8 @@ public class UpdateProductCommandHandler(
         }
 
         product.Update(request.Name, request.Price, request.BarCode);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await productCache.RemoveAsync(product.Id, cancellationToken);
 
         return new ProductDto
         {

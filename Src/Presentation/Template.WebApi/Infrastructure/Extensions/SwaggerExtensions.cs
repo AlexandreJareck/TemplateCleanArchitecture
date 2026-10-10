@@ -1,7 +1,6 @@
 ﻿#nullable disable
-using Elastic.Clients.Elasticsearch.IndexLifecycleManagement;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -14,7 +13,9 @@ public static class SwaggerExtensions
     public static IApplicationBuilder UseSwaggerWithVersioning(this IApplicationBuilder app)
     {
         IServiceProvider services = app.ApplicationServices;
+#pragma warning disable AV0027 // Test-only minimal endpoints are excluded and described before this method is called.
         var provider = services.GetRequiredService<IApiVersionDescriptionProvider>();
+#pragma warning restore AV0027
 
         app.UseSwagger();
 
@@ -34,11 +35,11 @@ public static class SwaggerExtensions
         services.AddApiVersioning(setup =>
         {
             setup.DefaultApiVersion = new ApiVersion(1, 0);
-            setup.AssumeDefaultVersionWhenUnspecified = true;
             setup.ReportApiVersions = true;
-        });
-
-        services.AddVersionedApiExplorer(setup =>
+            setup.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddMvc()
+        .AddApiExplorer(setup =>
         {
             setup.GroupNameFormat = "'v'VVV";
             setup.SubstituteApiVersionInUrl = true;

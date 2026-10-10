@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
 using Template.Infrastructure.Persistence.Contexts;
@@ -15,8 +15,12 @@ public static class ServiceRegistration
     {
         if (useInMemoryDatabase)
         {
+            var databaseName = configuration["TestDatabaseName"] is { Length: > 0 } testDatabaseName
+                ? $"{nameof(ApplicationDbContext)}-{testDatabaseName}"
+                : nameof(ApplicationDbContext);
+            var databaseRoot = new InMemoryDatabaseRoot();
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase(nameof(ApplicationDbContext)));
+                options.UseInMemoryDatabase(databaseName, databaseRoot));
         }
         else
         {
@@ -25,25 +29,10 @@ public static class ServiceRegistration
         }
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.RegisterRepositories();
+        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<IProductRepository, ProductRepository>();
 
         return services;
-    }
-    private static void RegisterRepositories(this IServiceCollection services)
-    {
-        var interfaceType = typeof(IGenericRepository<>);
-        var interfaces = Assembly.GetAssembly(interfaceType)!.GetTypes()
-            .Where(p => p.GetInterface(interfaceType.Name) != null);
-
-        var implementations = Assembly.GetAssembly(typeof(GenericRepository<>))!.GetTypes();
-
-        foreach (var item in interfaces)
-        {
-            var implementation = implementations.FirstOrDefault(p => p.GetInterface(item.Name) != null);
-
-            if (implementation is not null)
-                services.AddTransient(item, implementation);
-        }
     }
 }
 

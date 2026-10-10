@@ -1,28 +1,22 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Template.Application.Features.Products.Commands;
 using Template.Application.Features.Products.Queries;
 using Template.Application.Services.Product;
 using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
+using Template.WebApi.Infrastructure.Http;
 
 namespace Template.WebApi.Controllers.v2;
 
 [ApiVersion("2.0")]
-public class ProductController : BaseApiController
+public class ProductController(
+    ISender sender,
+    IProductService productService,
+    ApiResultMapper resultMapper) : BaseApiController
 {
-    private readonly IMediator _mediator;
-    private readonly IProductService _productService;
-
-    public ProductController(
-        IMediator mediator,
-        IProductService productService)
-    {
-        _mediator = mediator;
-        _productService = productService;
-    }
-
     /// <summary>
     /// Get product by id with cache.
     /// </summary>
@@ -32,14 +26,14 @@ public class ProductController : BaseApiController
     /// <response code="500">Erro interno</response>
     [HttpGet("{id:guid}/cache")]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError, "application/problem+json")]
     public async Task<IActionResult> GetWithCache(
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
-        var result = await _productService.GetProductAsync(id, cancellationToken);
-        return CustomResponse(result);
+        var result = await productService.GetProductAsync(id, cancellationToken);
+        return resultMapper.ToActionResult(this, result);
     }
 
     /// <summary>
@@ -49,12 +43,13 @@ public class ProductController : BaseApiController
     /// <response code="400">Invalid parameters</response>
     [HttpGet("get-paged-list")]
     [ProducesResponseType(typeof(PagedResponse<ProductDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest, "application/problem+json")]
     public async Task<IActionResult> GetPagedListProduct(
-        [FromQuery] GetPagedListProductQuery query)
+        [FromQuery] GetPagedListProductQuery query,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(query);
-        return CustomResponse(result);
+        var result = await sender.Send(query, cancellationToken);
+        return resultMapper.ToActionResult(this, result);
     }
 
     /// <summary>
@@ -65,12 +60,13 @@ public class ProductController : BaseApiController
     /// <response code="404">Product not found</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound, "application/problem+json")]
     public async Task<IActionResult> GetProductById(
-        [FromRoute] Guid id)
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetProductByIdQuery { Id = id });
-        return CustomResponse(result);
+        var result = await sender.Send(new GetProductByIdQuery { Id = id }, cancellationToken);
+        return resultMapper.ToActionResult(this, result);
     }
 
     /// <summary>
@@ -82,13 +78,17 @@ public class ProductController : BaseApiController
     [HttpPost]
     [Authorize]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized, "application/problem+json")]
     public async Task<IActionResult> CreateProduct(
-        [FromBody] CreateProductCommand command)
+        [FromBody] CreateProductCommand command,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(command);
-        return CustomResponse(result);
+        var result = await sender.Send(command, cancellationToken);
+        return resultMapper.ToActionResult(
+            this,
+            result,
+            () => Created($"/api/v2/product/{result.Data.Id}", result));
     }
 
     /// <summary>
@@ -99,14 +99,15 @@ public class ProductController : BaseApiController
     [HttpPut("{id:guid}")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound, "application/problem+json")]
     public async Task<IActionResult> UpdateProduct(
         [FromRoute] Guid id,
-        [FromBody] UpdateProductCommand command)
+        [FromBody] UpdateProductCommand command,
+        CancellationToken cancellationToken)
     {
         command.Id = id;
-        var result = await _mediator.Send(command);
-        return CustomResponse(result);
+        var result = await sender.Send(command, cancellationToken);
+        return resultMapper.ToActionResult(this, result);
     }
 
     /// <summary>
@@ -116,17 +117,18 @@ public class ProductController : BaseApiController
     /// <response code="404">Product not found</response>
     [HttpDelete("{id:guid}")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound, "application/problem+json")]
     public async Task<IActionResult> DeleteProduct(
-        [FromRoute] Guid id)
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteProductCommand
+        var result = await sender.Send(new DeleteProductCommand
         {
             Id = id
-        });
+        }, cancellationToken);
 
-        return CustomResponse(result);
+        return resultMapper.ToActionResult(this, result, NoContent);
     }
 
 }
