@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Template.Application.Services.Elastic;
+using Asp.Versioning;
 using Template.Domain.Person;
 
 namespace Template.WebApi.Controllers.v1;
 
-[ApiVersion("1")]
+[ApiVersion("1", Deprecated = true)]
 public class PersonController : BaseApiController
 {
     private readonly IElasticService _elasticService;
@@ -14,38 +15,44 @@ public class PersonController : BaseApiController
         _elasticService = elasticService;
     }
     [HttpPost("create-index")]
-    public async Task<IActionResult> CreateIndex(string indexName)
+    public async Task<IActionResult> CreateIndex([FromQuery] string indexName, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         await _elasticService.CreateIndexIfNotExistsAsync(indexName);
         return Ok($"Index {indexName} created or already exists.");
     }
     [HttpPost("add-person")]
-    public async Task<IActionResult> AddPerson([FromBody] Person person)
+    public async Task<IActionResult> AddPerson([FromBody] Person person, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var result = await _elasticService.AddOrUpdate(person);
         return result ? Ok("Person added or updated successfully.") : StatusCode(500, "Error adding or updating person.");
     }
     [HttpPost("update-person")]
-    public async Task<IActionResult> UpdatePerson([FromBody] Person person)
+    public async Task<IActionResult> UpdatePerson([FromBody] Person person, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var result = await _elasticService.AddOrUpdate(person);
         return result ? Ok("Person added or updated successfully.") : StatusCode(500, "Error adding or updating person.");
     }
     [HttpGet("get-person/{key}")]
-    public async Task<IActionResult> GetPerson(string key)
+    public async Task<IActionResult> GetPerson([FromRoute] string key, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var person = await _elasticService.Get(key);
         return person != null ? Ok(person) : NotFound("Person not found.");
     }
     [HttpGet("get-all-persons")]
-    public async Task<IActionResult> GetAllPersons()
+    public async Task<IActionResult> GetAllPersons(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var persons = await _elasticService.GetAll();
         return persons != null ? Ok(persons) : StatusCode(500, "Error retrieving persons.");
     }
     [HttpDelete("delete-person/{key}")]
-    public async Task<IActionResult> DeletePerson(string key)
+    public async Task<IActionResult> DeletePerson([FromRoute] string key, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var result = await _elasticService.Remove(key);
         return result ? Ok("Person deleted successfully.") : StatusCode(500, "Error deleting person.");
     }

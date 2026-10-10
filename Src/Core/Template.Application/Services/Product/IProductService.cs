@@ -1,5 +1,5 @@
 ﻿using Template.Application.Wrappers;
-using Template.Domain.Products.DTOs;
+using Template.Application.DTOs.Products;
 
 namespace Template.Application.Services.Product;
 

@@ -34,10 +34,10 @@ internal static class ApiRoutes
         internal static class Product
         {
             internal const string GetPagedListProduct = "/api/v2/product/get-paged-list";
-            internal const string GetProductById = "/api/v2/product/get-by-id";
             internal const string CreateProduct = "/api/v2/product";
-            internal const string UpdateProduct = "/api/v2/product";
-            internal const string DeleteProduct = "/api/v2/product";
+            internal static string GetProductById(Guid id) => $"/api/v2/product/{id}";
+            internal static string UpdateProduct(Guid id) => $"/api/v2/product/{id}";
+            internal static string DeleteProduct(Guid id) => $"/api/v2/product/{id}";
         }
     }
     internal static string AddQueryString(this string url, string key, string value)

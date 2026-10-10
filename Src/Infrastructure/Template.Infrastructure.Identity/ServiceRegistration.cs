@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using Template.Application.Interfaces.UserInterfaces;
-using Template.Application.Wrappers;
 using Template.Infrastructure.Identity.Contexts;
 using Template.Infrastructure.Identity.Models;
 using Template.Infrastructure.Identity.Services;
@@ -19,12 +19,16 @@ namespace Template.Infrastructure.Identity;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration, bool UseInMemoryDatabase)
+    public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase)
     {
-        if (UseInMemoryDatabase)
+        if (useInMemoryDatabase)
         {
+            var databaseName = configuration["TestDatabaseName"] is { Length: > 0 } testDatabaseName
+                ? $"{nameof(IdentityContext)}-{testDatabaseName}"
+                : nameof(IdentityContext);
+            var databaseRoot = new InMemoryDatabaseRoot();
             services.AddDbContext<IdentityContext>(options =>
-                options.UseInMemoryDatabase(nameof(IdentityContext)));
+                options.UseInMemoryDatabase(databaseName, databaseRoot));
         }
         else
         {
@@ -75,17 +79,6 @@ public static class ServiceRegistration
                 };
                 o.Events = new JwtBearerEvents()
                 {
-                    OnChallenge = async context =>
-                    {
-                        context.HandleResponse();
-                        context.Response.StatusCode = 401;
-                        await context.Response.WriteAsJsonAsync(BaseResult.Failure(new Error(ErrorCode.AccessDenied, "You are not Authorized")));
-                    },
-                    OnForbidden = async context =>
-                    {
-                        context.Response.StatusCode = 403;
-                        await context.Response.WriteAsJsonAsync(BaseResult.Failure(new Error(ErrorCode.AccessDenied, "You are not authorized to access this resource")));
-                    },
                     OnTokenValidated = async context =>
                     {
                         var claimsIdentity = context.Principal?.Identity as ClaimsIdentity;

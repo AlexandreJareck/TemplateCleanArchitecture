@@ -1,14 +1,23 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
+using FluentValidation;
 using Template.Application.DTOs.Account.Request;
 using Template.Application.DTOs.Account.Response;
 using Template.Application.Interfaces.UserInterfaces;
 using Template.Application.Wrappers;
+using Template.WebApi.Infrastructure.Http;
 
 namespace Template.WebApi.Controllers.v2;
 
 [ApiVersion("2.0")]
-public class AccountController(IAccountServices accountServices, ILogger<AccountController> logger) : BaseApiController
+public class AccountController(
+    IAccountServices accountServices,
+    ILogger<AccountController> logger,
+    ApiResultMapper resultMapper,
+    IValidator<AuthenticationRequest> authenticationValidator,
+    IValidator<ChangeUserNameRequest> userNameValidator,
+    IValidator<ChangePasswordRequest> passwordValidator) : BaseApiController
 {
 
     /// <summary>
@@ -18,12 +27,13 @@ public class AccountController(IAccountServices accountServices, ILogger<Account
     /// <response code="400">Invalid data</response>
     [HttpPost("authenticate")]
     [ProducesResponseType(typeof(AuthenticationResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Authenticate(AuthenticationRequest request)
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest, "application/problem+json")]
+    public async Task<IActionResult> Authenticate([FromBody] AuthenticationRequest request, CancellationToken cancellationToken)
     {
-        var result = await accountServices.Authenticate(request);
+        await authenticationValidator.ValidateAndThrowAsync(request, cancellationToken);
+        var result = await accountServices.Authenticate(request, cancellationToken);
 
-        return CustomResponse(result);
+        return resultMapper.ToActionResult(this, result);
     }
 
     /// <summary>
@@ -33,13 +43,14 @@ public class AccountController(IAccountServices accountServices, ILogger<Account
     /// <response code="400">Invalid data</response>
     [HttpPut("change-user-name"), Authorize]
     [ProducesResponseType(typeof(BaseResult), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> ChangeUserName(ChangeUserNameRequest model)
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized, "application/problem+json")]
+    public async Task<IActionResult> ChangeUserName([FromBody] ChangeUserNameRequest model, CancellationToken cancellationToken)
     {
-        var result = await accountServices.ChangeUserName(model);
+        await userNameValidator.ValidateAndThrowAsync(model, cancellationToken);
+        var result = await accountServices.ChangeUserName(model, cancellationToken);
 
-        return CustomResponse(result);
+        return resultMapper.ToActionResult(this, result);
     }
 
     /// <summary>
@@ -49,13 +60,14 @@ public class AccountController(IAccountServices accountServices, ILogger<Account
     /// <response code="400">Invalid data</response>
     [HttpPut("change-password"), Authorize]
     [ProducesResponseType(typeof(BaseResult), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> ChangePassword(ChangePasswordRequest model)
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized, "application/problem+json")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest model, CancellationToken cancellationToken)
     {
-        var result = await accountServices.ChangePassword(model);
+        await passwordValidator.ValidateAndThrowAsync(model, cancellationToken);
+        var result = await accountServices.ChangePassword(model, cancellationToken);
 
-        return CustomResponse(result);
+        return resultMapper.ToActionResult(this, result);
     }
 
     /// <summary>
@@ -65,8 +77,8 @@ public class AccountController(IAccountServices accountServices, ILogger<Account
     /// <response code="400">Invalid data</response>
     [HttpPost("start")]
     [ProducesResponseType(typeof(AuthenticationResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Start()
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest, "application/problem+json")]
+    public async Task<IActionResult> Start(CancellationToken cancellationToken)
     {
         logger.LogTrace("Log TRACE capturado!");
         logger.LogDebug("Log DEBUG capturado!");
@@ -75,9 +87,9 @@ public class AccountController(IAccountServices accountServices, ILogger<Account
         logger.LogError("Log ERROR capturado!");
         logger.LogCritical("Log CRITICAL capturado!");
 
-        var ghostUsername = await accountServices.RegisterGhostAccount();
-        var result = await accountServices.AuthenticateByUserName(ghostUsername.Data);
+        var ghostUsername = await accountServices.RegisterGhostAccount(cancellationToken);
+        var result = await accountServices.AuthenticateByUserName(ghostUsername.Data, cancellationToken);
 
-        return CustomResponse(result);
+        return resultMapper.ToActionResult(this, result);
     }
 }

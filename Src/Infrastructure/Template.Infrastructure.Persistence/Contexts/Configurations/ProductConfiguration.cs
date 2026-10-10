@@ -10,5 +10,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<ProductEntity>
         builder.HasKey(x => x.Id);
         builder.Property(p => p.Name).HasMaxLength(100);
         builder.Property(p => p.BarCode).HasMaxLength(50);
+        builder.Property(p => p.Price).HasPrecision(18, 2);
     }
 }

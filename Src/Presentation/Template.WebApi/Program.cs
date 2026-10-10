@@ -1,4 +1,7 @@
-using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authorization.Policy;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -16,12 +19,14 @@ using Template.Infrastructure.Resources;
 using Template.WebApi.Infrastructure.Extensions;
 using Template.WebApi.Infrastructure.Middlewares;
 using Template.WebApi.Infrastructure.Services;
+using Template.WebApi.Infrastructure.Http;
 
 var builder = WebApplication.CreateBuilder(args);
+var isTestEnvironment = builder.Environment.IsEnvironment("Test");
 
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .CreateLogger();
+Log.Logger = isTestEnvironment
+    ? new LoggerConfiguration().WriteTo.Console().CreateLogger()
+    : new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
 
 bool useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
@@ -29,22 +34,32 @@ builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSectio
 builder.Services.Configure<ElasticSearchSettings>(builder.Configuration.GetSection(nameof(ElasticSearchSettings)));
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection(nameof(RabbitMqSettings)));
 
-builder.Services.AddApplicationLayer();
+builder.Services.AddApplicationLayer(registerIntegrationHostedServices: !isTestEnvironment);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDatabase);
-builder.Services.AddRedis(builder.Configuration);
+if (isTestEnvironment)
+    builder.Services.AddDistributedMemoryCache();
+else
+    builder.Services.AddRedis(builder.Configuration);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 
+builder.Services.AddSingleton<ApiResultMapper>();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ProblemDetailsAuthorizationMiddlewareResultHandler>();
 builder.Services.AddControllers();
-builder.Services.AddFluentValidationAutoValidation();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+        context.HttpContext.RequestServices.GetRequiredService<ApiResultMapper>().FromModelState(context);
+});
 builder.Services.AddSwaggerWithVersioning();
 builder.Services.AddAnyCors();
 
 builder.Host.UseSerilog();
 builder.Services.AddCustomLocalization();
-builder.Services.AddHealthChecksService();
-builder.Host.ConfigureLog();
+builder.Services.AddHealthChecksService(includeElasticsearch: !isTestEnvironment);
+if (!isTestEnvironment)
+    builder.Host.ConfigureLog();
 
 builder.Services.AddRouting(options =>
 {
@@ -76,6 +91,17 @@ app.UseAnyCors();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+if (isTestEnvironment)
+{
+    app.MapGet("/_tests/forbidden", () => Results.NoContent())
+        .RequireAuthorization(policy => policy.RequireRole("role-not-assigned-to-test-user"))
+        .ExcludeFromDescription();
+    app.MapGet(
+            "/_tests/exception",
+            () => Task.FromException<IResult>(new InvalidOperationException("internal-sensitive-marker")))
+        .ExcludeFromDescription();
+}
+app.DescribeApiVersions();
 app.UseSwaggerWithVersioning();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.MapControllers();

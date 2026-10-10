@@ -14,7 +14,7 @@ public class DeleteProductCommandHandler(IProductRepository productRepository, I
 {
     public async Task<BaseResult> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await productRepository.GetByIdAsync(request.Id);
+        var product = await productRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (product is null)
         {
@@ -22,7 +22,7 @@ public class DeleteProductCommandHandler(IProductRepository productRepository, I
         }
 
         productRepository.Delete(product);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return BaseResult.Ok();
     }

@@ -20,7 +20,7 @@ public class GetProductByIdQueryHandlerTests
         var productBarCode = "123456789";
 
         var productRepositoryMock = new Mock<IProductRepository>();
-        productRepositoryMock.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>()))
+        productRepositoryMock.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                              .ReturnsAsync(new ProductEntity(productName, productPrice, productBarCode) { Id = productId });
 
         var translatorMock = new Mock<ITranslator>();
@@ -49,7 +49,7 @@ public class GetProductByIdQueryHandlerTests
         var productId = Guid.Parse("d40d3315-06d0-4ffa-8a52-976fb283cb3e");
 
         var productRepositoryMock = new Mock<IProductRepository>();
-        productRepositoryMock.Setup(repo => repo.GetByIdAsync(productId));
+        productRepositoryMock.Setup(repo => repo.GetByIdAsync(productId, It.IsAny<CancellationToken>()));
 
         var translatorMock = new Mock<ITranslator>();
         translatorMock.Setup(translator => translator.GetString(It.IsAny<string>()))
