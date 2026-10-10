@@ -18,7 +18,10 @@ using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Seeds;
 using Template.Infrastructure.Resources;
+using Template.Infrastructure.Search;
 using Template.WebApi.Infrastructure.Extensions;
+using Template.WebApi.Infrastructure.HealthChecks;
+using Template.WebApi.Infrastructure.Logging;
 using Template.WebApi.Infrastructure.Middlewares;
 using Template.WebApi.Infrastructure.Services;
 using Template.WebApi.Infrastructure.Http;
@@ -33,13 +36,13 @@ Log.Logger = isTestEnvironment
 bool useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
 builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSection(nameof(LocalizationSettings)));
-builder.Services.Configure<ElasticSearchSettings>(builder.Configuration.GetSection(nameof(ElasticSearchSettings)));
 
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddCachingInfrastructure(builder.Configuration, useInMemoryCache: isTestEnvironment);
 builder.Services.AddMessagingInfrastructure(builder.Configuration, useBroker: !isTestEnvironment);
+builder.Services.AddSearchInfrastructure(builder.Configuration, useSearchEngine: !isTestEnvironment);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 
@@ -56,7 +59,7 @@ builder.Services.AddAnyCors();
 
 builder.Host.UseSerilog();
 builder.Services.AddCustomLocalization();
-builder.Services.AddHealthChecksService(includeElasticsearch: !isTestEnvironment);
+builder.Services.AddHealthChecksService(builder.Configuration, includeElasticsearch: !isTestEnvironment);
 if (!isTestEnvironment)
     builder.Host.ConfigureLog();
 

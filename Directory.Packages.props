@@ -4,7 +4,6 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AspNetCore.HealthChecks.Elasticsearch" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="8.17.1" />
@@ -44,6 +43,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.3.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+    <PackageVersion Include="Testcontainers" Version="4.16.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
     <PackageVersion Include="Testcontainers.RabbitMq" Version="4.16.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
