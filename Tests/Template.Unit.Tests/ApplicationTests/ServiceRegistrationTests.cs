@@ -6,6 +6,7 @@ using Template.Application.Behaviors;
 using Template.Application.Features.Orders.EventHandlers;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Messaging;
+using Template.Application.Interfaces.Search;
 using Template.Application.Services.Time;
 
 namespace Template.Unit.Tests.ApplicationTests;
@@ -42,5 +43,14 @@ public class ServiceRegistrationTests
         handler.Lifetime.ShouldBe(ServiceLifetime.Scoped);
         services.ShouldNotContain(service => service.ServiceType.FullName == "Microsoft.Extensions.Hosting.IHostedService");
         services.ShouldNotContain(service => service.ServiceType == typeof(IOrderEventPublisher));
+    }
+
+    [Fact]
+    public void AddApplicationLayer_LeavesThePersonSearchIndexToInfrastructure()
+    {
+        var services = new ServiceCollection().AddApplicationLayer();
+
+        services.ShouldNotContain(service => service.ServiceType == typeof(IPersonSearchIndex));
+        services.ShouldNotContain(service => service.ServiceType.Namespace != null && service.ServiceType.Namespace.StartsWith("Elastic", StringComparison.Ordinal));
     }
 }

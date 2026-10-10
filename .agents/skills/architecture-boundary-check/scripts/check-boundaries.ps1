@@ -5,16 +5,12 @@ $domainProject = Get-Content -Raw 'Src/Core/Template.Domain/Template.Domain.cspr
 if ($domainProject -match '<PackageReference|<ProjectReference') { $violations.Add('Domain project declares a package or project reference.') }
 
 $applicationProject = [xml](Get-Content -Raw 'Src/Core/Template.Application/Template.Application.csproj')
-$allowedTemporaryPackages = @(
-    'Elastic.Clients.Elasticsearch' # Phase 10
-)
 $forbiddenPattern = 'EntityFrameworkCore|StackExchangeRedis|RabbitMQ|Elastic|Serilog|AspNetCore|Hosting.Abstractions'
-$actualTemporaryPackages = @($applicationProject.Project.ItemGroup.PackageReference |
+$forbiddenPackages = @($applicationProject.Project.ItemGroup.PackageReference |
     ForEach-Object { [string]$_.Include } |
-    Where-Object { $_ -match $forbiddenPattern } |
-    Sort-Object)
-if (Compare-Object $allowedTemporaryPackages $actualTemporaryPackages) {
-    $violations.Add('Application implementation package exceptions differ from the exact Phase 10 allowlist.')
+    Where-Object { $_ -match $forbiddenPattern })
+if ($forbiddenPackages.Count -gt 0) {
+    $violations.Add("Application references implementation packages: $($forbiddenPackages -join ', ').")
 }
 
 $coreFiles = Get-ChildItem 'Src/Core' -Recurse -Filter *.cs | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
@@ -22,6 +18,21 @@ foreach ($file in $coreFiles) {
     $source = Get-Content -Raw -LiteralPath $file.FullName
     if ($source -match 'RabbitMQ|BackgroundService|IHostedService|ConnectionFactory|CreateChannel|QueueDeclare|ExchangeDeclare|RabbitMqSettings') {
         $violations.Add("Core contains messaging plumbing in $($file.FullName).")
+    }
+    if ($source -match 'Elastic\.|ElasticsearchClient|ElasticSearchSettings|Elasticsearch|Serilog|HealthChecks') {
+        $violations.Add("Core contains search, logging or health-check plumbing in $($file.FullName).")
+    }
+}
+
+$sourceFiles = Get-ChildItem 'Src' -Recurse -Filter *.cs | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
+foreach ($file in $sourceFiles) {
+    $source = Get-Content -Raw -LiteralPath $file.FullName
+    $relative = $file.FullName.Substring((Get-Location).Path.Length + 1) -replace '\\', '/'
+    if ($source -match 'using Elastic\.Clients|ElasticsearchClient' -and $relative -notlike 'Src/Infrastructure/Template.Infrastructure.Search/*') {
+        $violations.Add("Elasticsearch client used outside Infrastructure.Search in $relative.")
+    }
+    if ($source -match 'BuildServiceProvider\(' -and $relative -ne 'Src/Presentation/Template.WebApi/Infrastructure/Extensions/LocalizationExtensions.cs') { # Phase 13: localization
+        $violations.Add("Registration builds an intermediate service provider in $relative.")
     }
 }
 
