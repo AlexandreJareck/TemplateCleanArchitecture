@@ -6,6 +6,7 @@
       "Src\\Core\\Template.Domain\\Template.Domain.csproj",
       "Src\\Infrastructure\\Template.Infrastructure.Caching\\Template.Infrastructure.Caching.csproj",
       "Src\\Infrastructure\\Template.Infrastructure.Identity\\Template.Infrastructure.Identity.csproj",
+      "Src\\Infrastructure\\Template.Infrastructure.Messaging\\Template.Infrastructure.Messaging.csproj",
       "Src\\Infrastructure\\Template.Infrastructure.Persistence\\Template.Infrastructure.Persistence.csproj",
       "Src\\Infrastructure\\Template.Infrastructure.Resources\\Template.Infrastructure.Resources.csproj",
       "Src\\Presentation\\Template.WebApi\\Template.WebApi.csproj",
@@ -13,6 +14,7 @@
       "Tests\\Template.Functional.Tests\\Template.Functional.Tests.csproj",
       "Tests\\Template.Integration.Tests\\Template.Integration.Tests.csproj",
       "Tests\\Template.PostgreSql.Integration.Tests\\Template.PostgreSql.Integration.Tests.csproj",
+      "Tests\\Template.RabbitMq.Integration.Tests\\Template.RabbitMq.Integration.Tests.csproj",
       "Tests\\Template.Unit.Tests\\Template.Unit.Tests.csproj"
     ]
   }

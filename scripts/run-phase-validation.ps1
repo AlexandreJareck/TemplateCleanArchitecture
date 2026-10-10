@@ -43,6 +43,7 @@ Invoke-Step '03-test-architecture' { & $DotNetPath test Tests\Template.Architect
 Invoke-Step '04-test-unit' { & $DotNetPath test Tests\Template.Unit.Tests\Template.Unit.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '05-test-integration' { & $DotNetPath test Tests\Template.Integration.Tests\Template.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '06-test-postgresql' { & $DotNetPath test Tests\Template.PostgreSql.Integration.Tests\Template.PostgreSql.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
+Invoke-Step '06b-test-rabbitmq' { & $DotNetPath test Tests\Template.RabbitMq.Integration.Tests\Template.RabbitMq.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '07-test-functional' { & $DotNetPath test Tests\Template.Functional.Tests\Template.Functional.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '08-vulnerable-packages' { & $DotNetPath list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive }
 Invoke-Step '09-docker-compose-config' { docker compose config -q }

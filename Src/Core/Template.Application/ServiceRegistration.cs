@@ -3,17 +3,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 using Template.Application.Behaviors;
-using Template.Application.Consumers;
+using Template.Application.Features.Orders.EventHandlers;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Messaging;
 using Template.Application.Services.Elastic;
 using Template.Application.Services.Product;
-using Template.Application.Services.RabbitMq;
 using Template.Application.Services.Time;
 
 namespace Template.Application;
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddApplicationLayer(this IServiceCollection services, bool registerIntegrationHostedServices = true)
+    public static IServiceCollection AddApplicationLayer(this IServiceCollection services)
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddMediatR(cfg =>
@@ -25,16 +25,8 @@ public static class ServiceRegistration
         services.TryAddSingleton<IClock, SystemClock>();
 
         services.AddScoped<IProductService, ProductService>();
-        services.AddScoped<IRabbitMqService, RabbitMqService>();
+        services.AddScoped<IOrderPlacedEventHandler, OrderPlacedEventHandler>();
         services.AddSingleton<IElasticService, ElasticService>();
-
-        if (registerIntegrationHostedServices)
-        {
-            services.AddHostedService<OrderConsumerDirect>();
-            services.AddHostedService<OrderConsumerFanoutA>();
-            services.AddHostedService<OrderConsumerFanoutB>();
-            services.AddHostedService<OrderConsumerTopic>();
-        }
 
         return services;
     }

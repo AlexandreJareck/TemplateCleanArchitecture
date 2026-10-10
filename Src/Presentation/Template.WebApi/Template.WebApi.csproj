@@ -36,6 +36,7 @@
     <ProjectReference Include="..\..\Core\Template.Application\Template.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Caching\Template.Infrastructure.Caching.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Identity\Template.Infrastructure.Identity.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Resources\Template.Infrastructure.Resources.csproj" />
   </ItemGroup>
