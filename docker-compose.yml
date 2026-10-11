@@ -4,11 +4,14 @@ services:
       context: .
       dockerfile: Src/Presentation/Template.WebApi/Dockerfile
     container_name: my_dotnet_app
+    # Startup order (Phase 14): migrations and seeds run at WebApi startup, so it waits until both PostgreSQL
+    # databases accept queries. Elasticsearch and RabbitMQ keep their pre-Phase 14 health conditions; Redis stays
+    # optional (the cache misses when Redis is down), so it is not a startup prerequisite.
     depends_on:
+      db:
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
-      db:
-        condition: service_started
       rabbitmq:
         condition: service_healthy
     environment:
@@ -16,15 +19,17 @@ services:
       - ConnectionStrings__IdentityConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_IDENTITY_DB_NAME};SearchPath=public
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetcore.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_CERTIFICATE_PASSWORD}
-      - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Port=${RABBITMQ_PORT}
-      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
-      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+      - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD}
+      - RabbitMqSettings__HostName=rabbitmq
+      - RabbitMqSettings__Port=5672
+      - RabbitMqSettings__UserName=${RABBITMQ_DEFAULT_USER}
+      - RabbitMqSettings__Password=${RABBITMQ_DEFAULT_PASS}
     networks:
       - nw
 
   db:
-    image: postgres:16
+    # PostgreSQL 16.11, the artifact `postgres:16` resolved to before Phase 14. Patching within 16 belongs to Phase 16.
+    image: postgres:16.11@sha256:056b54f00419b49289227ab12d09df508543883f407fe9935a2cec430ef8aa8d
     container_name: my_postgres_db
     restart: always
     environment:
@@ -34,9 +39,18 @@ services:
       POSTGRES_IDENTITY_DB_NAME: ${POSTGRES_IDENTITY_DB_NAME}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     networks:
       - nw
+    # Ready only when both databases created by init-db.sh accept a read-only query over TCP. The temporary
+    # server used during initialization listens on the Unix socket only, so the probe cannot pass early.
+    # Loopback connections use the image's trust rule, so no password is passed.
+    healthcheck:
+      test: ["CMD-SHELL", "psql -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB_NAME\" -tAc 'SELECT 1' >/dev/null && psql -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_IDENTITY_DB_NAME\" -tAc 'SELECT 1' >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   elasticsearch:
     container_name: elasticsearch
@@ -55,10 +69,11 @@ services:
     networks:
       - nw
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://elasticsearch:9200"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null"]
+      interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 12
+      start_period: 30s
 
   kibana:
     container_name: kibana
@@ -71,10 +86,17 @@ services:
         condition: service_healthy
     networks:
       - nw
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 18
+      start_period: 60s
 
   rabbitmq:
     container_name: rabbitmq
-    image: rabbitmq:latest
+    # RabbitMQ 4.2.2, the artifact `rabbitmq:latest` resolved to before Phase 14. Broker upgrades belong to Phase 17.
+    image: rabbitmq:4.2.2@sha256:18cc2597e9b07bc29f5f991ca2836555245b4f94563773c19b662944f4b6d870
     restart: always
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
@@ -88,13 +110,15 @@ services:
     networks:
       - nw
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 12
+      start_period: 30s
 
   redis:
-    image: redis:latest
+    # Redis 8.4.0, the artifact `redis:latest` resolved to before Phase 14. Consolidation belongs to Phase 15.
+    image: redis:8.4.0@sha256:47200b04138293fae39737e50878a238b13ec0781083126b1b0c63cf5d992e8d
     container_name: redis
     restart: always
     networks:
@@ -103,9 +127,16 @@ services:
       - redis-volume-data:/data
     command:
       - --requirepass ${REDIS_PASSWORD}
+    # A reply (PONG or NOAUTH) proves the server is up without passing the password to the probe.
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -qE 'PONG|NOAUTH'"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   redis-insight:
-    image: redislabs/redisinsight:1.14.0
+    # Redis Insight 1.14.0 (EOL line); its upgrade belongs to Phase 18.
+    image: redislabs/redisinsight:1.14.0@sha256:b03ab1426d0d861b0370e05ee670a8819c8ab36b987ca59e4a3e92e0038d089c
     container_name: redis-insight
     restart: always
     depends_on:
@@ -119,22 +150,40 @@ services:
       - redis-insight-volume_data:/db
 
   redis-graph:
-    image: redislabs/redisgraph
+    # Legacy module images pinned to the artifacts their floating tags resolved to before Phase 14 (EOL; their
+    # removal or consolidation belongs to Phase 15). Module versions: RedisGraph 2.10.16, RediSearch 2.6.13,
+    # RedisTimeSeries 1.6.19, all on Redis 6.2.
+    image: redislabs/redisgraph:2.10.16@sha256:bbf6c767f0ba80606e7bacf9bcf75966e97838c40dd5b6b685091a0c1632bdc3
     restart: always
     networks:
       - nw
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   redis-search:
-    image: redislabs/redisearch:latest
+    image: redislabs/redisearch:2.6.13@sha256:c0350c445d0c27ad91ffe5a1aaee1a2db3eb911222ff549e9066985ea94500a7
     restart: always
     networks:
       - nw
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   redis-timeseries:
-    image: redislabs/redistimeseries
+    image: redislabs/redistimeseries:1.6.19@sha256:5a15401e18bede614ca5d0e90c35ee3b51b27d43f8fe44922e34c5e35bc33b89
     restart: always
     networks:
       - nw
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
 volumes:
   postgres-data:

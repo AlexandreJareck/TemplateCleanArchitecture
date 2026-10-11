@@ -1,0 +1,34 @@
+# Phase 14 isolated baseline overlay. Used only by scripts/compose-baseline.ps1 with an explicit, unique project name:
+#   docker compose -p <project> --env-file <temp env> -f docker-compose.yml -f docker-compose.baseline.yml ...
+# It drops the fixed container names (so it never collides with the normal environment), publishes only the WebApi
+# over HTTP on a loopback port, and does not mount user secrets or certificates. docker-compose.override.yml is not
+# loaded. Volumes are created under the project name, so they are new and distinct from the normal volumes.
+services:
+  webapi:
+    container_name: !reset null
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      # HTTP only: clear the base file's default certificate, which Kestrel loads eagerly and is not mounted here.
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=
+    ports:
+      - "127.0.0.1:${P14_WEBAPI_PORT:?P14_WEBAPI_PORT must be set}:8080"
+
+  db:
+    container_name: !reset null
+
+  elasticsearch:
+    container_name: !reset null
+
+  kibana:
+    container_name: !reset null
+
+  rabbitmq:
+    container_name: !reset null
+
+  redis:
+    container_name: !reset null
+
+  redis-insight:
+    container_name: !reset null
