@@ -16,8 +16,8 @@ The repository is located at:
 Before changing any code, read the following in full:
 
 - `AGENTS.md`
-- `docs/fase-2-workspace.md`
-- `docs/fase-3-plano-implementacao.md`
+- `docs/phase-2-workspace.md`
+- `docs/phase-3-implementation-plan.md`
 - `docs/refactoring/phases-0-5-report.md`
 - `docs/refactoring/phases-6-7-report.md`
 - `docs/refactoring/phase-8-report.md`
@@ -31,7 +31,7 @@ Before changing any code, read the following in full:
 
 Treat the following as the approved API baseline:
 
-- `docs/refactoring/baseline-fase-6/`
+- `docs/refactoring/baseline-phase-6/`
 
 Before starting, confirm from the repository's actual state that Phase 8 is complete, with:
 
@@ -87,7 +87,7 @@ Record this inventory in the final report.
 
 ## Phase 9 scope
 
-Implement the requirements defined under “Phase 9 — Move RabbitMQ behind messaging ports and upgrade client” in `docs/fase-3-plano-implementacao.md`:
+Implement the requirements defined under “Phase 9 — Move RabbitMQ behind messaging ports and upgrade client” in `docs/phase-3-implementation-plan.md`:
 
 1. Characterize the existing direct, fanout, and topic exchanges, as well as queues, bindings, routing keys, payloads, and acknowledgements.
 2. Define application event contracts and ports for publishing and processing.
@@ -360,7 +360,7 @@ Internal methods may become asynchronous, but the observable HTTP contract must 
 
 Capture OpenAPI again and compare it with:
 
-`docs/refactoring/baseline-fase-6/`
+`docs/refactoring/baseline-phase-6/`
 
 The expected result is exact equality.
 

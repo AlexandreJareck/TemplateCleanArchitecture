@@ -61,7 +61,7 @@ Checkpoint fechado em 2026-10-10 às 15:40 (America/Sao_Paulo). As Fases 6 e 7 f
 - `.agents/skills/architecture-boundary-check/scripts/check-boundaries.ps1`
 - `scripts/run-phase-validation.ps1`
 - `docs/refactoring/api-v1-lifecycle.md`
-- `docs/refactoring/baseline-fase-6/*`
+- `docs/refactoring/baseline-phase-6/*`
 - `docs/refactoring/phases-6-7-report.md`
 - `AGENTS.md`
 - `graphify-out/*` (regenerado por Graphify, não editado à mão)
@@ -81,7 +81,7 @@ Rollback de pacotes: restaurar em conjunto o PackageReference/PackageVersion de 
 
 ## Diff de contrato e baseline
 
-O baseline original em `docs/refactoring/baseline/` foi preservado. O baseline aprovado está em `docs/refactoring/baseline-fase-6/`.
+O baseline original em `docs/refactoring/baseline/` foi preservado. O baseline aprovado está em `docs/refactoring/baseline-phase-6/`.
 
 - v1: o diff estrutural contém apenas `info.description = "This API version has been deprecated."`; paths e status codes permanecem idênticos.
 - v2: `ApiErrorResponse`/`ApiErrorItem` saem do OpenAPI; entram `ProblemDetails` e `ValidationProblemDetails` com `application/problem+json`. DELETE `/{id}` muda de 200 documentado para 204. O POST já documentava 201, e o comportamento real agora corresponde à documentação com `Location`.

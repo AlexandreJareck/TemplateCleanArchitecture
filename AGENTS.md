@@ -4,9 +4,17 @@
 
 This is an academic .NET Clean Architecture template. The executable system is an ASP.NET Core Web API with PostgreSQL persistence, ASP.NET Core Identity/JWT authentication, Redis caching, RabbitMQ messaging, an Elasticsearch person index, Serilog (console plus an optional Elasticsearch data-stream sink), localization, OpenAPI, and health checks. A separate legacy VSIX project packages the template for Visual Studio.
 
-Use `docs/fase-2-workspace.md` for the proposed AI workspace, target architecture, dependency upgrade matrix, and coding standards. Use `docs/fase-3-plano-implementacao.md` for the staged refactoring plan. Decisions adopted on 2026-10-10 are at the end of the Phase 3 plan. Re-check external versions before implementing upgrades; the recorded versions were verified on 2026-10-08.
+Use `docs/phase-2-workspace.md` for the proposed AI workspace, target architecture, dependency upgrade matrix, and coding standards. Use `docs/phase-3-implementation-plan.md` for the staged refactoring plan. Decisions adopted on 2026-10-10 are at the end of the Phase 3 plan. Re-check external versions before implementing upgrades; the recorded versions were verified on 2026-10-08.
 
 Agent skills have a single source in `.agents/skills/` (read by Codex). Claude Code reads them through a git-ignored `.claude/skills` link created by `powershell -ExecutionPolicy Bypass -File .\scripts\link-agent-skills.ps1` (run once per checkout, idempotent). Edit skills only in `.agents/skills/`.
+
+## Repository language and file naming
+
+- Name source files, scripts, configuration files, agent instructions, technical documentation, and their directories in English.
+- Write code, code comments, identifiers, agent-facing instructions, and technical documentation in English.
+- Human-facing functional or product documentation may be written in Brazilian Portuguese when its intended audience benefits from it, but its filename must still be English.
+- Culture-qualified localization resources such as `*.pt-BR.resx` keep their standard culture identifier; this is not considered a Portuguese filename.
+- When an `AGENTS.md` exists in a directory, keep a sibling `CLAUDE.md` that references it with `@AGENTS.md` so both agents use the same local instructions.
 
 ## Current solution structure
 
@@ -62,7 +70,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-phase-validation.ps1
 | `dotnet list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive` | No vulnerable packages (16 projects) |
 | `docker compose config -q` | Succeeded (Elasticsearch/Kibana 9.5.5 pinned by digest, Elasticsearch on the new `es9-data` volume) |
 | `powershell -ExecutionPolicy Bypass -File .\scripts\elastic-upgrade-rehearsal.ps1 -WebApi8xPath <published 8.x WebApi> -WebApi9xPath <published 9.x WebApi>` | Run separately on 2026-10-11 (not inside the gate): 49/49 checks in run `20261011100719` (synthetic data only; requires Docker and about 6 GB of container memory). The optional gate step `06d` runs it when both paths are passed. |
-| `scripts\capture-api-baseline.ps1 -OutputDirectory artifacts\validation\openapi` | Succeeded under Windows PowerShell 5.1; OpenAPI v1/v2 identical to `docs/refactoring/baseline-fase-6` (only line endings differ from the CRLF checkout) |
+| `scripts\capture-api-baseline.ps1 -OutputDirectory artifacts\validation\openapi` | Succeeded under Windows PowerShell 5.1; OpenAPI v1/v2 identical to `docs/refactoring/baseline-phase-6` (only line endings differ from the CRLF checkout) |
 | `graphify update . --force` | Succeeded: 3,199 nodes, 6,662 edges, 192 communities (rerun after the Phase 11 report and this file were written) |
 | `git diff --check` | Exit 0 (only LF/CRLF normalization notices) |
 
