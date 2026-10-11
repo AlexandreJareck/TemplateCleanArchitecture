@@ -14,7 +14,9 @@ param(
     [string]$ElasticRehearsalWebApi8xPath,
     [string]$ElasticRehearsalWebApi9xPath,
     # Optional Phase 14 isolated Compose baseline (new project and volumes; requires Docker).
-    [switch]$ComposeBaseline
+    [switch]$ComposeBaseline,
+    # Optional Phase 15 isolated Redis migration rehearsal and rollback-topology baseline (new projects and volumes).
+    [switch]$RedisRehearsal
 )
 
 $ErrorActionPreference = 'Continue'
@@ -50,11 +52,16 @@ Invoke-Step '05-test-integration' { & $DotNetPath test Tests\Template.Integratio
 Invoke-Step '06-test-postgresql' { & $DotNetPath test Tests\Template.PostgreSql.Integration.Tests\Template.PostgreSql.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '06b-test-rabbitmq' { & $DotNetPath test Tests\Template.RabbitMq.Integration.Tests\Template.RabbitMq.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '06c-test-elasticsearch' { & $DotNetPath test Tests\Template.Elasticsearch.Integration.Tests\Template.Elasticsearch.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
+Invoke-Step '06f-test-redis' { & $DotNetPath test Tests\Template.Redis.Integration.Tests\Template.Redis.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 if ($ElasticRehearsalWebApi8xPath -and $ElasticRehearsalWebApi9xPath) {
     Invoke-Step '06d-elastic-upgrade-rehearsal' { & (Join-Path $PSScriptRoot 'elastic-upgrade-rehearsal.ps1') -WebApi8xPath $ElasticRehearsalWebApi8xPath -WebApi9xPath $ElasticRehearsalWebApi9xPath -DotNetPath $DotNetPath }
 }
 if ($ComposeBaseline) {
     Invoke-Step '06e-compose-baseline' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') }
+}
+if ($RedisRehearsal) {
+    Invoke-Step '06g-redis8-migration-rehearsal' { & (Join-Path $PSScriptRoot 'redis8-migration-rehearsal.ps1') }
+    Invoke-Step '06h-compose-redis-rollback' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') -RedisRollback }
 }
 Invoke-Step '07-test-functional' { & $DotNetPath test Tests\Template.Functional.Tests\Template.Functional.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '08-vulnerable-packages' { & $DotNetPath list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive }
