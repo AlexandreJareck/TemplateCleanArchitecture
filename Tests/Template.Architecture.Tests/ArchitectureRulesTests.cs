@@ -1,4 +1,4 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Shouldly;
 
 namespace Template.Architecture.Tests;
@@ -53,7 +53,44 @@ public sealed class ArchitectureRulesTests
     {
         var actual = SourceViolations("Src/Presentation", PresentationMarkers());
 
-        actual.ShouldBe(["Src/Presentation/Template.WebApi/Program.cs"]); // Phases 7 and 12
+        actual.ShouldBe(["Src/Presentation/Template.WebApi/Program.cs"]); // Phase 7: ApplicationDbContext migration
+        ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldNotContain("IdentityContext"); // Phase 12
+    }
+
+    [Fact]
+    public void Core_Has_No_Identity_Jwt_Claims_Or_Http_References()
+    {
+        SourceViolations("Src/Core", IdentityMarkers()).ShouldBeEmpty(); // Phase 12
+        var application = LoadProject("Src/Core/Template.Application/Template.Application.csproj");
+        References(application, "PackageReference").Where(IsIdentityPackage).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Identity_Implementation_Lives_In_Infrastructure_Identity()
+    {
+        var identityTypes = SourceViolations("Src", IdentityImplementationMarkers());
+        var jwtTypes = SourceViolations("Src", JwtConstructionMarkers());
+        var identityPackageProjects = Directory.GetFiles(Path.Combine(Root, "Src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(path => References(XDocument.Load(path), "PackageReference").Any(IsIdentityPackage))
+            .Select(Relative)
+            .ToArray();
+
+        identityTypes.ShouldAllBe(path => path.StartsWith(IdentityProject, StringComparison.Ordinal));
+        identityTypes.ShouldNotBeEmpty();
+        jwtTypes.ShouldAllBe(path => path.StartsWith(IdentityProject, StringComparison.Ordinal));
+        jwtTypes.ShouldNotBeEmpty();
+        identityPackageProjects.ShouldBe([$"{IdentityProject}Template.Infrastructure.Identity.csproj"]);
+        References(LoadProject($"{IdentityProject}Template.Infrastructure.Identity.csproj"), "PackageReference")
+            .ShouldNotContain("Microsoft.AspNetCore.Identity"); // legacy 2.3.x metapackage stays removed
+    }
+
+    [Fact]
+    public void WebApi_Is_The_Only_Http_Context_Adapter_For_The_Current_User()
+    {
+        SourceViolations("Src", [": IAuthenticatedUserService"])
+            .ShouldBe(["Src/Presentation/Template.WebApi/Infrastructure/Services/AuthenticatedUserService.cs",
+                "Src/Infrastructure/Template.Infrastructure.Persistence/Contexts/ApplicationDbContextFactory.cs"], ignoreOrder: true);
+        SourceViolations("Src/Infrastructure", ["IHttpContextAccessor"]).ShouldBeEmpty();
     }
 
     [Fact]
@@ -271,6 +308,17 @@ public sealed class ArchitectureRulesTests
         ContainsAny("public LoggingExtensions(IPersonSearchIndex index)", SearchPortMarkers()).ShouldBeTrue();
         ContainsAny("var url = settings.Get<PersonSearchSettings>().Url;", SearchPortMarkers()).ShouldBeTrue();
         ContainsAny("using var provider = services.BuildServiceProvider();", ["BuildServiceProvider("]).ShouldBeTrue();
+        ContainsAny("public interface ICurrentUser { ClaimsPrincipal Principal { get; } }", IdentityMarkers()).ShouldBeTrue();
+        ContainsAny("Task<string> CreateAsync(UserManager<User> users);", IdentityMarkers()).ShouldBeTrue();
+        ContainsAny("using System.IdentityModel.Tokens.Jwt;", IdentityMarkers()).ShouldBeTrue();
+        ContainsAny("using Microsoft.IdentityModel.Tokens;", IdentityMarkers()).ShouldBeTrue();
+        ContainsAny("string? UserId { get; }", IdentityMarkers()).ShouldBeFalse();
+        ContainsAny("var key = new SymmetricSecurityKey(bytes);", JwtConstructionMarkers()).ShouldBeTrue();
+        ContainsAny("public Handler(SignInManager<ApplicationUser> signInManager)", IdentityImplementationMarkers()).ShouldBeTrue();
+        ContainsAny("await services.GetRequiredService<IdentityContext>().Database.MigrateAsync();", PresentationMarkers()).ShouldBeTrue();
+        IsIdentityPackage("Microsoft.AspNetCore.Identity").ShouldBeTrue();
+        IsIdentityPackage("System.IdentityModel.Tokens.Jwt").ShouldBeTrue();
+        IsIdentityPackage("MediatR").ShouldBeFalse();
     }
 
     private static string[] ForbiddenApplicationPackages(IEnumerable<string> packages) => packages
@@ -289,6 +337,28 @@ public sealed class ArchitectureRulesTests
         "Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore", "Microsoft.Extensions.Caching",
         "Microsoft.Extensions.Hosting", "RabbitMQ", "Serilog", "HealthChecks", .. SearchVendorMarkers()
     ];
+
+    private const string IdentityProject = "Src/Infrastructure/Template.Infrastructure.Identity/";
+
+    private static string[] IdentityMarkers() =>
+    [
+        "Microsoft.AspNetCore.Identity", "UserManager<", "SignInManager<", "RoleManager<", "IdentityUser",
+        "System.IdentityModel.Tokens.Jwt", "Microsoft.IdentityModel", "JwtSecurityToken", "ClaimsPrincipal",
+        "ClaimsIdentity", "System.Security.Claims", "HttpContext", "Microsoft.AspNetCore.Authentication"
+    ];
+
+    private static string[] IdentityImplementationMarkers() =>
+    [
+        "UserManager<", "SignInManager<", "RoleManager<", "IdentityContext", "ApplicationUser", "ApplicationRole"
+    ];
+
+    private static string[] JwtConstructionMarkers() =>
+    [
+        "JwtSecurityToken", "SymmetricSecurityKey", "SigningCredentials", "TokenValidationParameters", "JwtBearerEvents"
+    ];
+
+    private static bool IsIdentityPackage(string package) =>
+        package.Contains("Identity", StringComparison.Ordinal) || package.Contains("JwtBearer", StringComparison.Ordinal);
 
     private const string SearchProject = "Src/Infrastructure/Template.Infrastructure.Search/";
 
