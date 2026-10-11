@@ -113,7 +113,8 @@ public sealed class ArchitectureRulesTests
             "Tests/Template.Elasticsearch.Integration.Tests/Template.Elasticsearch.Integration.Tests.csproj",
             "Tests/Template.Integration.Tests/Template.Integration.Tests.csproj",
             "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj",
-            "Tests/Template.RabbitMq.Integration.Tests/Template.RabbitMq.Integration.Tests.csproj"
+            "Tests/Template.RabbitMq.Integration.Tests/Template.RabbitMq.Integration.Tests.csproj",
+            "Tests/Template.Redis.Integration.Tests/Template.Redis.Integration.Tests.csproj"
         ]);
     }
 
