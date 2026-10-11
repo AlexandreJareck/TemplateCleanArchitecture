@@ -28,4 +28,8 @@
     <ProjectReference Include="..\..\Src\Presentation\Template.WebApi\Template.WebApi.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Shared\FakeElasticsearchServer.cs" Link="Common\FakeElasticsearchServer.cs" />
+  </ItemGroup>
+
 </Project>

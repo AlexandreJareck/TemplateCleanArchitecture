@@ -25,24 +25,27 @@ public sealed class ArchitectureRulesTests
     }
 
     [Fact]
-    public void Application_Has_Only_Named_Temporary_Implementation_Package_Exceptions()
+    public void Application_Has_No_Implementation_Packages()
     {
         var project = LoadProject("Src/Core/Template.Application/Template.Application.csproj");
         var actual = ForbiddenApplicationPackages(References(project, "PackageReference"));
 
-        actual.ShouldBe([
-            "Elastic.Clients.Elasticsearch" // Phase 10
-        ]);
+        actual.ShouldBeEmpty(); // Phases 8, 9 and 10 exceptions removed
     }
 
     [Fact]
-    public void Application_Has_Only_Named_Temporary_Source_Exceptions()
+    public void Application_Has_No_Implementation_Sources()
     {
         var actual = SourceViolations("Src/Core/Template.Application", ApplicationMarkers());
 
-        actual.ShouldBe([
-            "Src/Core/Template.Application/Services/Elastic/ElasticService.cs" // Phase 10
-        ]);
+        actual.ShouldBeEmpty(); // Phases 8, 9 and 10 exceptions removed
+    }
+
+    [Fact]
+    public void Domain_Has_No_Search_Logging_Or_HealthCheck_References()
+    {
+        SourceViolations("Src/Core/Template.Domain", SearchVendorMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain", ["Serilog", "HealthCheck"]).ShouldBeEmpty();
     }
 
     [Fact]
@@ -70,6 +73,7 @@ public sealed class ArchitectureRulesTests
 
         composers.ShouldBe([
             "Src/Presentation/Template.WebApi/Template.WebApi.csproj",
+            "Tests/Template.Elasticsearch.Integration.Tests/Template.Elasticsearch.Integration.Tests.csproj",
             "Tests/Template.Integration.Tests/Template.Integration.Tests.csproj",
             "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj",
             "Tests/Template.RabbitMq.Integration.Tests/Template.RabbitMq.Integration.Tests.csproj"
@@ -121,6 +125,63 @@ public sealed class ArchitectureRulesTests
         References(webApi, "PackageReference").ShouldNotContain(package => package.Contains("RabbitMQ", StringComparison.Ordinal));
         SourceViolations("Src/Presentation", MessagingPlumbingMarkers()).ShouldBeEmpty();
         ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldContain("AddMessagingInfrastructure(");
+    }
+
+    [Fact]
+    public void Search_Vendor_Code_Lives_In_Infrastructure_Search()
+    {
+        var elasticClientProjects = Directory.GetFiles(Path.Combine(Root, "Src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(path => References(XDocument.Load(path), "PackageReference").Contains("Elastic.Clients.Elasticsearch"))
+            .Select(Relative)
+            .ToArray();
+        var clientSources = SourceViolations("Src", ["using Elastic.Clients", "ElasticsearchClient"]);
+
+        elasticClientProjects.ShouldBe([$"{SearchProject}Template.Infrastructure.Search.csproj"]);
+        clientSources.ShouldAllBe(path => path.StartsWith(SearchProject, StringComparison.Ordinal));
+        clientSources.ShouldNotBeEmpty();
+        SourceViolations("Src", ["class PersonSearchSettings"]).ShouldBe([$"{SearchProject}PersonSearchSettings.cs"]);
+        SourceViolations("Src", ["class ElasticSearchSettings"]).ShouldBeEmpty(); // the shared legacy options type is gone; only its keys remain
+    }
+
+    [Fact]
+    public void Infrastructure_Search_Implements_Application_Owned_Ports()
+    {
+        var project = LoadProject($"{SearchProject}Template.Infrastructure.Search.csproj");
+
+        References(project, "ProjectReference").ShouldBe([@"..\..\Core\Template.Application\Template.Application.csproj"]);
+        ReadSource($"{SearchProject}Persons/ElasticsearchPersonSearchIndex.cs").ShouldContain(": IPersonSearchIndex");
+        ReadSource($"{SearchProject}Persons/DisabledPersonSearchIndex.cs").ShouldContain(": IPersonSearchIndex");
+        ReadSource("Src/Core/Template.Application/Interfaces/Search/IPersonSearchIndex.cs").ShouldContain("public interface IPersonSearchIndex");
+        SourceViolations("Src/Core/Template.Application/Interfaces/Search", PortLeakMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Application/Search", PortLeakMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Logging_And_HealthChecks_Do_Not_Depend_On_The_Search_Port()
+    {
+        SourceViolations("Src/Presentation/Template.WebApi/Infrastructure/Logging", SearchPortMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Presentation/Template.WebApi/Infrastructure/HealthChecks", SearchPortMarkers()).ShouldBeEmpty();
+        ReadSource("Src/Presentation/Template.WebApi/Infrastructure/Logging/LoggingExtensions.cs").ShouldContain("WriteTo.Elasticsearch(");
+        ReadSource("Src/Presentation/Template.WebApi/Infrastructure/HealthChecks/HealthCheckExtensions.cs").ShouldContain("new ElasticsearchHealthCheck(");
+    }
+
+    [Fact]
+    public void WebApi_Only_Composes_Search()
+    {
+        var webApi = LoadProject("Src/Presentation/Template.WebApi/Template.WebApi.csproj");
+
+        References(webApi, "PackageReference").ShouldNotContain("Elastic.Clients.Elasticsearch");
+        References(webApi, "ProjectReference").ShouldContain(@"..\..\Infrastructure\Template.Infrastructure.Search\Template.Infrastructure.Search.csproj");
+        ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldContain("AddSearchInfrastructure(");
+        SourceViolations("Src/Presentation/Template.WebApi/Controllers", [.. SearchVendorMarkers(), "IPersonSearchIndex"]).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Registration_Does_Not_Build_Intermediate_Service_Providers()
+    {
+        var actual = SourceViolations("Src", ["BuildServiceProvider("]);
+
+        actual.ShouldBe(["Src/Presentation/Template.WebApi/Infrastructure/Extensions/LocalizationExtensions.cs"]); // Phase 13: localization options
     }
 
     [Fact]
@@ -196,6 +257,20 @@ public sealed class ArchitectureRulesTests
         ContainsAny("await channel.QueueDeclareAsync(\"orders\");", MessagingPlumbingMarkers()).ShouldBeTrue();
         ContainsAny("public sealed class RabbitMqSettings", MessagingPlumbingMarkers()).ShouldBeTrue();
         ContainsAny("Task PublishBroadcastAsync(OrderPlacedEvent e, CancellationToken ct);", MessagingPlumbingMarkers()).ShouldBeFalse();
+        ForbiddenApplicationPackages(["Elastic.Clients.Elasticsearch", "Elastic.Transport", "Elastic.Serilog.Sinks", "AspNetCore.HealthChecks.Elasticsearch", "MediatR"])
+            .ShouldBe(["AspNetCore.HealthChecks.Elasticsearch", "Elastic.Clients.Elasticsearch", "Elastic.Serilog.Sinks", "Elastic.Transport"]);
+        ContainsAny("using Elastic.Clients.Elasticsearch;", ApplicationMarkers()).ShouldBeTrue();
+        ContainsAny("using Elastic.Transport;", ApplicationMarkers()).ShouldBeTrue();
+        ContainsAny("using Elastic.Serilog.Sinks;", ApplicationMarkers()).ShouldBeTrue();
+        ContainsAny("var client = new ElasticsearchClient(settings);", ApplicationMarkers()).ShouldBeTrue();
+        ContainsAny("public class ElasticSearchSettings { public string Url { get; init; } }", ApplicationMarkers()).ShouldBeTrue();
+        ContainsAny("services.AddHealthChecks().AddElasticsearch(url);", ApplicationMarkers()).ShouldBeTrue();
+        ContainsAny("Task<PersonIndexResult> UpsertAsync(IndexedPerson person, CancellationToken cancellationToken);", ApplicationMarkers()).ShouldBeFalse();
+        ContainsAny("Task<SearchResponse<JsonElement>> SearchAsync();", PortLeakMarkers()).ShouldBeTrue();
+        ContainsAny("Task<PersonIndexResult<IndexedPerson>> GetAsync(string key, CancellationToken cancellationToken);", PortLeakMarkers()).ShouldBeFalse();
+        ContainsAny("public LoggingExtensions(IPersonSearchIndex index)", SearchPortMarkers()).ShouldBeTrue();
+        ContainsAny("var url = settings.Get<PersonSearchSettings>().Url;", SearchPortMarkers()).ShouldBeTrue();
+        ContainsAny("using var provider = services.BuildServiceProvider();", ["BuildServiceProvider("]).ShouldBeTrue();
     }
 
     private static string[] ForbiddenApplicationPackages(IEnumerable<string> packages) => packages
@@ -212,7 +287,25 @@ public sealed class ArchitectureRulesTests
     private static string[] ApplicationMarkers() =>
     [
         "Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore", "Microsoft.Extensions.Caching",
-        "Microsoft.Extensions.Hosting", "RabbitMQ", "Elastic.Clients", "Serilog"
+        "Microsoft.Extensions.Hosting", "RabbitMQ", "Serilog", "HealthChecks", .. SearchVendorMarkers()
+    ];
+
+    private const string SearchProject = "Src/Infrastructure/Template.Infrastructure.Search/";
+
+    private static string[] SearchVendorMarkers() =>
+    [
+        "Elastic.", "ElasticsearchClient", "ElasticSearchSettings", "Elasticsearch"
+    ];
+
+    private static string[] PortLeakMarkers() =>
+    [
+        .. SearchVendorMarkers(), "Json", "Transport", "SearchResponse", "Serilog", "HealthCheck", "Uri"
+    ];
+
+    private static string[] SearchPortMarkers() =>
+    [
+        "IPersonSearchIndex", "PersonSearchSettings", "Template.Infrastructure.Search", "Template.Application.Search",
+        "Template.Application.Interfaces.Search"
     ];
 
     private const string MessagingProject = "Src/Infrastructure/Template.Infrastructure.Messaging/";

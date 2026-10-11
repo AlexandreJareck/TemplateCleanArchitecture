@@ -25,6 +25,13 @@
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Caching\Template.Infrastructure.Caching.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Search\Template.Infrastructure.Search.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Hosts the loopback FakeElasticsearchServer; no external service is contacted. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="..\Shared\FakeElasticsearchServer.cs" Link="Search\FakeElasticsearchServer.cs" />
   </ItemGroup>
 
   <ItemGroup>

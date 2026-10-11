@@ -6,7 +6,6 @@ using Template.Application.Behaviors;
 using Template.Application.Features.Orders.EventHandlers;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Messaging;
-using Template.Application.Services.Elastic;
 using Template.Application.Services.Product;
 using Template.Application.Services.Time;
 
@@ -26,7 +25,6 @@ public static class ServiceRegistration
 
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IOrderPlacedEventHandler, OrderPlacedEventHandler>();
-        services.AddSingleton<IElasticService, ElasticService>();
 
         return services;
     }
