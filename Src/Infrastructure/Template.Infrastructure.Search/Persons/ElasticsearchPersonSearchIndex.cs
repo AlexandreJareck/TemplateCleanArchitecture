@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Transport;
@@ -10,8 +11,9 @@ using Template.Application.Search.Persons;
 namespace Template.Infrastructure.Search.Persons;
 
 /// <summary>
-/// Person search index on Elasticsearch 8.x. It owns one long-lived <see cref="ElasticsearchClient"/> (thread-safe and
-/// meant to be reused) and sends the same requests as the previous implementation: index with
+/// Person search index on Elasticsearch 9.x through the 9.x client. It owns one long-lived
+/// <see cref="ElasticsearchClient"/> (thread-safe and meant to be reused) and sends the same requests as the 8.x
+/// implementation: index with
 /// <c>refresh=wait_for</c>, bulk update with <c>doc_as_upsert</c>, get, search with the server's default page, and
 /// delete. Transport failures, timeouts and server errors become <see cref="PersonIndexStatus.Unavailable"/>, other
 /// refusals <see cref="PersonIndexStatus.Rejected"/>; caller cancellation always throws. Logs carry the operation,
@@ -100,7 +102,7 @@ public sealed class ElasticsearchPersonSearchIndex : IPersonSearchIndex, IDispos
             () => _client.BulkAsync(
                 bulk => bulk
                     .Index(_indexName)
-                    .UpdateMany(documents, (update, document) => update.Id(document.Id).Doc(document).DocAsUpsert(true)),
+                    .UpdateMany(documents, (update, document) => update.Id(DocumentId(document)).Doc(document).DocAsUpsert(true)),
                 cancellationToken),
             cancellationToken);
 
@@ -158,7 +160,7 @@ public sealed class ElasticsearchPersonSearchIndex : IPersonSearchIndex, IDispos
     public async Task<PersonIndexResult<IReadOnlyList<IndexedPerson>>> ListAsync(CancellationToken cancellationToken)
     {
         var response = await CallAsync(
-            () => _client.SearchAsync<JsonElement>(search => search.Index(_indexName), cancellationToken),
+            () => _client.SearchAsync<JsonElement>(search => search.Indices(_indexName), cancellationToken),
             cancellationToken);
 
         if (response is null)
@@ -185,10 +187,20 @@ public sealed class ElasticsearchPersonSearchIndex : IPersonSearchIndex, IDispos
 
         if (response is null)
             return PersonIndexResult.Failure(InvalidResponse("remove", cancellationToken));
-        return response.IsValidResponse
-            ? PersonIndexResult.Success()
-            : PersonIndexResult.Failure(Classify("remove", response, cancellationToken));
+        if (!response.IsValidResponse)
+            return PersonIndexResult.Failure(Classify("remove", response, cancellationToken));
+
+        // The 9.x client accepts the 404 "not_found" body of a missing document as a valid response.
+        return response.Result == Result.NotFound
+            ? PersonIndexResult.Failure(Classify("remove", response, cancellationToken))
+            : PersonIndexResult.Success();
     }
+
+    /// <summary>
+    /// The 9.x client writes a numeric id as a JSON number in bulk metadata; the stored and legacy format is the id as
+    /// text, so it is passed as a string.
+    /// </summary>
+    private static Id DocumentId(PersonDocument document) => document.Id.ToString(CultureInfo.InvariantCulture);
 
     public void Dispose() => ((IDisposable)_clientSettings).Dispose();
 

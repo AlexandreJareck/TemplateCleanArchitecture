@@ -612,8 +612,8 @@
     "semantic_hash": "f17613778c8f4090a19c11d02cf41e46"
   },
   "Tests/Template.Functional.Tests/Template.Functional.Tests.csproj": {
-    "mtime": 1791667960.847389,
-    "seen": 1791669784.9378633,
+    "mtime": 1791722082.4775853,
+    "seen": 1791724695.264453,
     "ast_hash": "0151cb5edf2fb5f888f95b3e9348c217",
     "semantic_hash": ""
   },
@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "docker-compose.yml": {
-    "mtime": 1791662158.284613,
-    "seen": 1791663925.5879292,
-    "ast_hash": "420b250c164037d13d11ba91fefd05ce",
+    "mtime": 1791722623.1656966,
+    "seen": 1791724695.2727704,
+    "ast_hash": "0300588367858984ae73f72566ab899a",
     "semantic_hash": ""
   },
   "docker.txt": {
@@ -888,9 +888,9 @@
     "semantic_hash": ""
   },
   "scripts/run-phase-validation.ps1": {
-    "mtime": 1791669110.225097,
-    "seen": 1791669784.9417787,
-    "ast_hash": "ef21f1e75fc372c93b99ceb9f482c5d5",
+    "mtime": 1791722634.1135485,
+    "seen": 1791724695.2699409,
+    "ast_hash": "e1115ffd46c109a72eb5b93852703c90",
     "semantic_hash": ""
   },
   ".agents/agents/api-contract-reviewer.md": {
@@ -996,9 +996,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791670276.9467072,
-    "seen": 1791670281.9879503,
-    "ast_hash": "e41f3b1bdff62962f74dc8fa51d561d9",
+    "mtime": 1791724800.8969667,
+    "seen": 1791724815.5605812,
+    "ast_hash": "8a580f137a3ca9db4da75620102163ab",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1494,9 +1494,9 @@
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Search/Persons/ElasticsearchPersonSearchIndex.cs": {
-    "mtime": 1791668201.9410338,
-    "seen": 1791669784.934755,
-    "ast_hash": "3ac4a49b56ac082ba345fdd090c5a304",
+    "mtime": 1791721675.8352003,
+    "seen": 1791724695.2590797,
+    "ast_hash": "c4c6d576c649b43e08963388111dd6bd",
     "semantic_hash": ""
   },
   "Src/Infrastructure/Template.Infrastructure.Search/Persons/PersonDocument.cs": {
@@ -1566,21 +1566,21 @@
     "semantic_hash": ""
   },
   "Tests/Template.Elasticsearch.Integration.Tests/ElasticsearchTestSupport.cs": {
-    "mtime": 1791669732.4028194,
-    "seen": 1791669784.9366949,
-    "ast_hash": "0a529de79363f86373320824715ec066",
+    "mtime": 1791722237.4457686,
+    "seen": 1791724695.262943,
+    "ast_hash": "28fad0fa59dc4fdb3adeeb538df664ad",
     "semantic_hash": ""
   },
   "Tests/Template.Elasticsearch.Integration.Tests/PersonSearchIndexElasticsearchTests.cs": {
-    "mtime": 1791668766.533182,
-    "seen": 1791669784.9366956,
-    "ast_hash": "c73b66a3167cd1df58af01948e10bc5c",
+    "mtime": 1791722275.6669948,
+    "seen": 1791724695.2629445,
+    "ast_hash": "2c5fee7f44324bf93bb7afe8648336cc",
     "semantic_hash": ""
   },
   "Tests/Template.Elasticsearch.Integration.Tests/Template.Elasticsearch.Integration.Tests.csproj": {
-    "mtime": 1791668690.3337903,
-    "seen": 1791669784.9366965,
-    "ast_hash": "7f8f434d97ae43994763b73820f018ae",
+    "mtime": 1791722370.0122166,
+    "seen": 1791724695.2629452,
+    "ast_hash": "67818d32b524181ab97fb2133c62dbef",
     "semantic_hash": ""
   },
   "Tests/Template.Functional.Tests/ApiEndpoints/PersonFunctionalTests.cs": {
@@ -1590,15 +1590,15 @@
     "semantic_hash": ""
   },
   "Tests/Template.Functional.Tests/Observability/ElasticLoggingTests.cs": {
-    "mtime": 1791668501.8397272,
-    "seen": 1791669784.9378612,
-    "ast_hash": "be39bc3019cf53e180b7550e70cc50cd",
+    "mtime": 1791721991.1809096,
+    "seen": 1791724695.2644506,
+    "ast_hash": "0e24b06dc59a45e41526d4a72e87af64",
     "semantic_hash": ""
   },
   "Tests/Template.Functional.Tests/Observability/ElasticsearchHealthCheckTests.cs": {
-    "mtime": 1791668501.8404589,
-    "seen": 1791669784.9378622,
-    "ast_hash": "fba2a9d09f71ddb655d72591aeead93f",
+    "mtime": 1791722247.702069,
+    "seen": 1791724695.2644515,
+    "ast_hash": "12ae726148c92162c6756bd753ee4da5",
     "semantic_hash": ""
   },
   "Tests/Template.Integration.Tests/Search/ElasticsearchPersonSearchIndexTests.cs": {
@@ -1635,6 +1635,150 @@
     "mtime": 1791670276.9904056,
     "seen": 1791670281.9893947,
     "ast_hash": "799806fb878e81d295d5c290c9ba56cc",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Elasticsearch.Integration.Tests/UpgradeRehearsalTests.cs": {
+    "mtime": 1791723280.6624105,
+    "seen": 1791724695.262947,
+    "ast_hash": "fb8921ee69c6d978b6aed44ef35b5e73",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Functional.Tests/Observability/ElasticDependencyCompatibilityTests.cs": {
+    "mtime": 1791722082.5173895,
+    "seen": 1791724695.264449,
+    "ast_hash": "4b539cadbddcaa02363f35b3ba2b17be",
+    "semantic_hash": ""
+  },
+  "scripts/elastic-upgrade-rehearsal.ps1": {
+    "mtime": 1791724033.2114625,
+    "seen": 1791724695.269939,
+    "ast_hash": "ec0e6205692ae32590caebc266fbf0c0",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-12.md": {
+    "mtime": 1791721293.8682964,
+    "seen": 1791724695.2732923,
+    "ast_hash": "3373215ec9d6cfaa6280848ea72e8c27",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-13.md": {
+    "mtime": 1791721294.4340477,
+    "seen": 1791724695.2732933,
+    "ast_hash": "84d22ba34d3def814c2812296413d8d7",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-14.md": {
+    "mtime": 1791721579.7993772,
+    "seen": 1791724695.2732937,
+    "ast_hash": "5b0421b455c0e143dda4ccfbdef49c1b",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-15.md": {
+    "mtime": 1791721846.6066058,
+    "seen": 1791724695.2732947,
+    "ast_hash": "7c5a0c49b3bf82be590942df7c81afa5",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-16.md": {
+    "mtime": 1791722075.9029775,
+    "seen": 1791724695.2732956,
+    "ast_hash": "79408dbc383f7ea8dae8e0adbaba47d9",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-17.md": {
+    "mtime": 1791722330.717712,
+    "seen": 1791724695.2732964,
+    "ast_hash": "2c1d4a380f2bf494570a3dfd787ac3cc",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-18.md": {
+    "mtime": 1791722538.8895428,
+    "seen": 1791724695.2732968,
+    "ast_hash": "a29867d261fc22c9596f596153c73fc8",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-19.md": {
+    "mtime": 1791722694.3942966,
+    "seen": 1791724695.2732975,
+    "ast_hash": "6399e4e59aaa9ea1ff6f5059a59b157a",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-20.md": {
+    "mtime": 1791722819.507057,
+    "seen": 1791724695.2732985,
+    "ast_hash": "f0643cd6927d166632d3bb88cd4719d4",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/execute-fase-21.md": {
+    "mtime": 1791722956.3768854,
+    "seen": 1791724695.2732992,
+    "ast_hash": "d08da71e354e99aaa5514cee50e80872",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-13.md": {
+    "mtime": 1791720992.3797324,
+    "seen": 1791724695.273568,
+    "ast_hash": "33465340254a7a5ff4035a29209f7422",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-14.md": {
+    "mtime": 1791721598.0454025,
+    "seen": 1791724695.2735689,
+    "ast_hash": "a4df7b7c8c8a954705bab191a4adc0b5",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-15.md": {
+    "mtime": 1791721864.5662048,
+    "seen": 1791724695.2735698,
+    "ast_hash": "7660e27fb30ad6c465cbc18800d26112",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-16.md": {
+    "mtime": 1791722073.7798963,
+    "seen": 1791724695.2735703,
+    "ast_hash": "75f8ab97527bb7e4aa05427fa7d39a0e",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-17.md": {
+    "mtime": 1791722330.3088043,
+    "seen": 1791724695.2735715,
+    "ast_hash": "19818c00fd2e05b889fa141b0f29d2d3",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-18.md": {
+    "mtime": 1791722538.3560085,
+    "seen": 1791724695.2735722,
+    "ast_hash": "80f80c903b71f0a9dc3d3d6b6376c02c",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-19.md": {
+    "mtime": 1791722693.889703,
+    "seen": 1791724695.2735732,
+    "ast_hash": "0b3810f9f85b55adf036f83bfc6fed38",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-20.md": {
+    "mtime": 1791722819.021392,
+    "seen": 1791724695.2735739,
+    "ast_hash": "4ea6c68597c0e5a896f1b88b9c537621",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/handoff-fase-21.md": {
+    "mtime": 1791722955.9815564,
+    "seen": 1791724695.2735753,
+    "ast_hash": "56ee6c073dfee20483d03298097bd9f0",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/prompt-create-handoffs-phases-14-21.md": {
+    "mtime": 1791721295.065595,
+    "seen": 1791724695.2743487,
+    "ast_hash": "1bfc642a0e5019139bbbbc911cafb36b",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/phase-11-report.md": {
+    "mtime": 1791724767.4528215,
+    "seen": 1791724815.5752394,
+    "ast_hash": "4e2d20cafe4fc66406d1220417b11111",
     "semantic_hash": ""
   }
 }

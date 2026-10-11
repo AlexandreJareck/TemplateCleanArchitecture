@@ -6,8 +6,8 @@
   <ItemGroup>
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="8.17.1" />
-    <PackageVersion Include="Elastic.Serilog.Sinks" Version="8.12.3" />
+    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.5.3" />
+    <PackageVersion Include="Elastic.Serilog.Sinks" Version="9.0.0" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="MediatR" Version="14.0.0" />

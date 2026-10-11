@@ -40,7 +40,10 @@ services:
 
   elasticsearch:
     container_name: elasticsearch
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
+    # Elasticsearch 9.x on its own volume. Never mount v01 here: it holds 8.17.4 data that a 9.x node must not open,
+    # and an upgraded volume cannot be reopened by 8.x. Move data only through snapshot/restore
+    # (docs/refactoring/phase-11-report.md); v01 stays untouched for rollback to the 8.17.4 image.
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5@sha256:13b4a40bb095774f5fda635e45fd5677cc6a26565e42b24997b0c72b88e75984
     environment:
       - node.name=elasticsearch
       - discovery.type=single-node
@@ -48,7 +51,7 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - xpack.security.enabled=false
     volumes:
-      - v01:/usr/share/elasticsearch/data
+      - es9-data:/usr/share/elasticsearch/data
     networks:
       - nw
     healthcheck:
@@ -59,7 +62,7 @@ services:
 
   kibana:
     container_name: kibana
-    image: docker.elastic.co/kibana/kibana:8.17.4
+    image: docker.elastic.co/kibana/kibana:9.5.5@sha256:13b72ce7222c36e4213229004ae62a87aeb32fd372ebfa6fb38f7a3285fdbb78
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
@@ -135,7 +138,9 @@ services:
 
 volumes:
   postgres-data:
+  # Elasticsearch 8.17.4 data: no longer mounted, kept for rollback and as the snapshot source of a migration.
   v01:
+  es9-data:
   rabbitmq-lib:
   rabbitmq-log:
   redis-volume-data:

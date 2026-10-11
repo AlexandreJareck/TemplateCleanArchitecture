@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Elastic.Clients.Elasticsearch;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using HealthStatus = Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus;
@@ -12,7 +11,7 @@ using Template.WebApi.Infrastructure.Logging;
 
 namespace Template.Elasticsearch.Integration.Tests;
 
-/// <summary>The current adapter against a real Elasticsearch 8.17.4, including compatibility with the previous format.</summary>
+/// <summary>The 9.x adapter against a real Elasticsearch 9.5.5, including compatibility with the 8.x document format.</summary>
 public sealed class PersonSearchIndexElasticsearchTests(ElasticsearchFixture fixture) : IClassFixture<ElasticsearchFixture>
 {
     [Fact]
@@ -21,7 +20,7 @@ public sealed class PersonSearchIndexElasticsearchTests(ElasticsearchFixture fix
         using var root = JsonDocument.Parse(await fixture.GetStringAsync("/"));
         using var health = JsonDocument.Parse(await fixture.GetStringAsync("/_cluster/health"));
 
-        root.RootElement.GetProperty("version").GetProperty("number").GetString().ShouldBe("8.17.4");
+        root.RootElement.GetProperty("version").GetProperty("number").GetString().ShouldBe(ElasticsearchImage.TargetVersion);
         health.RootElement.GetProperty("status").GetString().ShouldBeOneOf("green", "yellow");
     }
 
@@ -116,25 +115,41 @@ public sealed class PersonSearchIndexElasticsearchTests(ElasticsearchFixture fix
     }
 
     [Fact]
-    public async Task Documents_StayCompatible_WithThePreviousImplementation()
+    public async Task Documents_StayCompatible_WithThe8xFormat()
     {
         var indexName = fixture.OwnIndex();
-        using var legacySettings = new ElasticsearchClientSettings(new Uri(fixture.Url)).DefaultIndex(indexName);
-        var legacyClient = new ElasticsearchClient(legacySettings);
         using var index = ElasticsearchImage.CreateIndex(fixture.Url, indexName);
 
-        // Written exactly as the removed ElasticService.AddOrUpdate did, then read by the new adapter.
-        (await legacyClient.IndexAsync(new LegacyPerson { Id = 10, FirstName = "Legacy", LastName = null }, request => request.Index(indexName).Id(10).Refresh(Refresh.WaitFor)))
-            .IsValidResponse.ShouldBeTrue();
+        // Written with the exact request and body the 8.x adapter (client 8.17.1) sent, then read by the 9.x adapter.
+        (await fixture.PutJsonAsync($"/{indexName}/_doc/10?refresh=wait_for", """{"id":10,"firstName":"Legacy"}""")).IsSuccessStatusCode.ShouldBeTrue();
         (await index.GetAsync("10", CancellationToken.None)).Value.ShouldBe(new IndexedPerson(10, "Legacy", null));
 
-        // Written by the new adapter: byte-identical source, readable by the previous client code.
+        // Written by the 9.x adapter: byte-identical to the 8.x format, so the 8.x adapter still reads it.
         (await index.UpsertAsync(new IndexedPerson(11, "Novo", "Formato"), CancellationToken.None)).Status.ShouldBe(PersonIndexStatus.Succeeded);
+        (await index.UpsertManyAsync([new IndexedPerson(12, "Bulk", null)], CancellationToken.None)).IsComplete.ShouldBeTrue();
         (await fixture.GetStringAsync($"/{indexName}/_source/10")).ShouldBe("""{"id":10,"firstName":"Legacy"}""");
         (await fixture.GetStringAsync($"/{indexName}/_source/11")).ShouldBe("""{"id":11,"firstName":"Novo","lastName":"Formato"}""");
-        var legacyRead = await legacyClient.GetAsync<LegacyPerson>("11", request => request.Index(indexName));
-        legacyRead.Source.ShouldNotBeNull();
-        legacyRead.Source.LastName.ShouldBe("Formato");
+        (await fixture.GetStringAsync($"/{indexName}/_source/12")).ShouldBe("""{"id":12,"firstName":"Bulk"}""");
+
+        // Same dynamic mapping as the 8.x index: id long, names text with a keyword subfield.
+        using var mapping = JsonDocument.Parse(await fixture.GetStringAsync($"/{indexName}/_mapping"));
+        var properties = mapping.RootElement.GetProperty(indexName).GetProperty("mappings").GetProperty("properties");
+        properties.GetProperty("id").GetProperty("type").GetString().ShouldBe("long");
+        properties.GetProperty("firstName").GetProperty("type").GetString().ShouldBe("text");
+        properties.GetProperty("firstName").GetProperty("fields").GetProperty("keyword").GetProperty("type").GetString().ShouldBe("keyword");
+    }
+
+    [Fact]
+    public async Task CallerCancellation_Throws_AndNothingIsWritten()
+    {
+        var indexName = fixture.OwnIndex();
+        using var index = ElasticsearchImage.CreateIndex(fixture.Url, indexName);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        await Should.ThrowAsync<OperationCanceledException>(() => index.UpsertAsync(new IndexedPerson(1, "Never", null), cancelled.Token));
+        await Should.ThrowAsync<OperationCanceledException>(() => index.UpsertManyAsync([new IndexedPerson(2, "Never", null)], cancelled.Token));
+        (await index.GetAsync("1", CancellationToken.None)).Status.ShouldBe(PersonIndexStatus.NotFound);
     }
 
     [Fact]
@@ -149,8 +164,8 @@ public sealed class PersonSearchIndexElasticsearchTests(ElasticsearchFixture fix
     [Fact]
     public async Task LogSink_WritesToTheConfiguredDataStream()
     {
-        var @namespace = $"phase10test{Guid.NewGuid():N}";
-        var marker = $"phase10-log-marker-{Guid.NewGuid():N}";
+        var @namespace = $"phase11test{Guid.NewGuid():N}";
+        var marker = $"phase11-log-marker-{Guid.NewGuid():N}";
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ElasticLoggingSettings:Url"] = fixture.Url,
@@ -158,9 +173,16 @@ public sealed class PersonSearchIndexElasticsearchTests(ElasticsearchFixture fix
         }).Build();
         var dataStream = $"logs-api-example-{@namespace}";
 
-        using (var logger = LoggingExtensions.ConfigureLogger(new LoggerConfiguration(), configuration, new ElasticLogSinkDiagnostics(TextWriter.Null, TimeProvider.System, TimeSpan.FromMinutes(1))).CreateLogger())
+        var diagnostics = new StringWriter();
+        using (var logger = LoggingExtensions.ConfigureLogger(new LoggerConfiguration(), configuration, new ElasticLogSinkDiagnostics(diagnostics, TimeProvider.System, TimeSpan.FromMinutes(1))).CreateLogger())
         {
             logger.Information("Data stream check {Marker}", marker);
+        }
+
+        // A second logger bootstraps again over the installed templates: idempotent, no export failure.
+        using (var logger = LoggingExtensions.ConfigureLogger(new LoggerConfiguration(), configuration, new ElasticLogSinkDiagnostics(diagnostics, TimeProvider.System, TimeSpan.FromMinutes(1))).CreateLogger())
+        {
+            logger.Information("Data stream check {Marker} again", marker);
         }
 
         try
@@ -182,7 +204,17 @@ public sealed class PersonSearchIndexElasticsearchTests(ElasticsearchFixture fix
             }
 
             using var stream = JsonDocument.Parse(await fixture.GetStringAsync($"/_data_stream/{dataStream}"));
-            stream.RootElement.GetProperty("data_streams")[0].GetProperty("name").GetString().ShouldBe(dataStream);
+            var created = stream.RootElement.GetProperty("data_streams")[0];
+            created.GetProperty("name").GetString().ShouldBe(dataStream);
+            created.GetProperty("template").GetString().ShouldBe("logs-api-example-9.0.0");
+
+            // Sink 9.0.0 templates: ECS 9.0.0 component templates and one index template above the built-in logs-*-*.
+            using var template = JsonDocument.Parse(await fixture.GetStringAsync("/_index_template/logs-api-example-9.0.0"));
+            var body = template.RootElement.GetProperty("index_templates")[0].GetProperty("index_template");
+            body.GetProperty("index_patterns")[0].GetString().ShouldBe("logs-api-example-*");
+            body.GetProperty("priority").GetInt64().ShouldBe(589824);
+            (await fixture.Http.GetAsync("/_component_template/ecs_9.0.0_base")).IsSuccessStatusCode.ShouldBeTrue();
+            diagnostics.ToString().ShouldBeEmpty();
         }
         finally
         {
