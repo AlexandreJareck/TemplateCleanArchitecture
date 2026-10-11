@@ -6,6 +6,8 @@ This is an academic .NET Clean Architecture template. The executable system is a
 
 Use `docs/fase-2-workspace.md` for the proposed AI workspace, target architecture, dependency upgrade matrix, and coding standards. Use `docs/fase-3-plano-implementacao.md` for the staged refactoring plan. Decisions adopted on 2026-10-10 are at the end of the Phase 3 plan. Re-check external versions before implementing upgrades; the recorded versions were verified on 2026-10-08.
 
+Agent skills have a single source in `.agents/skills/` (read by Codex). Claude Code reads them through a git-ignored `.claude/skills` link created by `powershell -ExecutionPolicy Bypass -File .\scripts\link-agent-skills.ps1` (run once per checkout, idempotent). Edit skills only in `.agents/skills/`.
+
 ## Current solution structure
 
 - `Src/Core/Template.Domain` (`net10.0`): base/auditable entities and the product entity, plus sample `Person` and `Order` models. It has no project reference.
