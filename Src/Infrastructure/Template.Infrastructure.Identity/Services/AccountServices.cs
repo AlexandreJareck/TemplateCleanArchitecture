@@ -1,34 +1,38 @@
-﻿#nullable disable
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 using Template.Application.DTOs.Account.Request;
 using Template.Application.DTOs.Account.Response;
 using Template.Application.Helpers;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.UserInterfaces;
 using Template.Application.Wrappers;
+using Template.Infrastructure.Identity.Authentication;
 using Template.Infrastructure.Identity.Models;
-using Template.Infrastructure.Identity.Settings;
 
 namespace Template.Infrastructure.Identity.Services;
+
+/// <summary>
+/// Identity adapter for <see cref="IAccountServices"/>. ASP.NET Core Identity APIs do not accept a
+/// <see cref="CancellationToken"/>, so cancellation is checked before and between their calls.
+/// </summary>
 public class AccountServices(
     UserManager<ApplicationUser> userManager,
     IAuthenticatedUserService authenticatedUser,
     SignInManager<ApplicationUser> signInManager,
-    JwtSettings jwtSettings,
+    JwtTokenFactory tokenFactory,
     ITranslator translator
     ) : IAccountServices
 {
     public async Task<BaseResult> ChangePassword(ChangePasswordRequest model, CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        var user = await userManager.FindByIdAsync(authenticatedUser.UserId);
+        var user = await FindCurrentUserAsync(cancellationToken);
+        if (user is null)
+            return CurrentUserUnavailable();
 
         cancellationToken.ThrowIfCancellationRequested();
-        var token = await userManager.GeneratePasswordResetTokenAsync(user!);
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
         cancellationToken.ThrowIfCancellationRequested();
+        // ResetPasswordAsync replaces the hash and rotates the security stamp, so tokens issued
+        // before this call fail stamp validation afterwards.
         var identityResult = await userManager.ResetPasswordAsync(user, token, model.Password);
 
         if (identityResult.Succeeded)
@@ -38,8 +42,9 @@ public class AccountServices(
     }
     public async Task<BaseResult> ChangeUserName(ChangeUserNameRequest model, CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        var user = await userManager.FindByIdAsync(authenticatedUser.UserId);
+        var user = await FindCurrentUserAsync(cancellationToken);
+        if (user is null)
+            return CurrentUserUnavailable();
 
         user.UserName = model.UserName;
 
@@ -59,7 +64,7 @@ public class AccountServices(
             return new Error(ErrorCode.NotFound, translator.GetString(TranslatorMessages.AccountMessages.Account_NotFound_with_UserName(request.UserName)), nameof(request.UserName));
 
         cancellationToken.ThrowIfCancellationRequested();
-        var signInResult = await signInManager.PasswordSignInAsync(user.UserName, request.Password, false, lockoutOnFailure: false);
+        var signInResult = await signInManager.PasswordSignInAsync(user, request.Password, false, lockoutOnFailure: false);
         if (!signInResult.Succeeded)
             return new Error(ErrorCode.FieldDataInvalid, translator.GetString(TranslatorMessages.AccountMessages.Invalid_password()), nameof(request.Password));
 
@@ -98,13 +103,27 @@ public class AccountServices(
                     .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
+
+    private async Task<ApplicationUser?> FindCurrentUserAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return authenticatedUser.UserId is { Length: > 0 } userId
+            ? await userManager.FindByIdAsync(userId)
+            : null;
+    }
+
+    // No current user (unauthenticated, missing/malformed subject, or deleted account): the HTTP
+    // boundary maps ErrorInIdentity to 401 without revealing which case applied.
+    private static Error CurrentUserUnavailable() => new(ErrorCode.ErrorInIdentity, "Authentication is required.");
+
     private async Task<AuthenticationResponse> GetAuthenticationResponse(ApplicationUser user, CancellationToken cancellationToken)
     {
+        // Every sign-in rotates the stamp, so a new token invalidates tokens issued earlier for this user.
         cancellationToken.ThrowIfCancellationRequested();
         await userManager.UpdateSecurityStampAsync(user);
 
         cancellationToken.ThrowIfCancellationRequested();
-        var jwToken = await GenerateJwtToken();
+        var principal = await signInManager.ClaimsFactory.CreateAsync(user);
 
         cancellationToken.ThrowIfCancellationRequested();
         var rolesList = await userManager.GetRolesAsync(user);
@@ -112,24 +131,11 @@ public class AccountServices(
         return new AuthenticationResponse()
         {
             Id = user.Id.ToString(),
-            JwToken = new JwtSecurityTokenHandler().WriteToken(jwToken),
+            JwToken = tokenFactory.CreateToken(principal.Claims),
             Email = user.Email,
             UserName = user.UserName,
             Roles = rolesList,
             IsVerified = user.EmailConfirmed,
         };
-
-        async Task<JwtSecurityToken> GenerateJwtToken()
-        {
-            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
-            var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
-
-            return new JwtSecurityToken(
-                issuer: jwtSettings.Issuer,
-                audience: jwtSettings.Audience,
-                claims: (await signInManager.ClaimsFactory.CreateAsync(user)).Claims,
-                expires: DateTime.UtcNow.AddMinutes(jwtSettings.DurationInMinutes),
-                signingCredentials: signingCredentials);
-        }
     }
 }

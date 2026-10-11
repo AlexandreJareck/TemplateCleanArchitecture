@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning.Builder;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Template.Application;
@@ -10,9 +9,6 @@ using Template.Application.Interfaces;
 using Template.Application.Settings;
 using Template.Infrastructure.Caching;
 using Template.Infrastructure.Identity;
-using Template.Infrastructure.Identity.Contexts;
-using Template.Infrastructure.Identity.Models;
-using Template.Infrastructure.Identity.Seeds;
 using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
@@ -75,14 +71,10 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
+    await services.InitializeIdentityDatabaseAsync(applyMigrations: !useInMemoryDatabase);
     if (!useInMemoryDatabase)
-    {
-        await services.GetRequiredService<IdentityContext>().Database.MigrateAsync();
         await services.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
-    }
 
-    await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
-    await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
     await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
 }
 
@@ -97,6 +89,9 @@ if (isTestEnvironment)
 {
     app.MapGet("/_tests/forbidden", () => Results.NoContent())
         .RequireAuthorization(policy => policy.RequireRole("role-not-assigned-to-test-user"))
+        .ExcludeFromDescription();
+    app.MapGet("/_tests/admin", () => Results.NoContent())
+        .RequireAuthorization(policy => policy.RequireRole("Admin"))
         .ExcludeFromDescription();
     app.MapGet(
             "/_tests/exception",

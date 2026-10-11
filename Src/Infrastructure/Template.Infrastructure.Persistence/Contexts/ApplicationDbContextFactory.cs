@@ -19,7 +19,7 @@ public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Ap
     {
         public static DesignTimeAuthenticatedUser Instance { get; } = new();
 
-        public string UserId => string.Empty;
-        public string UserName => string.Empty;
+        public string? UserId => null;
+        public string? UserName => null;
     }
 }
