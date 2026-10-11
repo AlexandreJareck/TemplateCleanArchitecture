@@ -1,4 +1,5 @@
 #nullable enable
+using Template.Application.Logging;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Template.Application.DTOs.Products;
@@ -15,7 +16,7 @@ public class ProductService(IProductCache productCache, ILogger<ProductService> 
         var cachedProduct = await productCache.GetAsync(productId, cancellationToken);
         if (cachedProduct is not null)
         {
-            logger.LogDebug("Product {ProductId} retrieved from cache.", productId);
+            logger.LogDebug(LogEvents.ProductCacheHit, "Product {ProductId} retrieved from cache.", productId);
             return cachedProduct;
         }
 
@@ -24,7 +25,7 @@ public class ProductService(IProductCache productCache, ILogger<ProductService> 
         if (result.Success && result.Data is not null)
         {
             await productCache.SetAsync(result.Data, cancellationToken);
-            logger.LogDebug("Product {ProductId} added to cache.", productId);
+            logger.LogDebug(LogEvents.ProductCached, "Product {ProductId} added to cache.", productId);
         }
 
         return result;
