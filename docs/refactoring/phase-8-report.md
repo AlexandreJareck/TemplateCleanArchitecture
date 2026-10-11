@@ -57,7 +57,7 @@ Checkpoint fechado em 2026-10-10 às 16:22 (America/Sao_Paulo). A Fase 8 (cache 
 
 `check-boundaries.ps1` também passou: "Architecture boundary scan passed.".
 
-### OpenAPI e baseline (`docs/refactoring/baseline-fase-6`)
+### OpenAPI e baseline (`docs/refactoring/baseline-phase-6`)
 
 - `openapi-v1.json` e `openapi-v2.json` são semanticamente idênticos ao baseline (comparação JSON). Não houve mudança de contrato.
 - `health.json`, `product-v1-get.json` e `product-v2-get.json` diferem apenas em campos voláteis: `totalDuration` e o `createdDateTime` gerado no seed de cada execução.

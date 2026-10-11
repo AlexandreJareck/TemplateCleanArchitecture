@@ -16,7 +16,7 @@ Reversible assumptions:
 4. Keep PostgreSQL as the single relational provider. SQL Server references appear unused.
 5. Replace separate Redis Search and TimeSeries containers with Redis 8 integrated capabilities; retire RedisGraph unless a concrete academic requirement is confirmed.
 6. Prefer explicit application ports plus infrastructure adapters for Redis, RabbitMQ, Elasticsearch, identity, and time. MediatR remains an implementation option, not a domain dependency.
-7. Decisions adopted on 2026-10-10 are listed at the end of `fase-3-plano-implementacao.md` (VSIX isolated, v1 kept and deprecated, RedisGraph removed, fakes for functional tests, Domain on net10.0, PostgreSQL 16 patch first).
+7. Decisions adopted on 2026-10-10 are listed at the end of `phase-3-implementation-plan.md` (VSIX isolated, v1 kept and deprecated, RedisGraph removed, fakes for functional tests, Domain on net10.0, PostgreSQL 16 patch first).
 8. Use stable releases only. Preview .NET 11 is not considered “latest usable” for this project.
 
 ## 2. Proposed AI workspace

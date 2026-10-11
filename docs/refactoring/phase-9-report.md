@@ -357,7 +357,7 @@ Script temporário (fora do repositório). A WebApi rodou com `dotnet run --no-b
 | B. Broker parado com o app rodando | Publish → 500 Problem Details; `/swagger/v1/swagger.json` → 200; o consumer entra em recovery |
 | C. App iniciado sem broker | Startup OK; Swagger → 200; publish → 500 |
 
-### Comparação do OpenAPI com `docs/refactoring/baseline-fase-6/`
+### Comparação do OpenAPI com `docs/refactoring/baseline-phase-6/`
 
 - `openapi-v1.json` e `openapi-v2.json`: **idênticos ao blob versionado**. A única diferença de bytes contra o arquivo do checkout é a quebra de linha (o Git aplica CRLF no checkout e a captura grava LF). Normalizando as quebras, os bytes são iguais, e a comparação JSON estrutural tem zero diferenças. O baseline não foi alterado.
 - `health.json`: difere só em `totalDuration`. `product-v1-get.json` e `product-v2-get.json`: diferem só em `createdDateTime` (horário do seed). São os mesmos campos voláteis da Fase 8.
