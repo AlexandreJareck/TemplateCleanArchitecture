@@ -106,8 +106,9 @@ public sealed class ElasticLoggingTests : IAsyncLifetime
         await WaitUntilAsync(() => server.Requests.Any(request => request.Body.Contains("datastream-marker-7")), TimeSpan.FromSeconds(20));
         var export = server.Requests.First(request => request.Body.Contains("datastream-marker-7"));
         (export.Path + export.Body).ShouldContain("logs-api-example-demo");
-        server.Requests.ShouldContain(request => request.Method == "PUT" && request.Path.StartsWith("/_component_template/", StringComparison.Ordinal));
-        server.Requests.ShouldContain(request => request.Method == "PUT" && request.Path == "/_index_template/logs-api-example-8.11.0");
+        // Sink 9.0.0 installs ECS 9.0.0 component templates and a versioned index template for the data stream.
+        server.Requests.ShouldContain(request => request.Method == "PUT" && request.Path.StartsWith("/_component_template/ecs_9.0.0_", StringComparison.Ordinal));
+        server.Requests.ShouldContain(request => request.Method == "PUT" && request.Path == "/_index_template/logs-api-example-9.0.0");
     }
 
     [Fact]

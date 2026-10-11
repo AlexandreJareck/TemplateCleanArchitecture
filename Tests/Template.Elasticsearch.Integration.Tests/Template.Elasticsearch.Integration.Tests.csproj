@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Opt-in suite against a real Elasticsearch: requires Docker and starts disposable elasticsearch:8.17.4 containers. -->
+  <!-- Opt-in suite against a real Elasticsearch: requires Docker and starts disposable elasticsearch:9.5.5 (target) and 8.19.23 (upgrade source) containers. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

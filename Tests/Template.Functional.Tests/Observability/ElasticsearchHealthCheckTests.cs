@@ -58,6 +58,24 @@ public sealed class ElasticsearchHealthCheckTests : IAsyncLifetime
         report.Entries["elasticsearch"].Description.ShouldBe("Elasticsearch answered with an error status.");
     }
 
+    [Theory]
+    [InlineData(401)]
+    [InlineData(403)]
+    public async Task AuthenticationFailure_IsUnhealthy_WithoutLeakingTheChallengeOrBody(int status)
+    {
+        // A secured 9.x cluster answers an anonymous ping with 401 (or 403 without the monitor privilege).
+        server.Handler = _ => new FakeResponse(status, """{"error":{"type":"security_exception","reason":"secret-token-abc"}}""");
+
+        var report = await CheckAsync(new() { ["ElasticSearchSettings:Url"] = server.Url.ToString() });
+
+        var entry = report.Entries["elasticsearch"];
+        entry.Status.ShouldBe(HealthStatus.Unhealthy);
+        entry.Description.ShouldBe("Elasticsearch answered with an error status.");
+        entry.Exception.ShouldBeNull();
+        entry.Data.ShouldBeEmpty();
+        (entry.Description + report.Status).ShouldNotContain("secret-token-abc");
+    }
+
     [Fact]
     public async Task Unavailable_IsUnhealthy_Quickly_WithoutDetails()
     {

@@ -11,17 +11,29 @@ using Template.Infrastructure.Search.Persons;
 namespace Template.Elasticsearch.Integration.Tests;
 
 /// <summary>
-/// Same server version as the development compose service (8.17.4), pinned by digest, security disabled as in
-/// compose, no volumes. Compatible with the 8.17.1 client.
+/// Official images pinned by digest, security disabled as in compose, no volumes. <see cref="Target"/> is the selected
+/// 9.x server (same version and digest as the compose service) and the only one the 9.x client supports;
+/// <see cref="Source"/> is the latest 8.19 patch, the mandatory hop before a 9.x upgrade.
 /// </summary>
 public static class ElasticsearchImage
 {
-    public const string Name =
-        "docker.elastic.co/elasticsearch/elasticsearch:8.17.4@sha256:413d8df69823e9f41f6008f025fcbaf31a5849ab9c74894731d7ded65543cd56";
+    public const string Target =
+        "docker.elastic.co/elasticsearch/elasticsearch:9.5.5@sha256:13b4a40bb095774f5fda635e45fd5677cc6a26565e42b24997b0c72b88e75984";
 
-    public static IContainer Build(int? hostPort = null)
+    public const string TargetVersion = "9.5.5";
+
+    public const string Source =
+        "docker.elastic.co/elasticsearch/elasticsearch:8.19.23@sha256:4d0724bb8d78d7a2330693623e26ca4d621079d062ecc8a30b3e1fc180ec14c1";
+
+    public const string SourceVersion = "8.19.23";
+
+    /// <summary>Container path of the shared snapshot repository (<c>path.repo</c>).</summary>
+    public const string SnapshotPath = "/snapshots";
+
+    public static IContainer Build(int? hostPort = null, string image = Target, string clusterName = "phase11-test", string? snapshotDirectory = null)
     {
-        var builder = new ContainerBuilder(Name)
+        var builder = new ContainerBuilder(image)
+            .WithEnvironment("cluster.name", clusterName)
             .WithEnvironment("discovery.type", "single-node")
             .WithEnvironment("xpack.security.enabled", "false")
             .WithEnvironment("ingest.geoip.downloader.enabled", "false")
@@ -29,6 +41,13 @@ public static class ElasticsearchImage
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(
                 request => request.ForPort(9200).ForPath("/_cluster/health"),
                 strategy => strategy.WithTimeout(TimeSpan.FromMinutes(3))));
+
+        if (snapshotDirectory is not null)
+        {
+            builder = builder
+                .WithEnvironment("path.repo", SnapshotPath)
+                .WithBindMount(snapshotDirectory, SnapshotPath);
+        }
 
         builder = hostPort is { } port ? builder.WithPortBinding(port, 9200) : builder.WithPortBinding(9200, true);
         return builder.Build();
@@ -55,14 +74,14 @@ public static class ElasticsearchImage
     }
 
     /// <summary>A unique, test-owned index name; tests delete only names created this way.</summary>
-    public static string NewIndexName() => $"phase10-test-{Guid.NewGuid():N}";
+    public static string NewIndexName() => $"phase11-test-{Guid.NewGuid():N}";
 
     public static ElasticsearchPersonSearchIndex CreateIndex(string url, string indexName) =>
         new(Options.Create(new PersonSearchSettings { Url = url, IndexName = indexName, RequestTimeout = TimeSpan.FromSeconds(5) }),
             NullLogger<ElasticsearchPersonSearchIndex>.Instance);
 }
 
-/// <summary>One disposable Elasticsearch shared by a test class, plus raw HTTP helpers that bypass the adapter.</summary>
+/// <summary>One disposable Elasticsearch 9.x shared by a test class, plus raw HTTP helpers that bypass the adapter.</summary>
 public sealed class ElasticsearchFixture : IAsyncLifetime
 {
     private readonly List<string> ownedIndices = [];
