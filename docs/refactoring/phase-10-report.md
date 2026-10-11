@@ -7,7 +7,7 @@ Checkpoint de 2026-10-10 (America/Sao_Paulo). A Fase 10 tirou o Elasticsearch da
 - Checkout autoritativo: `C:\Users\alexa\source\repos\TemplateCleanArchNET`.
 - O usuário pausou a execução, mergeou a Fase 9 (PR #2) e autorizou continuar e abrir um PR ao final.
 - A branch `refactor/fase-10-elastic` foi criada a partir de `origin/main` (`8bd2548`, merge do PR #2). A árvore era idêntica à da branch da Fase 9.
-- Os únicos arquivos não versionados preexistentes eram `docs/refactoring/handoff-fase-10.md`, `handoff-fase-11.md` e `handoff-fase-12.md`. Foram preservados.
+- Os únicos arquivos não versionados preexistentes eram `docs/refactoring/handoff-phase-10.md`, `handoff-phase-11.md` e `handoff-phase-12.md`. Foram preservados.
 - Não houve reset, stash, clean nem checkout destrutivo.
 
 ## Pré-condições verificadas (Fases 8 e 9)
@@ -337,7 +337,7 @@ Antes desse resultado, houve duas falhas, ambas investigadas e corrigidas:
 1. O primeiro disparo do gate pelo Git Bash não executou nada (caminho `.\scripts` mal interpretado) e foi refeito pelo PowerShell.
 2. Numa rodada intermediária, só o passo `06c` falhou: logo depois do restart do container, a leitura voltou `Unavailable`, porque os shards do índice ainda estavam se recuperando (o Elasticsearch responde 503). A classificação estava certa; o teste é que considerava a porta HTTP como sinal de prontidão. Agora o teste espera o cluster ficar `yellow` (com limite) antes de verificar a recuperação.
 
-### Comparação do OpenAPI com `docs/refactoring/baseline-fase-6/`
+### Comparação do OpenAPI com `docs/refactoring/baseline-phase-6/`
 
 - `openapi-v1.json` e `openapi-v2.json`: **idênticos ao blob versionado**. Com as quebras de linha normalizadas, o SHA-256 é igual ao do baseline (`521a4ff0…` e `75127aba…`), e a comparação JSON estrutural tem zero diferenças. O baseline não foi alterado.
 - `health.json`: difere só em `totalDuration`. No Test não há entrada Elasticsearch, como antes.

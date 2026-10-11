@@ -25,7 +25,7 @@ Checkpoint fechado em 2026-10-10 às 14:26 (America/Sao_Paulo), com a validaçã
 
 ## Versões e fontes oficiais
 
-As versões e fontes verificadas estão em `docs/fase-2-workspace.md`: SDK em <https://dotnet.microsoft.com/en-us/download/dotnet/10.0> e pacotes em suas páginas do NuGet, consultados em 2026-10-08 e 2026-10-10. Nenhum pacote foi alterado na Fase 5. MediatR permanece em 14.0.0 (14.2.0 disponível, não adotado).
+As versões e fontes verificadas estão em `docs/phase-2-workspace.md`: SDK em <https://dotnet.microsoft.com/en-us/download/dotnet/10.0> e pacotes em suas páginas do NuGet, consultados em 2026-10-08 e 2026-10-10. Nenhum pacote foi alterado na Fase 5. MediatR permanece em 14.0.0 (14.2.0 disponível, não adotado).
 
 ## Testes e gates (execução de 2026-10-10, 14:25–14:26)
 

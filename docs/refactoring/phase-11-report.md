@@ -6,7 +6,7 @@ Checkpoint de 2026-10-11 (America/Sao_Paulo). A Fase 11 atualizou a integração
 
 - Checkout autoritativo: `C:\Users\alexa\source\repos\TemplateCleanArchNET`, branch `refactor/fase-10-elastic`, HEAD `0ef646c` (commit da Fase 10). Nenhuma worktree foi usada; a worktree antiga `.claude/worktrees/fase-8-redis-adapter-f4fda8` não foi tocada.
 - Antes de qualquer mudança, `git diff HEAD -- Src Tests Directory.Packages.props` estava vazio: o checkout continha todo o estado das Fases 0–10.
-- Arquivos não versionados preexistentes (`docs/refactoring/handoff-fase-10..12.md` e o cache `graphify-out/cache`) foram preservados. Durante a fase surgiram outros arquivos não versionados que **não foram criados por esta fase** (`docs/refactoring/execute-fase-12..21.md`, `handoff-fase-13..21.md`, `prompt-create-handoffs-phases-14-21.md`); também foram preservados.
+- Arquivos não versionados preexistentes (`docs/refactoring/handoff-phase-10..12.md` e o cache `graphify-out/cache`) foram preservados. Durante a fase surgiram outros arquivos não versionados que **não foram criados por esta fase** (`docs/refactoring/execute-phase-12..21.md`, `handoff-phase-13..21.md`, `prompt-create-handoffs-phases-14-21.md`); também foram preservados.
 - Não houve reset, stash, clean, checkout destrutivo, commit, push, merge nem PR.
 
 ## Pré-condições verificadas (Fase 10)
@@ -293,7 +293,7 @@ Execução de 10:11:58 a 10:18:17 (2026-10-11). Todos os passos terminaram com e
 
 O passo opcional `06d-elastic-upgrade-rehearsal` (novo, ativado por `-ElasticRehearsalWebApi8xPath`/`-ElasticRehearsalWebApi9xPath`) **não** foi incluído no gate final, para não criar um quarto conjunto de recursos `p11-*`. O script foi executado à parte, com o resultado registrado acima.
 
-### Comparação do OpenAPI com `docs/refactoring/baseline-fase-6/`
+### Comparação do OpenAPI com `docs/refactoring/baseline-phase-6/`
 
 - `openapi-v1.json` e `openapi-v2.json`: **idênticos**. Com as quebras de linha normalizadas, o SHA-256 é igual ao do baseline (`521a4ff0…` e `75127aba…`), e a comparação JSON estrutural é igual. O baseline não foi alterado.
 - `health.json`: igual ao baseline, exceto `totalDuration`. No ambiente Test não há entrada Elasticsearch.
