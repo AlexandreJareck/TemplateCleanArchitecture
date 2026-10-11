@@ -150,22 +150,10 @@
     "semantic_hash": "f131e065b291d4341b209d1788501006"
   },
   "Src/Core/Template.Application/ServiceRegistration.cs": {
-    "mtime": 1791662348.6111631,
-    "seen": 1791663925.5861793,
-    "ast_hash": "b671949232c2701a1cad82401651dd89",
+    "mtime": 1791667362.0089312,
+    "seen": 1791669784.9286933,
+    "ast_hash": "c6d06164c87f2dd2454119bc8a4d57ac",
     "semantic_hash": ""
-  },
-  "Src/Core/Template.Application/Services/Elastic/ElasticService.cs": {
-    "mtime": 1791662158.2131896,
-    "seen": 1791663925.5861804,
-    "ast_hash": "5459efb5c7e9187e251aaee3b7362a75",
-    "semantic_hash": "5459efb5c7e9187e251aaee3b7362a75"
-  },
-  "Src/Core/Template.Application/Services/Elastic/IElasticService.cs": {
-    "mtime": 1791662158.2204669,
-    "seen": 1791663925.5861819,
-    "ast_hash": "86946953b35cf4bffea41bec7870d037",
-    "semantic_hash": "86946953b35cf4bffea41bec7870d037"
   },
   "Src/Core/Template.Application/Services/Product/IProductService.cs": {
     "mtime": 1791662158.2204669,
@@ -179,12 +167,6 @@
     "ast_hash": "989702178a464457d1b83fb4aa5ce8a0",
     "semantic_hash": ""
   },
-  "Src/Core/Template.Application/Settings/ElasticSearchSettings.cs": {
-    "mtime": 1791662158.22251,
-    "seen": 1791663925.5861866,
-    "ast_hash": "e67393df12d8d4922fc134a3383a66fe",
-    "semantic_hash": "e67393df12d8d4922fc134a3383a66fe"
-  },
   "Src/Core/Template.Application/Settings/LocalizationSettings.cs": {
     "mtime": 1791662158.22251,
     "seen": 1791663925.5861878,
@@ -192,9 +174,9 @@
     "semantic_hash": "9ddc492e48250976b7b19f8f7f5f6481"
   },
   "Src/Core/Template.Application/Template.Application.csproj": {
-    "mtime": 1791662348.6111631,
-    "seen": 1791663925.586189,
-    "ast_hash": "0f8d8d49223e2fd448d66b707469c6aa",
+    "mtime": 1791669065.1531956,
+    "seen": 1791669784.9290488,
+    "ast_hash": "7886793f8f09f2c52a521dbefd9625e1",
     "semantic_hash": ""
   },
   "Src/Core/Template.Application/Wrappers/ApiErrorResponse.cs": {
@@ -468,9 +450,9 @@
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v1/PersonController.cs": {
-    "mtime": 1791662158.251972,
-    "seen": 1791663925.5866623,
-    "ast_hash": "f40c141efc8aa16327467e57dce1b103",
+    "mtime": 1791667729.342602,
+    "seen": 1791669784.9350317,
+    "ast_hash": "3a9d7f1071f9d5b787560cdc4afb495e",
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Controllers/v1/ProductController.cs": {
@@ -503,12 +485,6 @@
     "ast_hash": "83bb087d20b9022f6d6a6a82df530e3d",
     "semantic_hash": "83bb087d20b9022f6d6a6a82df530e3d"
   },
-  "Src/Presentation/Template.WebApi/Infrastructure/Extensions/ElasticExtensions.cs": {
-    "mtime": 1791662158.2556882,
-    "seen": 1791663925.586966,
-    "ast_hash": "9a24fe7e9c3bf7000060ea318c172340",
-    "semantic_hash": ""
-  },
   "Src/Presentation/Template.WebApi/Infrastructure/Extensions/LocalizationExtensions.cs": {
     "mtime": 1791662158.2556882,
     "seen": 1791663925.5869672,
@@ -540,9 +516,9 @@
     "semantic_hash": "03ae6b7f371f2f73a4e95140f1ec8da4"
   },
   "Src/Presentation/Template.WebApi/Program.cs": {
-    "mtime": 1791662557.9414277,
-    "seen": 1791663925.586976,
-    "ast_hash": "96bc8b63e98963ce97b09c88c92f2621",
+    "mtime": 1791667784.5528412,
+    "seen": 1791669784.9361753,
+    "ast_hash": "e4fd6657de86a19e94efe940b60b8e57",
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/Properties/launchSettings.json": {
@@ -552,9 +528,9 @@
     "semantic_hash": "370d75719c44470f844d564114ef0507"
   },
   "Src/Presentation/Template.WebApi/Template.WebApi.csproj": {
-    "mtime": 1791662557.9414277,
-    "seen": 1791663925.5869782,
-    "ast_hash": "1c64f026e8ba7c7d098a7a3484741a26",
+    "mtime": 1791667784.5528412,
+    "seen": 1791669784.936262,
+    "ast_hash": "b77b6dcef47f48c8cf9c684a4948a36c",
     "semantic_hash": ""
   },
   "Src/Presentation/Template.WebApi/appsettings.Development.json": {
@@ -582,9 +558,9 @@
     "semantic_hash": "bf12c2e3200da08301037d92ecc77ea2"
   },
   "TemplateCleanArchitecture.sln": {
-    "mtime": 1791663841.978194,
-    "seen": 1791663925.5869837,
-    "ast_hash": "7ef232fdb7bd754800eb63b0c84b7c35",
+    "mtime": 1791668742.2838566,
+    "seen": 1791669784.9366045,
+    "ast_hash": "928a824dfc588e78716ba051a2db3eb9",
     "semantic_hash": ""
   },
   "Tests/Template.Functional.Tests/ApiEndpoints/AccountFunctionalTests.cs": {
@@ -636,9 +612,9 @@
     "semantic_hash": "f17613778c8f4090a19c11d02cf41e46"
   },
   "Tests/Template.Functional.Tests/Template.Functional.Tests.csproj": {
-    "mtime": 1791662158.274644,
-    "seen": 1791663925.587306,
-    "ast_hash": "37f6245ec1bb851ee031915bfd6bd133",
+    "mtime": 1791667960.847389,
+    "seen": 1791669784.9378633,
+    "ast_hash": "0151cb5edf2fb5f888f95b3e9348c217",
     "semantic_hash": ""
   },
   "Tests/Template.Integration.Tests/Data/BaseEfRepoTestFixture.cs": {
@@ -666,9 +642,9 @@
     "semantic_hash": "5c88a7bcefb40393c6662276d6b23c66"
   },
   "Tests/Template.Integration.Tests/Template.Integration.Tests.csproj": {
-    "mtime": 1791662774.6074991,
-    "seen": 1791663925.58732,
-    "ast_hash": "ce217f24a0bb5c67579f111ad37e0425",
+    "mtime": 1791667960.847389,
+    "seen": 1791669784.9387798,
+    "ast_hash": "3b09a121a144c582f207de838d92fc2f",
     "semantic_hash": ""
   },
   "Tests/Template.Unit.Tests/ApplicationTests/Features/Products/Commands/CreateProductCommandHandlerTests.cs": {
@@ -738,9 +714,9 @@
     "semantic_hash": ""
   },
   ".agents/skills/architecture-boundary-check/scripts/check-boundaries.ps1": {
-    "mtime": 1791662757.0536954,
-    "seen": 1791663925.5861194,
-    "ast_hash": "46c53879c40daa67796ff2c0ccf47896",
+    "mtime": 1791669090.3565285,
+    "seen": 1791669784.924807,
+    "ast_hash": "cba4c6be6959ba9960530b567af45fcc",
     "semantic_hash": ""
   },
   ".agents/skills/dotnet-change-verification/scripts/select-checks.ps1": {
@@ -804,9 +780,9 @@
     "semantic_hash": ""
   },
   "Tests/Template.Architecture.Tests/ArchitectureRulesTests.cs": {
-    "mtime": 1791662734.8890395,
-    "seen": 1791663925.5869846,
-    "ast_hash": "e545166672e4c9bed54639a0a0ff569c",
+    "mtime": 1791668637.720127,
+    "seen": 1791669784.936607,
+    "ast_hash": "0bef7cd1ed9d6ab3594fdbdada254559",
     "semantic_hash": ""
   },
   "Tests/Template.Architecture.Tests/Template.Architecture.Tests.csproj": {
@@ -846,9 +822,9 @@
     "semantic_hash": ""
   },
   "Tests/Template.Unit.Tests/ApplicationTests/ServiceRegistrationTests.cs": {
-    "mtime": 1791662690.1111715,
-    "seen": 1791663925.587338,
-    "ast_hash": "7a01207ce9d6899c9b6454c621c9755e",
+    "mtime": 1791668278.320019,
+    "seen": 1791669784.9401984,
+    "ast_hash": "526f95b3ccbc6b4ab9db676014c1c5c2",
     "semantic_hash": ""
   },
   "Tests/Template.Unit.Tests/ApplicationTests/Services/SystemClockTests.cs": {
@@ -912,9 +888,9 @@
     "semantic_hash": ""
   },
   "scripts/run-phase-validation.ps1": {
-    "mtime": 1791663803.8070028,
-    "seen": 1791663925.587636,
-    "ast_hash": "d776f0c023660c644e7a9fcf51c2653b",
+    "mtime": 1791669110.225097,
+    "seen": 1791669784.9417787,
+    "ast_hash": "ef21f1e75fc372c93b99ceb9f482c5d5",
     "semantic_hash": ""
   },
   ".agents/agents/api-contract-reviewer.md": {
@@ -1020,9 +996,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791662158.1980917,
-    "seen": 1791663925.5876572,
-    "ast_hash": "f09ad7fc5d1765f6b9bb61ebc6dd62cc",
+    "mtime": 1791669956.548845,
+    "seen": 1791670102.3532887,
+    "ast_hash": "ebb78a52cd89b4b14b6c1f95616089b4",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1056,9 +1032,9 @@
     "semantic_hash": ""
   },
   "docs/fase-2-workspace.md": {
-    "mtime": 1791637862.0623152,
-    "seen": 1791651757.7475083,
-    "ast_hash": "b703bdfa9f3a117e8edb3646c8674c13",
+    "mtime": 1791668551.0450249,
+    "seen": 1791669784.9438875,
+    "ast_hash": "5de0ca6a47b474c8bcc15d197b551319",
     "semantic_hash": ""
   },
   "docs/fase-3-plano-implementacao.md": {
@@ -1437,6 +1413,222 @@
     "mtime": 1791662158.2939973,
     "seen": 1791663925.588547,
     "ast_hash": "0c80a348ae3002dda6fdf54ae941a7db",
+    "semantic_hash": ""
+  },
+  "docs/refactoring/phase-9-report.md": {
+    "mtime": 1791664855.362155,
+    "seen": 1791669784.944602,
+    "ast_hash": "62cc9b2c6dd4085042622ab7f548e6bc",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Features/Persons/Commands/EnsurePersonIndexCommand.cs": {
+    "mtime": 1791667413.4981582,
+    "seen": 1791669784.9264584,
+    "ast_hash": "a885e221c2210294c0b4de9d5efe82cb",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Features/Persons/Commands/IndexPersonCommand.cs": {
+    "mtime": 1791667413.523912,
+    "seen": 1791669784.9264593,
+    "ast_hash": "cca7929b7618c962cc2985c39501bde3",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Features/Persons/Commands/RemovePersonCommand.cs": {
+    "mtime": 1791667413.5498571,
+    "seen": 1791669784.9264605,
+    "ast_hash": "9f57ee8bcf54e04edb8081fed0339fa8",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Features/Persons/Queries/GetPersonQuery.cs": {
+    "mtime": 1791667413.5733738,
+    "seen": 1791669784.9264612,
+    "ast_hash": "f2a7573bba4b561b30cf3f0a13a4ae6a",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Features/Persons/Queries/ListPersonsQuery.cs": {
+    "mtime": 1791667413.6104562,
+    "seen": 1791669784.926462,
+    "ast_hash": "e8e7aa5a0590d6c647b29fb4bcdc78c3",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Interfaces/Search/IPersonSearchIndex.cs": {
+    "mtime": 1791667393.34279,
+    "seen": 1791669784.928018,
+    "ast_hash": "e712db215dab294aa18c71981da06f81",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Search/Persons/IndexedPerson.cs": {
+    "mtime": 1791667383.6943562,
+    "seen": 1791669784.9286892,
+    "ast_hash": "59a25548fe372b4e21a99290d48f0c7a",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Search/Persons/PersonBulkIndexResult.cs": {
+    "mtime": 1791667383.9518735,
+    "seen": 1791669784.9286907,
+    "ast_hash": "5f0b6638f76a86265d50bffd863d0767",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Search/Persons/PersonIndexResult.cs": {
+    "mtime": 1791667383.8717818,
+    "seen": 1791669784.9286914,
+    "ast_hash": "b29c53831ca1abb824098fda175ece3b",
+    "semantic_hash": ""
+  },
+  "Src/Core/Template.Application/Search/Persons/PersonIndexStatus.cs": {
+    "mtime": 1791667383.7722461,
+    "seen": 1791669784.9286923,
+    "ast_hash": "38135c379bc2788134f8b82dc6d16427",
+    "semantic_hash": ""
+  },
+  "Src/Infrastructure/Template.Infrastructure.Search/PersonSearchSettings.cs": {
+    "mtime": 1791667544.097403,
+    "seen": 1791669784.9347527,
+    "ast_hash": "9b01a20672ae94598361f54d7e8b8bb0",
+    "semantic_hash": ""
+  },
+  "Src/Infrastructure/Template.Infrastructure.Search/Persons/DisabledPersonSearchIndex.cs": {
+    "mtime": 1791667544.350322,
+    "seen": 1791669784.9347544,
+    "ast_hash": "5f25bf6ca6f42f3c2bffe78521b0b84e",
+    "semantic_hash": ""
+  },
+  "Src/Infrastructure/Template.Infrastructure.Search/Persons/ElasticsearchPersonSearchIndex.cs": {
+    "mtime": 1791668201.9410338,
+    "seen": 1791669784.934755,
+    "ast_hash": "3ac4a49b56ac082ba345fdd090c5a304",
+    "semantic_hash": ""
+  },
+  "Src/Infrastructure/Template.Infrastructure.Search/Persons/PersonDocument.cs": {
+    "mtime": 1791667544.4648676,
+    "seen": 1791669784.9347558,
+    "ast_hash": "333a5291e88726a4128dddf08475dea3",
+    "semantic_hash": ""
+  },
+  "Src/Infrastructure/Template.Infrastructure.Search/ServiceRegistration.cs": {
+    "mtime": 1791667544.2684445,
+    "seen": 1791669784.9347568,
+    "ast_hash": "88920cb143da24610bfbee78fcbbc897",
+    "semantic_hash": ""
+  },
+  "Src/Infrastructure/Template.Infrastructure.Search/Template.Infrastructure.Search.csproj": {
+    "mtime": 1791667543.9973834,
+    "seen": 1791669784.9347577,
+    "ast_hash": "791793f7e70442dde758700ba46df6b6",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/HealthChecks/ElasticsearchHealthCheck.cs": {
+    "mtime": 1791667729.5780158,
+    "seen": 1791669784.9358077,
+    "ast_hash": "cc77761a3f3be083468bf92749960c29",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/HealthChecks/ElasticsearchHealthCheckSettings.cs": {
+    "mtime": 1791667729.4651184,
+    "seen": 1791669784.9358087,
+    "ast_hash": "4c50f06e77ee46c604555aa0552a92cb",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/HealthChecks/HealthCheckExtensions.cs": {
+    "mtime": 1791669273.5120437,
+    "seen": 1791669784.9358099,
+    "ast_hash": "86b199a5fa1e2ac49fc4e38d3e8faeaf",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/Logging/ElasticLogSinkDiagnostics.cs": {
+    "mtime": 1791667769.3296933,
+    "seen": 1791669784.9359875,
+    "ast_hash": "a18cea98dc0905cc53919a66fa6a0982",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/Logging/ElasticLoggingSettings.cs": {
+    "mtime": 1791669481.7248814,
+    "seen": 1791669784.9359884,
+    "ast_hash": "94fa43b1e81a06ce0be7076479c8bdd5",
+    "semantic_hash": ""
+  },
+  "Src/Presentation/Template.WebApi/Infrastructure/Logging/LoggingExtensions.cs": {
+    "mtime": 1791669053.493871,
+    "seen": 1791669784.9359891,
+    "ast_hash": "37ff904db35376f7ae5c34762a2c50ec",
+    "semantic_hash": ""
+  },
+  "Tests/Shared/FakeElasticsearchServer.cs": {
+    "mtime": 1791668159.5178256,
+    "seen": 1791669784.9366057,
+    "ast_hash": "1d8318f8335204e0f381854fc3de8d7c",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Elasticsearch.Integration.Tests/ElasticsearchAvailabilityTests.cs": {
+    "mtime": 1791669732.4028194,
+    "seen": 1791669784.9366937,
+    "ast_hash": "cb1530db2327c68718b990976e71bd8e",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Elasticsearch.Integration.Tests/ElasticsearchTestSupport.cs": {
+    "mtime": 1791669732.4028194,
+    "seen": 1791669784.9366949,
+    "ast_hash": "0a529de79363f86373320824715ec066",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Elasticsearch.Integration.Tests/PersonSearchIndexElasticsearchTests.cs": {
+    "mtime": 1791668766.533182,
+    "seen": 1791669784.9366956,
+    "ast_hash": "c73b66a3167cd1df58af01948e10bc5c",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Elasticsearch.Integration.Tests/Template.Elasticsearch.Integration.Tests.csproj": {
+    "mtime": 1791668690.3337903,
+    "seen": 1791669784.9366965,
+    "ast_hash": "7f8f434d97ae43994763b73820f018ae",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Functional.Tests/ApiEndpoints/PersonFunctionalTests.cs": {
+    "mtime": 1791668432.534614,
+    "seen": 1791669784.936962,
+    "ast_hash": "da5595b1472d6e0b14e0b4f1eb5973d5",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Functional.Tests/Observability/ElasticLoggingTests.cs": {
+    "mtime": 1791668501.8397272,
+    "seen": 1791669784.9378612,
+    "ast_hash": "be39bc3019cf53e180b7550e70cc50cd",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Functional.Tests/Observability/ElasticsearchHealthCheckTests.cs": {
+    "mtime": 1791668501.8404589,
+    "seen": 1791669784.9378622,
+    "ast_hash": "fba2a9d09f71ddb655d72591aeead93f",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Integration.Tests/Search/ElasticsearchPersonSearchIndexTests.cs": {
+    "mtime": 1791668212.0600252,
+    "seen": 1791669784.938777,
+    "ast_hash": "1e52a7fc771a80ae074603cd8b3a82a7",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Integration.Tests/Search/SearchRegistrationTests.cs": {
+    "mtime": 1791668075.8616445,
+    "seen": 1791669784.9387782,
+    "ast_hash": "2750fa2716397bd6ebc3d461aa5c8dfb",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Integration.Tests/Search/SearchTestSupport.cs": {
+    "mtime": 1791668108.9525633,
+    "seen": 1791669784.9387789,
+    "ast_hash": "bc8eae8da0b094ea7621c7b2f0c41159",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Unit.Tests/ApplicationTests/Features/Persons/PersonUseCaseHandlerTests.cs": {
+    "mtime": 1791668268.2327044,
+    "seen": 1791669784.939717,
+    "ast_hash": "28dc24ed688fee1eb1c527e762d38af0",
+    "semantic_hash": ""
+  },
+  "Tests/Template.Unit.Tests/ApplicationTests/Search/PersonIndexResultTests.cs": {
+    "mtime": 1791668268.2705064,
+    "seen": 1791669784.9401968,
+    "ast_hash": "50301cc949965751aa22d75aa2de60eb",
     "semantic_hash": ""
   }
 }
