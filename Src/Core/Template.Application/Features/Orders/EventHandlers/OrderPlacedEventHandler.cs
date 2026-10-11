@@ -1,4 +1,5 @@
 #nullable enable
+using Template.Application.Logging;
 using Microsoft.Extensions.Logging;
 using Template.Application.Interfaces.Messaging;
 using Template.Application.Messaging;
@@ -18,12 +19,14 @@ public sealed class OrderPlacedEventHandler(IProcessedMessageStore processedMess
         if (await processedMessages.WasProcessedAsync(context.Subscription, context.MessageId, cancellationToken))
         {
             logger.LogInformation(
+                LogEvents.OrderDuplicateSkipped,
                 "Skipping duplicate order {OrderId} on {Subscription} (message {MessageId})",
                 orderPlaced.OrderId, context.Subscription, context.MessageId);
             return;
         }
 
         logger.LogInformation(
+            LogEvents.OrderReceived,
             "Order {OrderId} received on {Subscription} (redelivery: {IsRedelivery})",
             orderPlaced.OrderId, context.Subscription, context.IsRedelivery);
 

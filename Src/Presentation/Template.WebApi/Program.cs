@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Template.Application;
 using Template.Application.Interfaces;
-using Template.Application.Settings;
+using Template.Application.Logging;
 using Template.Infrastructure.Caching;
 using Template.Infrastructure.Identity;
 using Template.Infrastructure.Messaging;
@@ -26,12 +26,10 @@ var builder = WebApplication.CreateBuilder(args);
 var isTestEnvironment = builder.Environment.IsEnvironment("Test");
 
 Log.Logger = isTestEnvironment
-    ? new LoggerConfiguration().WriteTo.Console().CreateLogger()
-    : new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
+    ? new LoggerConfiguration().Enrich.With<SensitiveDataRedactionEnricher>().WriteTo.Console().CreateLogger()
+    : new LoggerConfiguration().Enrich.With<SensitiveDataRedactionEnricher>().ReadFrom.Configuration(builder.Configuration).CreateLogger();
 
 bool useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
-
-builder.Services.Configure<LocalizationSettings>(builder.Configuration.GetSection(nameof(LocalizationSettings)));
 
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
@@ -53,11 +51,10 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddSwaggerWithVersioning();
 builder.Services.AddAnyCors();
 
-builder.Host.UseSerilog();
-builder.Services.AddCustomLocalization();
+builder.Host.ConfigureLog(isTestEnvironment);
+builder.Services.AddCustomLocalization(builder.Configuration);
 builder.Services.AddHealthChecksService(builder.Configuration, includeElasticsearch: !isTestEnvironment);
-if (!isTestEnvironment)
-    builder.Host.ConfigureLog();
+builder.Services.AddDependencyHealthChecks(builder.Configuration, includeMessageBroker: !isTestEnvironment);
 
 builder.Services.AddRouting(options =>
 {
@@ -78,10 +75,13 @@ using (var scope = app.Services.CreateScope())
     await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
 }
 
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.ConfigureHealthCheck();
 
 app.UseCustomLocalization();
 app.UseAnyCors();
+// Before routing and authentication, so a failure anywhere in the pipeline maps to Problem Details and is logged once.
+app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -97,15 +97,37 @@ if (isTestEnvironment)
             "/_tests/exception",
             () => Task.FromException<IResult>(new InvalidOperationException("internal-sensitive-marker")))
         .ExcludeFromDescription();
+    app.MapGet(
+            "/_tests/canceled",
+            async (HttpContext context) =>
+            {
+                context.Abort();
+                await Task.Delay(Timeout.Infinite, context.RequestAborted);
+                return Results.NoContent();
+            })
+        .ExcludeFromDescription();
 }
 app.DescribeApiVersions();
 app.UseSwaggerWithVersioning();
-app.UseMiddleware<ErrorHandlerMiddleware>();
 app.MapControllers();
 
-app.Run();
-
+var lifecycleLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Template.WebApi.Lifecycle");
+app.Lifetime.ApplicationStarted.Register(() => lifecycleLogger.LogInformation(
+    LogEvents.ApplicationStarted, "Application started in {EnvironmentName}", app.Environment.EnvironmentName));
+app.Lifetime.ApplicationStopping.Register(() => lifecycleLogger.LogInformation(
+    LogEvents.ApplicationStopping, "Application stopping"));
 app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
+
+try
+{
+    app.Run();
+}
+catch (Exception error) when (error is not HostAbortedException)
+{
+    lifecycleLogger.LogCritical(
+        LogEvents.ApplicationStartupFailed, error, "Application terminated unexpectedly ({FailureCategory})", error.GetType().Name);
+    throw;
+}
 public partial class Program
 {
 }

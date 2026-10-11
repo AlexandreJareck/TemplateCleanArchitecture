@@ -100,4 +100,8 @@ public static class ServiceRegistration
         await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
         await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
     }
+
+    /// <summary>Readiness probe of the Identity database (EF Core <c>CanConnectAsync</c>), without exposing the context.</summary>
+    public static Task<bool> CanConnectToIdentityDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken) =>
+        services.GetRequiredService<IdentityContext>().Database.CanConnectAsync(cancellationToken);
 }

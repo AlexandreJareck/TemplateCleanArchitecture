@@ -24,9 +24,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
-    <PackageReference Include="Serilog.Enrichers.ClientInfo" />
-    <PackageReference Include="Serilog.Exceptions" />
-    <PackageReference Include="Serilog.Extensions.Logging" />
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Elastic.Serilog.Sinks" />
   </ItemGroup>

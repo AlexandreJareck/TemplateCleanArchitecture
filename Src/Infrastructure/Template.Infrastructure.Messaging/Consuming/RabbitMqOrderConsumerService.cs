@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Template.Application.Logging;
 using Template.Infrastructure.Messaging.Topology;
 
 namespace Template.Infrastructure.Messaging.Consuming;
@@ -35,7 +36,7 @@ public sealed class RabbitMqOrderConsumerService(
         var settings = options.Value;
         if (!settings.Enabled || !settings.ConsumersEnabled)
         {
-            logger.LogInformation("Order consumers are disabled by configuration");
+            logger.LogInformation(LogEvents.MessagingConsumersDisabled, "Order consumers are disabled by configuration");
             return;
         }
 
@@ -55,6 +56,7 @@ public sealed class RabbitMqOrderConsumerService(
             catch (Exception exception) when (RabbitMqConnections.IsBrokerFailure(exception) || exception is OperationCanceledException)
             {
                 logger.LogWarning(
+                    LogEvents.MessagingBrokerUnreachable,
                     "Order consumers cannot reach the message broker ({ExceptionType}); retrying in {Delay}",
                     exception.GetType().Name, delay);
             }
@@ -74,7 +76,7 @@ public sealed class RabbitMqOrderConsumerService(
             delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, settings.MaxReconnectDelay.Ticks));
         }
 
-        logger.LogInformation("Order consumers stopped");
+        logger.LogInformation(LogEvents.MessagingConsumersStopped, "Order consumers stopped");
     }
 
     /// <summary>Runs until a consumer channel is lost (returns true) or the host stops (throws).</summary>
@@ -89,13 +91,13 @@ public sealed class RabbitMqOrderConsumerService(
             connection = await factory.CreateConnectionAsync(stoppingToken);
             connection.RecoverySucceededAsync += (_, _) =>
             {
-                logger.LogInformation("Order consumers reconnected to the message broker");
+                logger.LogInformation(LogEvents.MessagingConnectionRecovered, "Order consumers reconnected to the message broker");
                 return Task.CompletedTask;
             };
             connection.ConnectionShutdownAsync += (_, args) =>
             {
                 if (args.Initiator != ShutdownInitiator.Application)
-                    logger.LogWarning("Order consumer connection lost ({ReplyCode}); automatic recovery is active", args.ReplyCode);
+                    logger.LogWarning(LogEvents.MessagingConnectionLost, "Order consumer connection lost ({ReplyCode}); automatic recovery is active", args.ReplyCode);
                 return Task.CompletedTask;
             };
 
@@ -128,11 +130,11 @@ public sealed class RabbitMqOrderConsumerService(
                 consumers[^1] = (channel, consumerTag);
             }
 
-            logger.LogInformation("Order consumers started on {Count} queues", consumers.Count);
+            logger.LogInformation(LogEvents.MessagingConsumersStarted, "Order consumers started on {QueueCount} queues", consumers.Count);
             Volatile.Read(ref consuming).TrySetResult();
 
             await sessionLost.Task.WaitAsync(stoppingToken);
-            logger.LogWarning("An order consumer channel was closed by the broker; restarting consumers");
+            logger.LogWarning(LogEvents.MessagingChannelClosed, "An order consumer channel was closed by the broker; restarting consumers");
             return true;
         }
         finally
@@ -187,6 +189,7 @@ public sealed class RabbitMqOrderConsumerService(
         {
             // The acknowledgement could not be sent; the broker redelivers the message (at-least-once).
             logger.LogWarning(
+                LogEvents.MessageSettleFailed,
                 "Could not settle a delivery on {Subscription} ({ExceptionType}); the broker will redeliver it",
                 subscription.Name, exception.GetType().Name);
         }
@@ -232,11 +235,12 @@ public sealed class RabbitMqOrderConsumerService(
                 received.Body,
                 timeout.Token);
             await channel.BasicAckAsync(delivery.DeliveryTag, multiple: false);
-            logger.LogWarning("Message {MessageId} on {Subscription} dead-lettered: {Reason}", received.MessageId, subscription.Name, reason);
+            logger.LogWarning(LogEvents.MessageDeadLettered, "Message {MessageId} on {Subscription} dead-lettered: {Reason}", received.MessageId, subscription.Name, reason);
         }
         catch (Exception exception) when (RabbitMqConnections.IsBrokerFailure(exception) || exception is OperationCanceledException)
         {
             logger.LogError(
+                LogEvents.MessageDeadLetterFailed,
                 "Dead-lettering message {MessageId} on {Subscription} failed ({ExceptionType}); requeueing it",
                 received.MessageId, subscription.Name, exception.GetType().Name);
             try
