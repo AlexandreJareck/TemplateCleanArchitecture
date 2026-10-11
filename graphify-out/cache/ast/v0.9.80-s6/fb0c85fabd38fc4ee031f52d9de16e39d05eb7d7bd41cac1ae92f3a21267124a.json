@@ -1,1 +1,0 @@
-{"nodes": [{"id": "$graphify-root$_agents_skills_architecture_boundary_check_scripts_check_boundaries_ps1", "label": "check-boundaries.ps1", "file_type": "code", "source_file": ".agents/skills/architecture-boundary-check/scripts/check-boundaries.ps1", "source_location": "L1"}], "edges": [], "raw_calls": []}
