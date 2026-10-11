@@ -12,7 +12,9 @@ param(
     [switch]$SkipGraphify,
     # Optional Phase 11 parallel upgrade rehearsal: published pre-upgrade (8.x) and upgraded (9.x) WebApi folders.
     [string]$ElasticRehearsalWebApi8xPath,
-    [string]$ElasticRehearsalWebApi9xPath
+    [string]$ElasticRehearsalWebApi9xPath,
+    # Optional Phase 14 isolated Compose baseline (new project and volumes; requires Docker).
+    [switch]$ComposeBaseline
 )
 
 $ErrorActionPreference = 'Continue'
@@ -50,6 +52,9 @@ Invoke-Step '06b-test-rabbitmq' { & $DotNetPath test Tests\Template.RabbitMq.Int
 Invoke-Step '06c-test-elasticsearch' { & $DotNetPath test Tests\Template.Elasticsearch.Integration.Tests\Template.Elasticsearch.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 if ($ElasticRehearsalWebApi8xPath -and $ElasticRehearsalWebApi9xPath) {
     Invoke-Step '06d-elastic-upgrade-rehearsal' { & (Join-Path $PSScriptRoot 'elastic-upgrade-rehearsal.ps1') -WebApi8xPath $ElasticRehearsalWebApi8xPath -WebApi9xPath $ElasticRehearsalWebApi9xPath -DotNetPath $DotNetPath }
+}
+if ($ComposeBaseline) {
+    Invoke-Step '06e-compose-baseline' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') }
 }
 Invoke-Step '07-test-functional' { & $DotNetPath test Tests\Template.Functional.Tests\Template.Functional.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '08-vulnerable-packages' { & $DotNetPath list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive }
