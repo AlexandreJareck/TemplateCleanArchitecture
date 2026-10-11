@@ -1,17 +1,15 @@
-﻿#nullable disable
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using System.Text;
+using Microsoft.Extensions.Options;
 using Template.Application.Interfaces.UserInterfaces;
+using Template.Infrastructure.Identity.Authentication;
 using Template.Infrastructure.Identity.Contexts;
 using Template.Infrastructure.Identity.Models;
+using Template.Infrastructure.Identity.Seeds;
 using Template.Infrastructure.Identity.Services;
 using Template.Infrastructure.Identity.Settings;
 
@@ -38,66 +36,68 @@ public static class ServiceRegistration
 
         services.AddTransient<IGetUserServices, GetUserServices>();
         services.AddTransient<IAccountServices, AccountServices>();
+        services.AddSingleton<JwtTokenFactory>();
 
-        var identitySettings = configuration.GetSection(nameof(IdentitySettings)).Get<IdentitySettings>();
-        var jwtSettings = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
+        services.AddSingleton<IValidateOptions<JwtSettings>, JwtSettingsValidator>();
+        services.AddOptions<JwtSettings>().Bind(configuration.GetSection(JwtSettings.SectionName)).ValidateOnStart();
+        services.AddSingleton<IValidateOptions<IdentitySettings>, IdentitySettingsValidator>();
+        services.AddOptions<IdentitySettings>().Bind(configuration.GetSection(IdentitySettings.SectionName)).ValidateOnStart();
 
-        services.AddSingleton(jwtSettings);
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         {
             options.SignIn.RequireConfirmedAccount = false;
             options.SignIn.RequireConfirmedEmail = false;
             options.User.RequireUniqueEmail = false;
-
-            options.Password.RequireDigit = identitySettings.PasswordRequireDigit;
-            options.Password.RequiredLength = identitySettings.PasswordRequiredLength;
-            options.Password.RequireNonAlphanumeric = identitySettings.PasswordRequireNonAlphanumeric;
-            options.Password.RequireUppercase = identitySettings.PasswordRequireUppercase;
-            options.Password.RequireLowercase = identitySettings.PasswordRequireLowercase;
-
         }).AddEntityFrameworkStores<IdentityContext>().AddDefaultTokenProviders();
+
+        services.AddOptions<IdentityOptions>()
+            .Configure<IOptions<IdentitySettings>>((options, identitySettings) =>
+            {
+                var settings = identitySettings.Value;
+                options.Password.RequireDigit = settings.PasswordRequireDigit;
+                options.Password.RequiredLength = settings.PasswordRequiredLength;
+                options.Password.RequireNonAlphanumeric = settings.PasswordRequireNonAlphanumeric;
+                options.Password.RequireUppercase = settings.PasswordRequireUppercase;
+                options.Password.RequireLowercase = settings.PasswordRequireLowercase;
+            });
 
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-            .AddJwtBearer(o =>
+        }).AddJwtBearer();
+
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<JwtSettings>>((options, jwtSettings) =>
             {
-                o.RequireHttpsMetadata = false;
-                o.SaveToken = false;
-                o.TokenValidationParameters = new TokenValidationParameters
+                // Tokens are validated with a local key, not Authority/MetadataAddress discovery, so this
+                // flag has no runtime effect today. It stays at the secure framework default so that adding
+                // an authority later cannot silently fetch metadata over HTTP.
+                options.RequireHttpsMetadata = true;
+                options.SaveToken = false;
+                // Keep validation failure reasons out of the WWW-Authenticate header; it stays "Bearer".
+                options.IncludeErrorDetails = false;
+                options.TokenValidationParameters = JwtTokenFactory.CreateValidationParameters(jwtSettings.Value);
+                options.Events = new JwtBearerEvents
                 {
-                    ValidateIssuerSigningKey = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
-                };
-                o.Events = new JwtBearerEvents()
-                {
-                    OnTokenValidated = async context =>
-                    {
-                        var claimsIdentity = context.Principal?.Identity as ClaimsIdentity;
-                        if (claimsIdentity?.Claims.Any() is not true)
-                            context.Fail("This token has no claims.");
-
-                        var securityStamp = claimsIdentity?.FindFirst("AspNet.Identity.SecurityStamp");
-                        if (securityStamp is null)
-                            context.Fail("This token has no security stamp");
-
-                        var signInManager = context.HttpContext.RequestServices.GetRequiredService<SignInManager<ApplicationUser>>();
-                        var validatedUser = await signInManager.ValidateSecurityStampAsync(context.Principal);
-                        if (validatedUser is null)
-                            context.Fail("Token security stamp is not valid.");
-                    },
-
+                    OnTokenValidated = SecurityStampTokenValidator.ValidateAsync
                 };
             });
 
         return services;
+    }
+
+    /// <summary>
+    /// Applies Identity migrations (relational providers only) and seeds the default role and user.
+    /// Keeps <see cref="IdentityContext"/>, <see cref="UserManager{TUser}"/> and <see cref="RoleManager{TRole}"/>
+    /// inside this project.
+    /// </summary>
+    public static async Task InitializeIdentityDatabaseAsync(this IServiceProvider services, bool applyMigrations)
+    {
+        if (applyMigrations)
+            await services.GetRequiredService<IdentityContext>().Database.MigrateAsync();
+
+        await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
+        await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
     }
 }

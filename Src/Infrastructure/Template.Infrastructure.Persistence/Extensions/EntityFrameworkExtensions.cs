@@ -13,9 +13,11 @@ public static class EntityFrameworkExtensions
     /// <param name="authenticatedUser">The authenticated user service to get user information.</param>
     public static void ApplyAuditing(this ChangeTracker changeTracker, IAuthenticatedUserService authenticatedUser)
     {
-        var userId = string.IsNullOrEmpty(authenticatedUser.UserId)
-            ? Guid.Empty
-            : Guid.Parse(authenticatedUser.UserId);
+        // No authenticated user (anonymous request, background work, design time) or a malformed
+        // identifier is audited as Guid.Empty, the explicit "system/anonymous" actor.
+        var userId = Guid.TryParse(authenticatedUser.UserId, out var parsedUserId)
+            ? parsedUserId
+            : Guid.Empty;
 
         var currentTime = DateTime.UtcNow;
 
