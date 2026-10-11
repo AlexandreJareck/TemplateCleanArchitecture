@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -45,5 +46,15 @@ public static class ServiceRegistration
         services.AddSingleton<RabbitMqOrderConsumerService>();
         services.AddHostedService(provider => provider.GetRequiredService<RabbitMqOrderConsumerService>());
         return services;
+    }
+
+    /// <summary>
+    /// The broker endpoint for a reachability probe, or null when messaging is disabled. Only host and port are
+    /// returned; credentials never leave this project.
+    /// </summary>
+    public static DnsEndPoint? GetMessageBrokerEndpoint(IConfiguration configuration)
+    {
+        var settings = configuration.GetSection(RabbitMqSettings.SectionName).Get<RabbitMqSettings>() ?? new RabbitMqSettings();
+        return settings.Enabled ? new DnsEndPoint(settings.HostName, settings.Port) : null;
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Shouldly;
 
 namespace Template.Architecture.Tests;
@@ -218,7 +218,52 @@ public sealed class ArchitectureRulesTests
     {
         var actual = SourceViolations("Src", ["BuildServiceProvider("]);
 
-        actual.ShouldBe(["Src/Presentation/Template.WebApi/Infrastructure/Extensions/LocalizationExtensions.cs"]); // Phase 13: localization options
+        actual.ShouldBeEmpty(); // Phase 13: the LocalizationExtensions exception was removed; no replacement exception
+    }
+
+    [Fact]
+    public void Domain_Has_No_Logging_Health_Http_Or_Localization_Framework()
+    {
+        SourceViolations("Src/Core/Template.Domain", ObservabilityFrameworkMarkers()).ShouldBeEmpty(); // Phase 13
+    }
+
+    [Fact]
+    public void Application_Depends_Only_On_The_Localization_Port()
+    {
+        SourceViolations("Src/Core", LocalizationImplementationMarkers()).ShouldBeEmpty(); // Phase 13
+        SourceViolations("Src/Core/Template.Application", ["Serilog", "HealthCheck", "Microsoft.AspNetCore.Localization"]).ShouldBeEmpty();
+        ReadSource("Src/Core/Template.Application/Interfaces/ITranslator.cs").ShouldContain("public interface ITranslator");
+    }
+
+    [Fact]
+    public void Concrete_Localization_Lives_In_Infrastructure_Resources()
+    {
+        SourceViolations("Src", ["ResourceManager", ": ITranslator"])
+            .ShouldAllBe(path => path.StartsWith("Src/Infrastructure/Template.Infrastructure.Resources/", StringComparison.Ordinal));
+        SourceViolations("Src", [": ITranslator"]).ShouldBe(["Src/Infrastructure/Template.Infrastructure.Resources/Services/Translator.cs"]);
+    }
+
+    [Fact]
+    public void Logging_And_Health_Do_Not_Depend_On_Application_Ports()
+    {
+        SourceViolations("Src/Presentation/Template.WebApi/Infrastructure/Logging", ApplicationPortMarkers()).ShouldBeEmpty(); // Phase 13
+        SourceViolations("Src/Presentation/Template.WebApi/Infrastructure/HealthChecks", ApplicationPortMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Presentation/Template.WebApi/Infrastructure/HealthChecks", PresentationMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Redundant_Logging_Packages_Stay_Removed()
+    {
+        var webApi = References(LoadProject("Src/Presentation/Template.WebApi/Template.WebApi.csproj"), "PackageReference");
+        var central = ReadSource("Directory.Packages.props");
+
+        foreach (var package in RemovedLoggingPackages)
+        {
+            webApi.ShouldNotContain(package); // Phase 13
+            central.ShouldNotContain($"\"{package}\"");
+        }
+
+        webApi.ShouldContain("Serilog.AspNetCore");
     }
 
     [Fact]
@@ -308,6 +353,13 @@ public sealed class ArchitectureRulesTests
         ContainsAny("public LoggingExtensions(IPersonSearchIndex index)", SearchPortMarkers()).ShouldBeTrue();
         ContainsAny("var url = settings.Get<PersonSearchSettings>().Url;", SearchPortMarkers()).ShouldBeTrue();
         ContainsAny("using var provider = services.BuildServiceProvider();", ["BuildServiceProvider("]).ShouldBeTrue();
+        ContainsAny("using Microsoft.Extensions.Logging;", ObservabilityFrameworkMarkers()).ShouldBeTrue();
+        ContainsAny("public sealed class Product { public Guid Id { get; } }", ObservabilityFrameworkMarkers()).ShouldBeFalse();
+        ContainsAny("public Handler(IStringLocalizer<Messages> localizer)", LocalizationImplementationMarkers()).ShouldBeTrue();
+        ContainsAny("new ResourceManager(typeof(Messages))", LocalizationImplementationMarkers()).ShouldBeTrue();
+        ContainsAny("public Handler(ITranslator translator)", LocalizationImplementationMarkers()).ShouldBeFalse();
+        ContainsAny("public sealed class CacheHealthCheck(IProductCache cache) : IHealthCheck", ApplicationPortMarkers()).ShouldBeTrue();
+        ContainsAny("public sealed class DistributedCacheHealthCheck(IDistributedCache cache)", ApplicationPortMarkers()).ShouldBeFalse();
         ContainsAny("public interface ICurrentUser { ClaimsPrincipal Principal { get; } }", IdentityMarkers()).ShouldBeTrue();
         ContainsAny("Task<string> CreateAsync(UserManager<User> users);", IdentityMarkers()).ShouldBeTrue();
         ContainsAny("using System.IdentityModel.Tokens.Jwt;", IdentityMarkers()).ShouldBeTrue();
@@ -336,6 +388,28 @@ public sealed class ArchitectureRulesTests
     [
         "Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore", "Microsoft.Extensions.Caching",
         "Microsoft.Extensions.Hosting", "RabbitMQ", "Serilog", "HealthChecks", .. SearchVendorMarkers()
+    ];
+
+    private static readonly string[] RemovedLoggingPackages =
+    [
+        "Serilog.Enrichers.ClientInfo", "Serilog.Exceptions", "Serilog.Extensions.Logging"
+    ];
+
+    private static string[] ObservabilityFrameworkMarkers() =>
+    [
+        "Microsoft.Extensions.Logging", "Serilog", "HealthCheck", "Microsoft.AspNetCore", "HttpContext",
+        "Microsoft.Extensions.Localization", "IStringLocalizer", "ResourceManager", "CultureInfo"
+    ];
+
+    private static string[] LocalizationImplementationMarkers() =>
+    [
+        "IStringLocalizer", "Microsoft.Extensions.Localization", "Microsoft.AspNetCore.Localization", "ResourceManager",
+        "System.Resources", "new RequestCulture", "RequestCultureProvider", "RequestLocalizationOptions", ".resx", "Template.Infrastructure.Resources"
+    ];
+
+    private static string[] ApplicationPortMarkers() =>
+    [
+        "IProductCache", "IOrderEventPublisher", "IPersonSearchIndex", "IProcessedMessageStore", "Template.Application.Interfaces"
     ];
 
     private const string IdentityProject = "Src/Infrastructure/Template.Infrastructure.Identity/";

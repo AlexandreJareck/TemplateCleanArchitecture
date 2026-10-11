@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Template.Application.Interfaces.Messaging;
+using Template.Application.Logging;
 using Template.Application.Messaging;
 using Template.Infrastructure.Messaging.Serialization;
 using Template.Infrastructure.Messaging.Topology;
@@ -50,14 +51,20 @@ public sealed class OrderDeliveryProcessor(
         if (decoded.Status != DecodeStatus.Decoded)
         {
             var reason = decoded.Status == DecodeStatus.IncompatibleContract ? IncompatibleContractReason : InvalidPayloadReason;
+            // The inbound id is untrusted: a missing or malformed one is replaced by a new safe identifier.
+            var rejectedId = CorrelationId.Normalize(delivery.MessageId, CorrelationId.New());
+            using var rejectedScope = BeginCorrelationScope(rejectedId, subscription);
             logger.LogWarning(
+                LogEvents.MessageRejected,
                 "Rejecting message {MessageId} on {Subscription}: {Reason} ({BodyLength} bytes, type {MessageType})",
-                delivery.MessageId, subscription.Name, reason, delivery.Body.Length, delivery.MessageType);
+                rejectedId, subscription.Name, reason, delivery.Body.Length, CorrelationId.Normalize(delivery.MessageType, "invalid"));
             return DeliveryDecision.DeadLetter(reason);
         }
 
         var orderPlaced = decoded.Event!;
-        var messageId = string.IsNullOrEmpty(delivery.MessageId) ? orderPlaced.OrderId.ToString("D") : delivery.MessageId;
+        // A missing or malformed inbound id falls back to the order id, which is deterministic across redeliveries.
+        var messageId = CorrelationId.Normalize(delivery.MessageId, orderPlaced.OrderId.ToString("D"));
+        using var correlationScope = BeginCorrelationScope(messageId, subscription);
         var context = new IncomingMessageContext(subscription.Name, messageId, delivery.Redelivered);
 
         try
@@ -68,7 +75,7 @@ public sealed class OrderDeliveryProcessor(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            logger.LogInformation("Processing of message {MessageId} on {Subscription} was cancelled; requeueing", messageId, subscription.Name);
+            logger.LogInformation(LogEvents.MessageProcessingCanceled, "Processing of message {MessageId} on {Subscription} was cancelled; requeueing", messageId, subscription.Name);
             return DeliveryDecision.Requeue;
         }
         catch (Exception exception)
@@ -79,6 +86,7 @@ public sealed class OrderDeliveryProcessor(
             {
                 attempts.Forget(subscription.Name, messageId);
                 logger.LogError(
+                    LogEvents.MessageRetriesExhausted,
                     exception,
                     "Message {MessageId} on {Subscription} failed {Attempt} of {MaxAttempts} attempts; dead-lettering",
                     messageId, subscription.Name, attempt, settings.MaxDeliveryAttempts);
@@ -86,6 +94,7 @@ public sealed class OrderDeliveryProcessor(
             }
 
             logger.LogWarning(
+                LogEvents.MessageRetryScheduled,
                 exception,
                 "Message {MessageId} on {Subscription} failed attempt {Attempt} of {MaxAttempts}; requeueing",
                 messageId, subscription.Name, attempt, settings.MaxDeliveryAttempts);
@@ -104,4 +113,12 @@ public sealed class OrderDeliveryProcessor(
         attempts.Forget(subscription.Name, messageId);
         return DeliveryDecision.Ack;
     }
+
+    /// <summary>Every log written while the message is processed, including the handler's, carries its correlation.</summary>
+    private IDisposable? BeginCorrelationScope(string correlationId, OrderSubscription subscription) =>
+        logger.BeginScope(new Dictionary<string, object>
+        {
+            ["CorrelationId"] = correlationId,
+            ["Subscription"] = subscription.Name
+        });
 }

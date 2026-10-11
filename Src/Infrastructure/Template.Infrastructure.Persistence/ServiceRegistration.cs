@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,5 +34,8 @@ public static class ServiceRegistration
 
         return services;
     }
-}
 
+    /// <summary>Readiness probe of the application database (EF Core <c>CanConnectAsync</c>), without exposing the context.</summary>
+    public static Task<bool> CanConnectToApplicationDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken) =>
+        services.GetRequiredService<ApplicationDbContext>().Database.CanConnectAsync(cancellationToken);
+}

@@ -3,15 +3,31 @@ using Elastic.Ingest.Elasticsearch;
 using Elastic.Ingest.Elasticsearch.DataStreams;
 using Elastic.Serilog.Sinks;
 using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 
 namespace Template.WebApi.Infrastructure.Logging;
 
 public static class LoggingExtensions
 {
-    public static IHostBuilder ConfigureLog(this IHostBuilder hostBuilder)
+    /// <summary>
+    /// Builds the host logger. Sinks and enrichers registered in DI (<see cref="ILogEventSink"/>) are added too, which is
+    /// how functional tests capture events. The Test environment never adds the Elasticsearch sink and keeps the static
+    /// logger untouched, so parallel test hosts do not share one logger.
+    /// </summary>
+    public static IHostBuilder ConfigureLog(this IHostBuilder hostBuilder, bool isTestEnvironment = false)
     {
-        hostBuilder.UseSerilog((context, configuration) =>
-            ConfigureLogger(configuration, context.Configuration, ElasticLogSinkDiagnostics.Default));
+        hostBuilder.UseSerilog(
+            (context, services, configuration) =>
+            {
+                ConfigureLogger(
+                    configuration,
+                    context.Configuration,
+                    ElasticLogSinkDiagnostics.Default,
+                    includeElasticsearchSink: !isTestEnvironment);
+                configuration.ReadFrom.Services(services);
+            },
+            preserveStaticLogger: isTestEnvironment);
 
         return hostBuilder;
     }
@@ -25,16 +41,20 @@ public static class LoggingExtensions
     public static LoggerConfiguration ConfigureLogger(
         LoggerConfiguration configuration,
         IConfiguration appConfiguration,
-        ElasticLogSinkDiagnostics diagnostics)
+        ElasticLogSinkDiagnostics diagnostics,
+        bool includeElasticsearchSink = true)
     {
         var settings = ElasticLoggingSettings.From(appConfiguration);
 
         configuration
             .MinimumLevel.Verbose()
+            // The health status tracker logs outcome changes once; the framework would log every failing probe.
+            .MinimumLevel.Override("Microsoft.Extensions.Diagnostics.HealthChecks", LogEventLevel.Fatal)
             .Enrich.FromLogContext()
+            .Enrich.With<SensitiveDataRedactionEnricher>()
             .WriteTo.Console();
 
-        if (settings.Enabled && settings.TryGetEndpoint(out var endpoint))
+        if (includeElasticsearchSink && settings.Enabled && settings.TryGetEndpoint(out var endpoint))
         {
             configuration.WriteTo.Elasticsearch(
                 [endpoint],
