@@ -35,15 +35,3 @@ services:
   redis-insight:
     ports:
       - ${REDIS_INSIGHT_PORT}:8001
-
-  redis-graph:
-    ports:
-      - ${REDIS_GRAPH_PORT}:6379
-
-  redis-search:
-    ports:
-      - ${REDIS_SEARCH_PORT}:6379
-
-  redis-timeseries:
-    ports:
-      - ${REDIS_TIMESERIES_PORT}:6379

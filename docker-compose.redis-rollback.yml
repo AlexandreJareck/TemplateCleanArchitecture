@@ -1,0 +1,53 @@
+# Phase 15 Redis rollback overlay. It selects the preserved pre-Phase 15 Redis environment instead of the Redis 8.10.2
+# target, without touching the target volume:
+#   docker compose -f docker-compose.yml [-f docker-compose.override.yml] -f docker-compose.redis-rollback.yml up -d
+# The redis service goes back to the Redis 8.4.0 artifact on its original redis-volume-data volume (never redis8-data:
+# an older server must not open data written by a newer one). The legacy module services are restored exactly as
+# pinned in Phase 14; they had no named volume and no application consumer.
+services:
+  redis:
+    image: redis:8.4.0@sha256:47200b04138293fae39737e50878a238b13ec0781083126b1b0c63cf5d992e8d
+    volumes: !override
+      - redis-volume-data:/data
+    command: !override
+      - --requirepass ${REDIS_PASSWORD}
+
+  redis-insight:
+    depends_on: !override
+      - redis
+      - redis-graph
+      - redis-search
+      - redis-timeseries
+
+  redis-graph:
+    image: redislabs/redisgraph:2.10.16@sha256:bbf6c767f0ba80606e7bacf9bcf75966e97838c40dd5b6b685091a0c1632bdc3
+    restart: always
+    networks:
+      - nw
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis-search:
+    image: redislabs/redisearch:2.6.13@sha256:c0350c445d0c27ad91ffe5a1aaee1a2db3eb911222ff549e9066985ea94500a7
+    restart: always
+    networks:
+      - nw
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis-timeseries:
+    image: redislabs/redistimeseries:1.6.19@sha256:5a15401e18bede614ca5d0e90c35ee3b51b27d43f8fe44922e34c5e35bc33b89
+    restart: always
+    networks:
+      - nw
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12

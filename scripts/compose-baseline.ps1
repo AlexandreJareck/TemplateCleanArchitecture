@@ -8,18 +8,24 @@
     values written to an untracked env file under artifacts/validation/compose-baseline/<RunId> (git-ignored) and are
     never printed. The script never removes containers, volumes, images, or networks: it ends with `docker compose stop`.
     Evidence (checks, sanitized logs, captured OpenAPI) is written to the same folder.
+    Phase 15: the default topology has one Redis 8 service (Search and Time Series integrated, no RedisGraph). Pass
+    -RedisRollback to run the same baseline with docker-compose.redis-rollback.yml (the preserved pre-Phase 15 Redis
+    8.4.0 + legacy module topology) layered on top; the Redis topology checks then assert the rollback shape instead.
 #>
 param(
     [string]$RunId = (Get-Date -Format 'yyyyMMddHHmmss'),
     [int]$WebApiPort = 18080,
-    [int]$StartupTimeoutSeconds = 900
+    [int]$StartupTimeoutSeconds = 900,
+    [switch]$RedisRollback
 )
 
 $ErrorActionPreference = 'Continue'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repositoryRoot
 
-$project = "p14-baseline-$RunId"
+$project = if ($RedisRollback) { "p15-rollback-$RunId" } else { "p14-baseline-$RunId" }
+$composeFiles = @('-f', 'docker-compose.yml', '-f', 'docker-compose.baseline.yml')
+if ($RedisRollback) { $composeFiles += @('-f', 'docker-compose.redis-rollback.yml') }
 $outputDirectory = Join-Path $repositoryRoot "artifacts\validation\compose-baseline\$RunId"
 New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
 $envFile = Join-Path $outputDirectory 'baseline.env'
@@ -33,14 +39,14 @@ function Write-Check([string]$Name, [bool]$Passed, [string]$Detail = '') {
 }
 
 function Invoke-Compose {
-    $arguments = @('compose', '-p', $project, '--env-file', $envFile, '-f', 'docker-compose.yml', '-f', 'docker-compose.baseline.yml') + $args
+    $arguments = @('compose', '-p', $project, '--env-file', $envFile) + $composeFiles + $args
     & docker @arguments
 }
 
 function Invoke-Sql([string]$DatabaseVariable, [string]$Sql) {
     # The SQL goes through stdin and the credentials stay inside the container's own environment. The database names
     # are passed as psql variables (:'app_db', :'identity_db'); no double quotes in the native argument (PowerShell 5.1).
-    $arguments = @('compose', '-p', $project, '--env-file', $envFile, '-f', 'docker-compose.yml', '-f', 'docker-compose.baseline.yml',
+    $arguments = @('compose', '-p', $project, '--env-file', $envFile) + $composeFiles + @(
         'exec', '-T', 'db', 'sh', '-c',
         "psql -U `$POSTGRES_USER -d `$$DatabaseVariable -tA -v ON_ERROR_STOP=1 -v app_db=`$POSTGRES_DB_NAME -v identity_db=`$POSTGRES_IDENTITY_DB_NAME")
     $output = $Sql | & docker @arguments 2>&1
@@ -133,14 +139,38 @@ $allImages | Set-Content (Join-Path $outputDirectory 'images.txt')
 
 $expectedMajors = [ordered]@{
     'postgres' = '16.'; 'redis' = '8.'; 'rabbitmq' = '4.'; 'docker.elastic.co/elasticsearch/elasticsearch' = '9.';
-    'docker.elastic.co/kibana/kibana' = '9.'; 'redislabs/redisinsight' = '1.'; 'redislabs/redisgraph' = '2.10.';
-    'redislabs/redisearch' = '2.6.'; 'redislabs/redistimeseries' = '1.6.'; 'mcr.microsoft.com/dotnet/aspnet' = '10.0.';
+    'docker.elastic.co/kibana/kibana' = '9.'; 'redislabs/redisinsight' = '1.'; 'mcr.microsoft.com/dotnet/aspnet' = '10.0.';
     'mcr.microsoft.com/dotnet/sdk' = '10.0.'
+}
+if ($RedisRollback) {
+    $expectedMajors['redislabs/redisgraph'] = '2.10.'; $expectedMajors['redislabs/redisearch'] = '2.6.'; $expectedMajors['redislabs/redistimeseries'] = '1.6.'
 }
 foreach ($repository in $expectedMajors.Keys) {
     $match = @($allImages | Where-Object { ($_ -split '@')[0] -match ('^' + [regex]::Escape($repository) + ':') })
     $ok = $match.Count -gt 0 -and @($match | Where-Object { (($_ -split '@')[0] -split ':')[-1].StartsWith($expectedMajors[$repository]) }).Count -eq $match.Count
     Write-Check "images.major-unchanged.$repository" $ok ($match -join ',')
+}
+
+# Phase 15 Redis topology (static): one Redis 8 service on redis8-data, no module services, Insight -> redis only.
+$services = @(Invoke-Compose config --services 2>$null)
+$legacyRedisServices = @($services | Where-Object { $_ -in @('redis-graph', 'redis-search', 'redis-timeseries') })
+$redisImage = @($images | Where-Object { $_ -like 'redis:*' })[0]
+$configJson = Invoke-Compose config --format json 2>$null | Out-String | ConvertFrom-Json
+$redisVolume = @($configJson.services.redis.volumes | ForEach-Object { $_.source })[0]
+$insightDependencies = @($configJson.services.'redis-insight'.depends_on.PSObject.Properties.Name | Sort-Object) -join ','
+if ($RedisRollback) {
+    Write-Check 'redis.rollback-image-8.4.0' ($redisImage -like 'redis:8.4.0@sha256:47200b04*') $redisImage
+    Write-Check 'redis.rollback-source-volume' ($redisVolume -eq 'redis-volume-data') $redisVolume
+    Write-Check 'redis.rollback-legacy-services-restored' ($legacyRedisServices.Count -eq 3) ($legacyRedisServices -join ',')
+}
+else {
+    Write-Check 'redis.single-redis8-target-image' ($redisImage -like 'redis:8.10.2@sha256:2c2dff79*') $redisImage
+    Write-Check 'redis.target-volume-redis8-data' ($redisVolume -eq 'redis8-data') $redisVolume
+    Write-Check 'redis.no-legacy-module-services' ($legacyRedisServices.Count -eq 0) ($services -join ',')
+    Write-Check 'redis.insight-depends-on-redis-only' ($insightDependencies -eq 'redis') $insightDependencies
+    $staleReferences = @(git grep -n -E 'redis-graph|redis-search|redis-timeseries|REDIS_(GRAPH|SEARCH|TIMESERIES)_PORT' -- docker-compose.yml docker-compose.override.yml docker-compose.baseline.yml .env.example scripts Tests Src 2>$null |
+        Where-Object { $_ -notmatch '^scripts/(compose-baseline|redis8-migration-rehearsal)\.ps1:' })
+    Write-Check 'redis.no-removed-service-references' ($staleReferences.Count -eq 0) ($staleReferences -join ' | ')
 }
 
 $postgresImage = @($images | Where-Object { $_ -like 'postgres:*' })[0]
@@ -239,6 +269,27 @@ Write-Check 'smoke.product-v1-unauthenticated-post-401' ((Get-Status 'POST' '/ap
 $cacheResponse = Get-Status 'GET' "/api/v2/product/$productId/cache"
 $cacheKeys = Invoke-Compose exec -T -e "REDISCLI_AUTH=$redisPassword" redis redis-cli --no-auth-warning --scan --pattern 'template:product:v1:*' 2>&1 | Out-String
 Write-Check 'integration.redis-cache-read-through' ($cacheResponse.Status -eq 200 -and $cacheKeys -match $productId) "status=$($cacheResponse.Status)"
+$redisInfo = Invoke-Compose exec -T -e "REDISCLI_AUTH=$redisPassword" redis redis-cli --no-auth-warning INFO server 2>&1 | Out-String
+$redisModules = Invoke-Compose exec -T -e "REDISCLI_AUTH=$redisPassword" redis redis-cli --no-auth-warning MODULE LIST 2>&1 | Out-String
+$redisVersion = if ($redisInfo -match 'redis_version:(\S+)') { $Matches[1] } else { 'unknown' }
+if ($RedisRollback) {
+    Write-Check 'redis.runtime-version' ($redisVersion -eq '8.4.0') "version=$redisVersion"
+}
+else {
+    Write-Check 'redis.runtime-version' ($redisVersion -eq '8.10.2') "version=$redisVersion"
+    Write-Check 'redis.integrated-search-and-timeseries' ($redisModules -match '(?m)^search\s*$' -and $redisModules -match '(?m)^timeseries\s*$') ''
+}
+# WebApi is connected to the redis service of this project (its address appears in CLIENT LIST), and Redis Insight can
+# reach and authenticate to it (Insight 1.x has no connection provisioning by environment; its saved connections live in
+# its own volume and are configured in the UI).
+$webApiAddress = (Invoke-Compose exec -T webapi sh -c 'hostname -i' 2>$null | Out-String).Trim()
+$clients = Invoke-Compose exec -T -e "REDISCLI_AUTH=$redisPassword" redis redis-cli --no-auth-warning CLIENT LIST 2>&1 | Out-String
+Write-Check 'redis.webapi-connected-to-target' ($webApiAddress -and $clients -match ('addr=' + [regex]::Escape(($webApiAddress -split '\s+')[0]) + ':')) ''
+$probeScript = "import os,socket,time`ns=socket.create_connection(('redis',6379),5)`ns.sendall(('AUTH '+os.environ['P15_PROBE_SECRET']+'\r\nPING\r\n').encode())`ntime.sleep(0.5)`nprint(s.recv(100).decode().split())`n"
+$probeEncoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($probeScript))
+# The probe travels as base64 (Windows PowerShell 5.1 mangles quotes in native arguments).
+$insightProbe = Invoke-Compose exec -T -e "P15_PROBE_SECRET=$redisPassword" -e "P15_PROBE=$probeEncoded" redis-insight sh -c 'echo $P15_PROBE | base64 -d | python3' 2>&1 | Out-String
+Write-Check 'redis.insight-reaches-and-authenticates' ($insightProbe -match "'\+OK', '\+PONG'") ($insightProbe.Trim() -replace [regex]::Escape($redisPassword), '***')
 
 # The seed user's credentials are read from the committed seed source, never duplicated here.
 $seedSource = Get-Content 'Src\Infrastructure\Template.Infrastructure.Identity\Seeds\DefaultBasicUser.cs' -Raw

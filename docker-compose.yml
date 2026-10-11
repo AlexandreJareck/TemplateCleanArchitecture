@@ -117,16 +117,25 @@ services:
       start_period: 30s
 
   redis:
-    # Redis 8.4.0, the artifact `redis:latest` resolved to before Phase 14. Consolidation belongs to Phase 15.
-    image: redis:8.4.0@sha256:47200b04138293fae39737e50878a238b13ec0781083126b1b0c63cf5d992e8d
+    # Phase 15: one Redis 8 server with the integrated Query Engine (Search), Time Series, JSON and probabilistic
+    # capabilities, replacing the separate Search and Time Series module services; RedisGraph was removed (EOL, no
+    # consumer). It uses the new redis8-data volume. Never mount redis-volume-data here: it holds the Redis 8.4.0
+    # source data kept for rollback (docker-compose.redis-rollback.yml). Move data only through an RDB copy or
+    # MIGRATE COPY (docs/refactoring/phase-15-report.md).
+    image: redis:8.10.2@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6
     container_name: redis
     restart: always
     networks:
       - nw
     volumes:
-      - redis-volume-data:/data
+      - redis8-data:/data
+    # Persistence policy: RDB snapshots with the Redis defaults made explicit, no AOF, no eviction (the cache sets
+    # its own TTLs). Authentication: the default user with requirepass.
     command:
       - --requirepass ${REDIS_PASSWORD}
+      - --save 3600 1 300 100 60 10000
+      - --appendonly no
+      - --maxmemory-policy noeviction
     # A reply (PONG or NOAUTH) proves the server is up without passing the password to the probe.
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep -qE 'PONG|NOAUTH'"]
@@ -135,55 +144,16 @@ services:
       retries: 12
 
   redis-insight:
-    # Redis Insight 1.14.0 (EOL line); its upgrade belongs to Phase 18.
+    # Redis Insight 1.14.0 (EOL line); its upgrade belongs to Phase 18. It targets the single redis service.
     image: redislabs/redisinsight:1.14.0@sha256:b03ab1426d0d861b0370e05ee670a8819c8ab36b987ca59e4a3e92e0038d089c
     container_name: redis-insight
     restart: always
     depends_on:
       - redis
-      - redis-graph
-      - redis-search
-      - redis-timeseries
     networks:
       - nw
     volumes:
       - redis-insight-volume_data:/db
-
-  redis-graph:
-    # Legacy module images pinned to the artifacts their floating tags resolved to before Phase 14 (EOL; their
-    # removal or consolidation belongs to Phase 15). Module versions: RedisGraph 2.10.16, RediSearch 2.6.13,
-    # RedisTimeSeries 1.6.19, all on Redis 6.2.
-    image: redislabs/redisgraph:2.10.16@sha256:bbf6c767f0ba80606e7bacf9bcf75966e97838c40dd5b6b685091a0c1632bdc3
-    restart: always
-    networks:
-      - nw
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-
-  redis-search:
-    image: redislabs/redisearch:2.6.13@sha256:c0350c445d0c27ad91ffe5a1aaee1a2db3eb911222ff549e9066985ea94500a7
-    restart: always
-    networks:
-      - nw
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-
-  redis-timeseries:
-    image: redislabs/redistimeseries:1.6.19@sha256:5a15401e18bede614ca5d0e90c35ee3b51b27d43f8fe44922e34c5e35bc33b89
-    restart: always
-    networks:
-      - nw
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
 
 volumes:
   postgres-data:
@@ -192,7 +162,9 @@ volumes:
   es9-data:
   rabbitmq-lib:
   rabbitmq-log:
+  # Redis 8.4.0 source data: no longer mounted by default, kept for rollback (docker-compose.redis-rollback.yml).
   redis-volume-data:
+  redis8-data:
   redis-insight-volume_data:
 
 configs:
