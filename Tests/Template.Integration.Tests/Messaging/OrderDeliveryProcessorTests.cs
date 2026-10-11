@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Shouldly;
 using Template.Application.Features.Orders.EventHandlers;
 using Template.Application.Interfaces.Messaging;
+using Template.Application.Logging;
 using Template.Application.Messaging;
 using Template.Application.Messaging.Orders;
 using Template.Infrastructure.Messaging;
@@ -24,7 +25,7 @@ public sealed class OrderDeliveryProcessorTests
     private static ReceivedDelivery Delivery(string? messageId = "message-1", bool redelivered = false, byte[]? body = null, string? contentType = OrderPlacedMessageSerializer.ContentType, string? type = OrderPlacedMessageSerializer.MessageType) =>
         new(body ?? OrderPlacedMessageSerializer.Serialize(Order), contentType, type, messageId, redelivered);
 
-    private static OrderDeliveryProcessor CreateProcessor(IOrderPlacedEventHandler handler, int maxAttempts = 3)
+    private static OrderDeliveryProcessor CreateProcessor(IOrderPlacedEventHandler handler, int maxAttempts = 3, ILogger<OrderDeliveryProcessor>? logger = null)
     {
         var provider = new ServiceCollection().AddScoped(_ => handler).BuildServiceProvider();
         var settings = new RabbitMqSettings { MaxDeliveryAttempts = maxAttempts, RetryDelay = TimeSpan.Zero };
@@ -32,7 +33,7 @@ public sealed class OrderDeliveryProcessorTests
             provider.GetRequiredService<IServiceScopeFactory>(),
             new DeliveryAttemptTracker(),
             Options.Create(settings),
-            NullLogger<OrderDeliveryProcessor>.Instance);
+            logger ?? NullLogger<OrderDeliveryProcessor>.Instance);
     }
 
     [Fact]
@@ -45,6 +46,52 @@ public sealed class OrderDeliveryProcessorTests
 
         decision.ShouldBe(DeliveryDecision.Ack);
         handler.Calls.Single().ShouldBe((Order, new IncomingMessageContext("direct-urgent-orders", "message-1", true)));
+    }
+
+    [Fact]
+    public async Task Processing_RunsInsideACorrelationScope_WithTheValidatedMessageId()
+    {
+        var logger = new ScopeCapturingLogger();
+        var handler = new ScriptedHandler(failures: 1);
+
+        await CreateProcessor(handler, logger: logger).ProcessAsync(Subscription, Delivery(messageId: "message-1"), CancellationToken.None);
+
+        var retry = logger.Entries.Single(entry => entry.EventId == LogEvents.MessageRetryScheduled);
+        retry.Scope["CorrelationId"].ShouldBe("message-1");
+        retry.Scope["Subscription"].ShouldBe(Subscription.Name);
+    }
+
+    [Theory]
+    [InlineData("bad id with spaces")]
+    [InlineData("Bearer eyJhbGciOiJIUzI1NiJ9.payload.signature")]
+    [InlineData(null)]
+    public async Task UnusableInboundMessageId_IsReplacedByTheOrderId_AndNeverLogged(string? inbound)
+    {
+        var logger = new ScopeCapturingLogger();
+        var handler = new ScriptedHandler(failures: 1);
+        var oversized = inbound ?? new string('x', CorrelationId.MaxLength + 1);
+
+        await CreateProcessor(handler, logger: logger).ProcessAsync(Subscription, Delivery(messageId: oversized), CancellationToken.None);
+
+        handler.Calls.Single().Context.MessageId.ShouldBe(Order.OrderId.ToString("D"));
+        var retry = logger.Entries.Single(entry => entry.EventId == LogEvents.MessageRetryScheduled);
+        retry.Scope["CorrelationId"].ShouldBe(Order.OrderId.ToString("D"));
+        logger.Entries.ShouldAllBe(entry => !entry.Text.Contains(oversized));
+    }
+
+    [Fact]
+    public async Task RejectedMessageWithAnUnusableId_GetsANewSafeCorrelationId()
+    {
+        var logger = new ScopeCapturingLogger();
+
+        var decision = await CreateProcessor(new ScriptedHandler(), logger: logger)
+            .ProcessAsync(Subscription, Delivery(messageId: "bad id\nwith newline", body: Encoding.UTF8.GetBytes("not json")), CancellationToken.None);
+
+        decision.Action.ShouldBe(DeliveryAction.DeadLetter);
+        var rejected = logger.Entries.Single(entry => entry.EventId == LogEvents.MessageRejected);
+        var correlationId = rejected.Scope["CorrelationId"]?.ToString();
+        CorrelationId.IsValid(correlationId).ShouldBeTrue();
+        rejected.Text.ShouldNotContain("bad id");
     }
 
     [Fact]
@@ -191,6 +238,30 @@ public sealed class OrderDeliveryProcessorTests
         {
             Marks++;
             return inner.MarkProcessedAsync(subscription, messageId, cancellationToken);
+        }
+    }
+
+    private sealed class ScopeCapturingLogger : ILogger<OrderDeliveryProcessor>
+    {
+        private readonly AsyncLocal<IReadOnlyDictionary<string, object>?> scope = new();
+
+        public List<(EventId EventId, string Text, IReadOnlyDictionary<string, object> Scope)> Entries { get; } = [];
+
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull
+        {
+            var previous = scope.Value;
+            scope.Value = state as IReadOnlyDictionary<string, object> ?? (state as IDictionary<string, object>)?.AsReadOnly();
+            return new Restore(() => scope.Value = previous);
+        }
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            Entries.Add((eventId, formatter(state, exception), scope.Value ?? new Dictionary<string, object>()));
+
+        private sealed class Restore(Action restore) : IDisposable
+        {
+            public void Dispose() => restore();
         }
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using Template.Application.Interfaces.Messaging;
+using Template.Application.Logging;
 using Template.Application.Messaging;
 using Template.Application.Messaging.Orders;
 using Template.Infrastructure.Messaging.Serialization;
@@ -67,7 +68,7 @@ public sealed class RabbitMqOrderEventPublisher(IOptions<RabbitMqSettings> optio
         {
             var publishChannel = await EnsureChannelAsync(settings, timeout.Token);
             await publishChannel.BasicPublishAsync(exchange, routingKey, mandatory: false, properties, body, timeout.Token);
-            logger.LogDebug("Order {OrderId} confirmed by the broker on {Exchange}", orderPlaced.OrderId, exchange);
+            logger.LogDebug(LogEvents.MessagePublished, "Order {OrderId} confirmed by the broker on {Exchange}", orderPlaced.OrderId, exchange);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -83,6 +84,7 @@ public sealed class RabbitMqOrderEventPublisher(IOptions<RabbitMqSettings> optio
         {
             await ResetAsync();
             logger.LogWarning(
+                LogEvents.MessagePublishFailed,
                 "Order {OrderId} was not accepted by the broker on {Exchange}: {ExceptionType}",
                 orderPlaced.OrderId, exchange, exception.GetType().Name);
             throw new MessagePublishException("The message broker did not accept the message.", exception);
@@ -95,7 +97,7 @@ public sealed class RabbitMqOrderEventPublisher(IOptions<RabbitMqSettings> optio
 
     private MessagePublishException TimedOut(string exchange, OrderPlacedEvent orderPlaced, Exception exception)
     {
-        logger.LogWarning("Publishing order {OrderId} to {Exchange} timed out", orderPlaced.OrderId, exchange);
+        logger.LogWarning(LogEvents.MessagePublishTimedOut, "Publishing order {OrderId} to {Exchange} timed out", orderPlaced.OrderId, exchange);
         return new MessagePublishException("The message broker did not confirm the message in time.", exception);
     }
 
@@ -111,7 +113,7 @@ public sealed class RabbitMqOrderEventPublisher(IOptions<RabbitMqSettings> optio
             new CreateChannelOptions(publisherConfirmationsEnabled: true, publisherConfirmationTrackingEnabled: true),
             cancellationToken);
         await OrderMessagingTopology.DeclareAsync(channel, cancellationToken);
-        logger.LogInformation("Publisher connected to the message broker");
+        logger.LogInformation(LogEvents.MessagingPublisherConnected, "Publisher connected to the message broker");
         return channel;
     }
 

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Template.Application.DTOs.Products;
 using Template.Application.Interfaces.Caching;
+using Template.Application.Logging;
 
 namespace Template.Infrastructure.Caching.Products;
 
@@ -56,7 +57,7 @@ public sealed class DistributedProductCache(
 
         if (product is null || product.Id != productId)
         {
-            logger.LogWarning("Unreadable product cache entry {CacheKey}; treating as miss and evicting.", key);
+            logger.LogWarning(LogEvents.CacheEntryUnreadable, "Unreadable product cache entry {CacheKey}; treating as miss and evicting.", key);
             await RemoveAsync(productId, cancellationToken);
             return null;
         }
@@ -114,6 +115,7 @@ public sealed class DistributedProductCache(
 
     private void LogFailure(Exception exception, string operation, string key) =>
         logger.LogWarning(
+            LogEvents.CacheOperationFailed,
             "Product cache {Operation} failed for {CacheKey} ({ExceptionType}); treating as miss.",
             operation,
             key,

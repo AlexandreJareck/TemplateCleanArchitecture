@@ -6,6 +6,7 @@ using Elastic.Transport.Products.Elasticsearch;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Template.Application.Interfaces.Search;
+using Template.Application.Logging;
 using Template.Application.Search.Persons;
 
 namespace Template.Infrastructure.Search.Persons;
@@ -42,6 +43,7 @@ public sealed class ElasticsearchPersonSearchIndex : IPersonSearchIndex, IDispos
         _client = new ElasticsearchClient(_clientSettings);
 
         _logger.LogInformation(
+            LogEvents.SearchIndexConfigured,
             "Person search index '{IndexName}' on {Endpoint} with a request timeout of {RequestTimeout}.",
             _indexName,
             endpoint.GetLeftPart(UriPartial.Authority),
@@ -128,6 +130,7 @@ public sealed class ElasticsearchPersonSearchIndex : IPersonSearchIndex, IDispos
         if (failed.Count > 0)
         {
             _logger.LogWarning(
+                LogEvents.SearchBulkPartiallyFailed,
                 "Person search {Operation} partially failed: {FailedCount} of {RequestedCount} documents were not indexed.",
                 "upsert-many",
                 failed.Count,
@@ -222,6 +225,7 @@ public sealed class ElasticsearchPersonSearchIndex : IPersonSearchIndex, IDispos
                 throw new OperationCanceledException(cancellationToken);
 
             _logger.LogWarning(
+                LogEvents.SearchResponseUnreadable,
                 "Person search received a response it could not read ({ErrorType}, inner {InnerErrorType}).",
                 error.GetType().Name,
                 error.InnerException?.GetType().Name ?? "none");
@@ -268,6 +272,7 @@ public sealed class ElasticsearchPersonSearchIndex : IPersonSearchIndex, IDispos
         var level = status == PersonIndexStatus.NotFound ? LogLevel.Debug : LogLevel.Warning;
         _logger.Log(
             level,
+            LogEvents.SearchOperationFailed,
             "Person search {Operation} ended with {Outcome} (HTTP status {HttpStatus}, error type {ErrorType}).",
             operation,
             status,
