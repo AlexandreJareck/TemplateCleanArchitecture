@@ -11,6 +11,8 @@
     Phase 15: the default topology has one Redis 8 service (Search and Time Series integrated, no RedisGraph). Pass
     -RedisRollback to run the same baseline with docker-compose.redis-rollback.yml (the preserved pre-Phase 15 Redis
     8.4.0 + legacy module topology) layered on top; the Redis topology checks then assert the rollback shape instead.
+    Phase 17: the broker is RabbitMQ 4.3.6 (management image, fixed node name, rabbitmq4-data). Pass -RabbitMqRollback
+    to layer docker-compose.rabbitmq-rollback.yml (the Phase 14 4.2.2 artifact on rabbitmq-lib) instead.
 #>
 param(
     [string]$RunId = (Get-Date -Format 'yyyyMMddHHmmss'),
@@ -18,17 +20,20 @@ param(
     [int]$StartupTimeoutSeconds = 900,
     [switch]$RedisRollback,
     # Phase 16: run the baseline with docker-compose.postgres-rollback.yml (the Phase 14 PostgreSQL 16.11 artifact).
-    [switch]$PostgresRollback
+    [switch]$PostgresRollback,
+    # Phase 17: run the baseline with docker-compose.rabbitmq-rollback.yml (the Phase 14 RabbitMQ 4.2.2 artifact).
+    [switch]$RabbitMqRollback
 )
 
 $ErrorActionPreference = 'Continue'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repositoryRoot
 
-$project = if ($PostgresRollback) { "p16-rollback-$RunId" } elseif ($RedisRollback) { "p15-rollback-$RunId" } else { "p14-baseline-$RunId" }
+$project = if ($RabbitMqRollback) { "p17-rollback-$RunId" } elseif ($PostgresRollback) { "p16-rollback-$RunId" } elseif ($RedisRollback) { "p15-rollback-$RunId" } else { "p14-baseline-$RunId" }
 $composeFiles = @('-f', 'docker-compose.yml', '-f', 'docker-compose.baseline.yml')
 if ($RedisRollback) { $composeFiles += @('-f', 'docker-compose.redis-rollback.yml') }
 if ($PostgresRollback) { $composeFiles += @('-f', 'docker-compose.postgres-rollback.yml') }
+if ($RabbitMqRollback) { $composeFiles += @('-f', 'docker-compose.rabbitmq-rollback.yml') }
 $outputDirectory = Join-Path $repositoryRoot "artifacts\validation\compose-baseline\$RunId"
 New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
 $envFile = Join-Path $outputDirectory 'baseline.env'
@@ -180,6 +185,22 @@ $postgresImage = @($images | Where-Object { $_ -like 'postgres:*' })[0]
 # Phase 16: 16.15 by default; the rollback overlay selects the Phase 14 artifact 16.11.
 $expectedPostgres = if ($PostgresRollback) { 'postgres:16.11@sha256:056b54f0*' } else { 'postgres:16.15@sha256:ca0bd484*' }
 Write-Check 'postgres.expected-image' ($postgresImage -like $expectedPostgres) $postgresImage
+# Phase 17: 4.3.6 management image with a fixed node name on rabbitmq4-data; the rollback overlay restores the
+# Phase 14 4.2.2 artifact on rabbitmq-lib with the original container-id hostname.
+$rabbitImage = @($images | Where-Object { $_ -like 'rabbitmq:*' })[0]
+$rabbitVolume = @($configJson.services.rabbitmq.volumes | Where-Object { $_.target -like '/var/lib/rabbitmq*' } | ForEach-Object { $_.source })[0]
+$rabbitHostname = [string]$configJson.services.rabbitmq.hostname
+if ($RabbitMqRollback) {
+    Write-Check 'rabbitmq.rollback-image-4.2.2' ($rabbitImage -like 'rabbitmq:4.2.2@sha256:18cc2597*') $rabbitImage
+    Write-Check 'rabbitmq.rollback-source-volume' ($rabbitVolume -eq 'rabbitmq-lib') $rabbitVolume
+    Write-Check 'rabbitmq.rollback-original-hostname' ([string]::IsNullOrEmpty($rabbitHostname)) $rabbitHostname
+}
+else {
+    Write-Check 'rabbitmq.target-image-4.3.6-management' ($rabbitImage -like 'rabbitmq:4.3.6-management@sha256:8dd6e357*') $rabbitImage
+    Write-Check 'rabbitmq.target-volume-rabbitmq4-data' ($rabbitVolume -eq 'rabbitmq4-data') $rabbitVolume
+    Write-Check 'rabbitmq.fixed-hostname' ($rabbitHostname -eq 'rabbitmq') $rabbitHostname
+}
+
 $initScript = Join-Path $repositoryRoot 'init-db.sh'
 docker run --rm -v "${initScript}:/tmp/init-db.sh:ro" --entrypoint bash $postgresImage -n /tmp/init-db.sh 2>&1 | Out-Null
 Write-Check 'init-db.syntax' ($LASTEXITCODE -eq 0) 'bash -n inside the pinned PostgreSQL image'
@@ -323,6 +344,17 @@ Write-Check 'integration.rabbitmq-publish' ($publish.Status -eq 200 -and $queues
 $pending = @($queues -split "`n" | Where-Object { $_ -match '^(\S+)\s+\S+\s+(\d+)' -and $Matches[1] -notmatch 'dead_letter' -and [int]$Matches[2] -gt 0 })
 $deadLettered = @($queues -split "`n" | Where-Object { $_ -match '^(\S+dead_letter)\s+\S+\s+(\d+)' -and [int]$Matches[2] -gt 0 })
 Write-Check 'integration.rabbitmq-consumed-and-acked' ($pending.Count -eq 0 -and $deadLettered.Count -eq 0) "pending=$($pending.Count) deadLettered=$($deadLettered.Count)"
+$rabbitVersion = (Invoke-Compose exec -T rabbitmq rabbitmq-diagnostics -q server_version 2>&1 | Out-String).Trim()
+Write-Check 'rabbitmq.runtime-version' ($rabbitVersion -eq $(if ($RabbitMqRollback) { '4.2.2' } else { '4.3.6' })) "version=$rabbitVersion"
+$rabbitPlugins = ((Invoke-Compose exec -T rabbitmq rabbitmq-plugins -q list -e -m 2>&1 | Where-Object { $_ } | Sort-Object) -join ',')
+Write-Check 'rabbitmq.plugins-explicit-management-only' ($rabbitPlugins -eq 'rabbitmq_management,rabbitmq_management_agent,rabbitmq_web_dispatch') $rabbitPlugins
+$rabbitFlags = Invoke-Compose exec -T rabbitmq rabbitmqctl -q -s list_feature_flags name state stability 2>&1 | Out-String
+$disabledFlags = @($rabbitFlags -split "`r?`n" | Where-Object { $_ -match '^(\S+)\t(\S+)\t(stable|required)$' -and $Matches[2] -ne 'enabled' })
+Write-Check 'rabbitmq.stable-feature-flags-enabled' ($disabledFlags.Count -eq 0 -and $rabbitFlags -match '(?m)^khepri_db\tenabled') ($disabledFlags -join ',')
+if (-not $RabbitMqRollback) {
+    $rabbitStatus = Invoke-Compose exec -T rabbitmq rabbitmq-diagnostics -q status 2>&1 | Out-String
+    Write-Check 'rabbitmq.fixed-node-name' ($rabbitStatus -match 'Node name: rabbit@rabbitmq\s') ''
+}
 
 $createIndex = Get-Status 'POST' '/api/v1/person/create-index?indexName=persons'
 $addPerson = Get-Status 'POST' '/api/v1/person/add-person' (@{ id = 9014; firstName = 'Synthetic' } | ConvertTo-Json -Compress)

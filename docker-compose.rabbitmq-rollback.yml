@@ -1,0 +1,14 @@
+# Phase 17 RabbitMQ rollback overlay. It selects the preserved pre-Phase 17 broker instead of the 4.3.6 target, without
+# touching the target volumes:
+#   docker compose -f docker-compose.yml [-f docker-compose.override.yml] -f docker-compose.rabbitmq-rollback.yml up -d
+# The rabbitmq service goes back to the Phase 14 4.2.2 artifact on its original rabbitmq-lib/rabbitmq-log volumes and to
+# the original container-id hostname. Never mount rabbitmq4-data with it: 4.2.x must not open data written by 4.3.x
+# (feature flags cannot be disabled and downgrades are unsupported). Messages published to the target after the cutover
+# are not on the source; drain or republish them before switching back if they matter.
+services:
+  rabbitmq:
+    image: rabbitmq:4.2.2@sha256:18cc2597e9b07bc29f5f991ca2836555245b4f94563773c19b662944f4b6d870
+    hostname: !reset null
+    volumes: !override
+      - rabbitmq-lib:/var/lib/rabbitmq/
+      - rabbitmq-log:/var/log/rabbitmq

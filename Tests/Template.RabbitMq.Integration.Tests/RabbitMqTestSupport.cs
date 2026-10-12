@@ -17,10 +17,21 @@ using Testcontainers.RabbitMq;
 
 namespace Template.RabbitMq.Integration.Tests;
 
-/// <summary>Same broker version as the current development image (rabbitmq:latest resolved to 4.2.2 on 2026-10-10).</summary>
+/// <summary>
+/// The Phase 17 target broker, pinned exactly as in docker-compose.yml. Set TEMPLATE_RABBITMQ_TEST_IMAGE to run the same
+/// suite against another pinned image, such as the Phase 14 source kept for rollback (<see cref="SourceImage"/>).
+/// </summary>
 public static class BrokerImage
 {
-    public const string Name = "rabbitmq:4.2.2";
+    public const string TargetImage = "rabbitmq:4.3.6-management@sha256:8dd6e3570ddaa2ef82a6c3a8950e79c1f73893adfbdddbc374fc1f1ac8a0f5dd";
+
+    public const string SourceImage = "rabbitmq:4.2.2@sha256:18cc2597e9b07bc29f5f991ca2836555245b4f94563773c19b662944f4b6d870";
+
+    public static string Name { get; } =
+        Environment.GetEnvironmentVariable("TEMPLATE_RABBITMQ_TEST_IMAGE") is { Length: > 0 } image ? image : TargetImage;
+
+    /// <summary>The server version encoded in the image tag (for example 4.3.6).</summary>
+    public static string ExpectedServerVersion => Name.Split('@')[0].Split(':')[1].Split('-')[0];
 
     public const string UserName = "phase9_test_user";
 
