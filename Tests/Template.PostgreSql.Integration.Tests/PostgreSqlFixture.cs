@@ -10,7 +10,7 @@ namespace Template.PostgreSql.Integration.Tests;
 public sealed class PostgreSqlFixture : IAsyncLifetime
 {
     private const string InitialMigration = "20250326224009_InitialPostgresMigration";
-    private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:16.15")
+    private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:16.15@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d")
         .WithDatabase("template_phase7_tests")
         .WithUsername("template_test_user")
         .WithPassword($"ephemeral-{Guid.NewGuid():N}")

@@ -28,8 +28,9 @@ services:
       - nw
 
   db:
-    # PostgreSQL 16.11, the artifact `postgres:16` resolved to before Phase 14. Patching within 16 belongs to Phase 16.
-    image: postgres:16.11@sha256:056b54f00419b49289227ab12d09df508543883f407fe9935a2cec430ef8aa8d
+    # PostgreSQL 16.15 (Phase 16 minor update; same on-disk format as the Phase 14 pin 16.11, no dump/restore needed).
+    # Rollback to 16.11: docker-compose.postgres-rollback.yml. PostgreSQL 18 is a separate, not yet authorized migration.
+    image: postgres:16.15@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
     container_name: my_postgres_db
     restart: always
     environment:
