@@ -13,6 +13,10 @@
     8.4.0 + legacy module topology) layered on top; the Redis topology checks then assert the rollback shape instead.
     Phase 17: the broker is RabbitMQ 4.3.6 (management image, fixed node name, rabbitmq4-data). Pass -RabbitMqRollback
     to layer docker-compose.rabbitmq-rollback.yml (the Phase 14 4.2.2 artifact on rabbitmq-lib) instead.
+    Phase 18: Redis Insight is 3.8.0 on redis-insight-data and nothing depends on it; the baseline proves WebApi and
+    Redis keep working while it is stopped and that the stack starts without it. Pass -RedisInsightRollback to layer
+    docker-compose.redis-insight-rollback.yml (the Phase 14 Redis Insight 1.14.0 artifact on redis-insight-volume_data).
+    The baseline never accepts the Redis Insight EULA (scripts/redis-insight-upgrade-rehearsal.ps1 covers connections).
 #>
 param(
     [string]$RunId = (Get-Date -Format 'yyyyMMddHHmmss'),
@@ -22,18 +26,21 @@ param(
     # Phase 16: run the baseline with docker-compose.postgres-rollback.yml (the Phase 14 PostgreSQL 16.11 artifact).
     [switch]$PostgresRollback,
     # Phase 17: run the baseline with docker-compose.rabbitmq-rollback.yml (the Phase 14 RabbitMQ 4.2.2 artifact).
-    [switch]$RabbitMqRollback
+    [switch]$RabbitMqRollback,
+    # Phase 18: run the baseline with docker-compose.redis-insight-rollback.yml (the Phase 14 Redis Insight 1.14.0 artifact).
+    [switch]$RedisInsightRollback
 )
 
 $ErrorActionPreference = 'Continue'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repositoryRoot
 
-$project = if ($RabbitMqRollback) { "p17-rollback-$RunId" } elseif ($PostgresRollback) { "p16-rollback-$RunId" } elseif ($RedisRollback) { "p15-rollback-$RunId" } else { "p14-baseline-$RunId" }
+$project = if ($RedisInsightRollback) { "p18-rollback-$RunId" } elseif ($RabbitMqRollback) { "p17-rollback-$RunId" } elseif ($PostgresRollback) { "p16-rollback-$RunId" } elseif ($RedisRollback) { "p15-rollback-$RunId" } else { "p14-baseline-$RunId" }
 $composeFiles = @('-f', 'docker-compose.yml', '-f', 'docker-compose.baseline.yml')
 if ($RedisRollback) { $composeFiles += @('-f', 'docker-compose.redis-rollback.yml') }
 if ($PostgresRollback) { $composeFiles += @('-f', 'docker-compose.postgres-rollback.yml') }
 if ($RabbitMqRollback) { $composeFiles += @('-f', 'docker-compose.rabbitmq-rollback.yml') }
+if ($RedisInsightRollback) { $composeFiles += @('-f', 'docker-compose.redis-insight-rollback.yml') }
 $outputDirectory = Join-Path $repositoryRoot "artifacts\validation\compose-baseline\$RunId"
 New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
 $envFile = Join-Path $outputDirectory 'baseline.env'
@@ -147,9 +154,10 @@ $allImages | Set-Content (Join-Path $outputDirectory 'images.txt')
 
 $expectedMajors = [ordered]@{
     'postgres' = '16.'; 'redis' = '8.'; 'rabbitmq' = '4.'; 'docker.elastic.co/elasticsearch/elasticsearch' = '9.';
-    'docker.elastic.co/kibana/kibana' = '9.'; 'redislabs/redisinsight' = '1.'; 'mcr.microsoft.com/dotnet/aspnet' = '10.0.';
+    'docker.elastic.co/kibana/kibana' = '9.'; 'mcr.microsoft.com/dotnet/aspnet' = '10.0.';
     'mcr.microsoft.com/dotnet/sdk' = '10.0.'
 }
+if ($RedisInsightRollback) { $expectedMajors['redislabs/redisinsight'] = '1.' } else { $expectedMajors['redis/redisinsight'] = '3.' }
 if ($RedisRollback) {
     $expectedMajors['redislabs/redisgraph'] = '2.10.'; $expectedMajors['redislabs/redisearch'] = '2.6.'; $expectedMajors['redislabs/redistimeseries'] = '1.6.'
 }
@@ -200,6 +208,30 @@ else {
     Write-Check 'rabbitmq.target-volume-rabbitmq4-data' ($rabbitVolume -eq 'rabbitmq4-data') $rabbitVolume
     Write-Check 'rabbitmq.fixed-hostname' ($rabbitHostname -eq 'rabbitmq') $rabbitHostname
 }
+
+# Phase 18: Redis Insight is disposable tooling. Target 3.8.0 on the new redis-insight-data volume (never the 1.14
+# volume); the rollback overlay restores 1.14.0 on redis-insight-volume_data. No service depends on it, and WebApi
+# carries no Redis Insight setting.
+$insightImage = @($images | Where-Object { $_ -like '*redisinsight:*' })[0]
+$insightConfig = $configJson.services.'redis-insight'
+$insightMounts = @($insightConfig.volumes | ForEach-Object { "$($_.source):$($_.target)" }) -join ','
+$insightDependents = @($configJson.services.PSObject.Properties | Where-Object { $_.Value.depends_on -and $_.Value.depends_on.PSObject.Properties.Name -contains 'redis-insight' } | ForEach-Object { $_.Name })
+$webApiEnvironment = ($configJson.services.webapi.environment | ConvertTo-Json -Compress)
+if ($RedisInsightRollback) {
+    Write-Check 'redis-insight.rollback-image-1.14.0' ($insightImage -like 'redislabs/redisinsight:1.14.0@sha256:b03ab142*') $insightImage
+    Write-Check 'redis-insight.rollback-legacy-volume' ($insightMounts -eq 'redis-insight-volume_data:/db') $insightMounts
+}
+else {
+    Write-Check 'redis-insight.target-image-3.8.0' ($insightImage -like 'redis/redisinsight:3.8.0@sha256:b5e19ee2*') $insightImage
+    Write-Check 'redis-insight.target-volume-only' ($insightMounts -eq 'redis-insight-data:/data') $insightMounts
+    $insightEnvironment = @($insightConfig.environment.PSObject.Properties.Name | Sort-Object) -join ','
+    Write-Check 'redis-insight.preconfigured-connection-keys' ($insightEnvironment -eq 'RI_ENCRYPTION_KEY,RI_REDIS_ALIAS,RI_REDIS_HOST,RI_REDIS_PASSWORD,RI_REDIS_PORT' -and $insightConfig.environment.RI_REDIS_HOST -eq 'redis') $insightEnvironment
+}
+Write-Check 'redis-insight.no-dependents' ($insightDependents.Count -eq 0) ($insightDependents -join ',')
+Write-Check 'redis-insight.webapi-has-no-insight-setting' ($webApiEnvironment -notmatch '(?i)insight|RI_') ''
+# Committed files reference the secrets only as ${VARIABLE} interpolations.
+$committedSecrets = @(git grep -n -E 'RI_(REDIS_PASSWORD|ENCRYPTION_KEY)[:=] *[^$ ]' -- 'docker-compose*.yml' .env.example 2>$null)
+Write-Check 'redis-insight.no-committed-credentials' ($committedSecrets.Count -eq 0) ($committedSecrets -join ' | ')
 
 $initScript = Join-Path $repositoryRoot 'init-db.sh'
 docker run --rm -v "${initScript}:/tmp/init-db.sh:ro" --entrypoint bash $postgresImage -n /tmp/init-db.sh 2>&1 | Out-Null
@@ -308,17 +340,37 @@ else {
     Write-Check 'redis.runtime-version' ($redisVersion -eq '8.10.2') "version=$redisVersion"
     Write-Check 'redis.integrated-search-and-timeseries' ($redisModules -match '(?m)^search\s*$' -and $redisModules -match '(?m)^timeseries\s*$') ''
 }
-# WebApi is connected to the redis service of this project (its address appears in CLIENT LIST), and Redis Insight can
-# reach and authenticate to it (Insight 1.x has no connection provisioning by environment; its saved connections live in
-# its own volume and are configured in the UI).
+# WebApi is connected to the redis service of this project (its address appears in CLIENT LIST), and the Redis Insight
+# container can reach and authenticate to it over the project network (connection management through the UI is covered
+# by scripts/redis-insight-upgrade-rehearsal.ps1; the baseline does not accept the EULA).
 $webApiAddress = (Invoke-Compose exec -T webapi sh -c 'hostname -i' 2>$null | Out-String).Trim()
 $clients = Invoke-Compose exec -T -e "REDISCLI_AUTH=$redisPassword" redis redis-cli --no-auth-warning CLIENT LIST 2>&1 | Out-String
 Write-Check 'redis.webapi-connected-to-target' ($webApiAddress -and $clients -match ('addr=' + [regex]::Escape(($webApiAddress -split '\s+')[0]) + ':')) ''
-$probeScript = "import os,socket,time`ns=socket.create_connection(('redis',6379),5)`ns.sendall(('AUTH '+os.environ['P15_PROBE_SECRET']+'\r\nPING\r\n').encode())`ntime.sleep(0.5)`nprint(s.recv(100).decode().split())`n"
+# Redis Insight 3.x runs on Node.js (no Python); 1.14 runs on Python. Both probes print the two RESP replies the same way.
+if ($RedisInsightRollback) {
+    $probeScript = "import os,socket,time`ns=socket.create_connection(('redis',6379),5)`ns.sendall(('AUTH '+os.environ['P15_PROBE_SECRET']+'\r\nPING\r\n').encode())`ntime.sleep(0.5)`nprint(s.recv(100).decode().split())`n"
+    $probeRunner = 'python3'
+}
+else {
+    $probeScript = "const s=require('net').connect(6379,'redis',()=>s.write('AUTH '+process.env.P15_PROBE_SECRET+'\r\nPING\r\n'));let d='';s.on('data',c=>{d+=c;const r=d.trim().split('\r\n');if(r.length>1){console.log('['+r.map(x=>String.fromCharCode(39)+x+String.fromCharCode(39)).join(', ')+']');s.end()}});setTimeout(()=>process.exit(1),5000).unref()"
+    $probeRunner = 'node'
+}
 $probeEncoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($probeScript))
 # The probe travels as base64 (Windows PowerShell 5.1 mangles quotes in native arguments).
-$insightProbe = Invoke-Compose exec -T -e "P15_PROBE_SECRET=$redisPassword" -e "P15_PROBE=$probeEncoded" redis-insight sh -c 'echo $P15_PROBE | base64 -d | python3' 2>&1 | Out-String
+$insightProbe = Invoke-Compose exec -T -e "P15_PROBE_SECRET=$redisPassword" -e "P15_PROBE=$probeEncoded" redis-insight sh -c "echo `$P15_PROBE | base64 -d > /tmp/p18-probe && $probeRunner /tmp/p18-probe; rm -f /tmp/p18-probe" 2>&1 | Out-String
 Write-Check 'redis.insight-reaches-and-authenticates' ($insightProbe -match "'\+OK', '\+PONG'") ($insightProbe.Trim() -replace [regex]::Escape($redisPassword), '***')
+if ($RedisInsightRollback) {
+    $insightHealth = Invoke-Compose exec -T redis-insight python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:5540/healthcheck/', timeout=5).read().decode())" 2>&1 | Out-String
+    Write-Check 'redis-insight.rollback-legacy-healthcheck' ($insightHealth.Trim() -eq 'OK') ($insightHealth.Trim())
+}
+else {
+    $insightHealth = Invoke-Compose exec -T redis-insight wget -q -O - http://127.0.0.1:5540/api/health/ 2>&1 | Out-String
+    $insightInfo = Invoke-Compose exec -T redis-insight wget -q -O - http://127.0.0.1:5540/api/info 2>&1 | Out-String
+    $insightSettings = Invoke-Compose exec -T redis-insight wget -q -O - http://127.0.0.1:5540/api/settings 2>&1 | Out-String
+    Write-Check 'redis-insight.health-up' ($insightHealth -match '"status":"up"') ($insightHealth.Trim())
+    Write-Check 'redis-insight.runtime-version-3.8.0' ($insightInfo -match '"appVersion":"3\.8\.0"' -and $insightInfo -match '"buildType":"DOCKER_ON_PREMISE"') ''
+    Write-Check 'redis-insight.eula-not-auto-accepted' ($insightSettings -match '"agreements":null') ''
+}
 
 # The seed user's credentials are read from the committed seed source, never duplicated here.
 $seedSource = Get-Content 'Src\Infrastructure\Template.Infrastructure.Identity\Seeds\DefaultBasicUser.cs' -Raw
@@ -369,7 +421,18 @@ for ($attempt = 0; $attempt -lt 20 -and -not $logStream; $attempt++) {
 }
 Write-Check 'integration.elasticsearch-log-data-stream' $logStream ''
 Write-Check 'service.kibana-healthy' ((Get-ServiceStates) -match 'kibana\|running\|healthy') ''
-Write-Check 'service.redis-insight-running' ((Get-ServiceStates) -match 'redis-insight\|running') ''
+Write-Check 'service.redis-insight-healthy' ((Get-ServiceStates) -match 'redis-insight\|running\|healthy') ''
+
+# Phase 18: Redis Insight stopped -> WebApi readiness, the Redis cache and Redis itself are unaffected.
+Invoke-Compose stop redis-insight 2>&1 | Out-Null
+Write-Check 'insight-absent.stopped' ((Get-ServiceStates) -match 'redis-insight\|exited') ''
+$readyWithoutInsight = Get-Status 'GET' '/health/ready'
+Write-Check 'insight-absent.webapi-ready' ($readyWithoutInsight.Status -eq 200 -and $readyWithoutInsight.Content -notmatch '(?i)insight') "status=$($readyWithoutInsight.Status)"
+Write-Check 'insight-absent.cache-read-through' ((Get-Status 'GET' "/api/v2/product/$productId/cache").Status -eq 200) ''
+$pingWithoutInsight = (Invoke-Compose exec -T -e "REDISCLI_AUTH=$redisPassword" redis redis-cli --no-auth-warning PING 2>&1 | Out-String).Trim()
+Write-Check 'insight-absent.redis-ping' ($pingWithoutInsight -eq 'PONG') $pingWithoutInsight
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 redis-insight 2>&1 | Out-Null
+Write-Check 'insight-absent.restarted-healthy' ((Get-ServiceStates) -match 'redis-insight\|running\|healthy') ''
 
 # ---------------------------------------------------------------- 4. Second application startup (idempotency)
 $secondStart = (Get-Date).ToUniversalTime().ToString('o')
@@ -386,7 +449,13 @@ Write-Check 'idempotency.no-migration-applied-on-second-startup' ($firstRunMigra
 $stackRestart = (Get-Date).ToUniversalTime().ToString('o')
 Invoke-Compose stop 2>&1 | Set-Content (Join-Path $outputDirectory '07-stop.log')
 Write-Check 'restart.stack-stopped' ((Get-ServiceStates) -notmatch '\|running\|') (Get-ServiceStates)
-Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout $StartupTimeoutSeconds 2>&1 | Set-Content (Join-Path $outputDirectory '08-restart.log')
+# Phase 18: the stack starts without Redis Insight (every other service first), then Redis Insight joins.
+$servicesWithoutInsight = @($services | Where-Object { $_ -ne 'redis-insight' })
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout $StartupTimeoutSeconds @servicesWithoutInsight 2>&1 | Set-Content (Join-Path $outputDirectory '08-restart.log')
+$stackWithoutInsight = $LASTEXITCODE -eq 0
+Write-Check 'insight-absent.stack-starts-without-insight' ($stackWithoutInsight -and (Get-ServiceStates) -match 'redis-insight\|exited') (Get-ServiceStates)
+Write-Check 'insight-absent.webapi-ready-after-restart' (Wait-HttpOk '/health/ready' 180) ''
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout $StartupTimeoutSeconds 2>&1 | Add-Content (Join-Path $outputDirectory '08-restart.log')
 Write-Check 'restart.stack-healthy-again' ($LASTEXITCODE -eq 0) (Get-ServiceStates)
 Write-Check 'restart.webapi-ready' (Wait-HttpOk '/health/ready' 180) ''
 $dbRestartLog = Invoke-Compose logs --no-color --since $stackRestart db 2>&1 | Out-String

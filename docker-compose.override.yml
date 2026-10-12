@@ -33,5 +33,6 @@ services:
       - ${REDIS_PORT}:6379
 
   redis-insight:
+    # Administrative UI without authentication: published on loopback only.
     ports:
-      - ${REDIS_INSIGHT_PORT}:8001
+      - 127.0.0.1:${REDIS_INSIGHT_PORT}:5540
