@@ -16,7 +16,9 @@ param(
     # Optional Phase 14 isolated Compose baseline (new project and volumes; requires Docker).
     [switch]$ComposeBaseline,
     # Optional Phase 15 isolated Redis migration rehearsal and rollback-topology baseline (new projects and volumes).
-    [switch]$RedisRehearsal
+    [switch]$RedisRehearsal,
+    # Optional Phase 16 PostgreSQL 16 backup/restore/patch/rollback rehearsal and 16.11 rollback-image baseline.
+    [switch]$PostgresRehearsal
 )
 
 $ErrorActionPreference = 'Continue'
@@ -62,6 +64,10 @@ if ($ComposeBaseline) {
 if ($RedisRehearsal) {
     Invoke-Step '06g-redis8-migration-rehearsal' { & (Join-Path $PSScriptRoot 'redis8-migration-rehearsal.ps1') }
     Invoke-Step '06h-compose-redis-rollback' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') -RedisRollback }
+}
+if ($PostgresRehearsal) {
+    Invoke-Step '06i-postgres16-patch-rehearsal' { & (Join-Path $PSScriptRoot 'postgres16-patch-rehearsal.ps1') }
+    Invoke-Step '06j-compose-postgres-rollback' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') -PostgresRollback }
 }
 Invoke-Step '07-test-functional' { & $DotNetPath test Tests\Template.Functional.Tests\Template.Functional.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '08-vulnerable-packages' { & $DotNetPath list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive }

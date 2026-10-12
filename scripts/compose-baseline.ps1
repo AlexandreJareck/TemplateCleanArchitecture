@@ -16,16 +16,19 @@ param(
     [string]$RunId = (Get-Date -Format 'yyyyMMddHHmmss'),
     [int]$WebApiPort = 18080,
     [int]$StartupTimeoutSeconds = 900,
-    [switch]$RedisRollback
+    [switch]$RedisRollback,
+    # Phase 16: run the baseline with docker-compose.postgres-rollback.yml (the Phase 14 PostgreSQL 16.11 artifact).
+    [switch]$PostgresRollback
 )
 
 $ErrorActionPreference = 'Continue'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repositoryRoot
 
-$project = if ($RedisRollback) { "p15-rollback-$RunId" } else { "p14-baseline-$RunId" }
+$project = if ($PostgresRollback) { "p16-rollback-$RunId" } elseif ($RedisRollback) { "p15-rollback-$RunId" } else { "p14-baseline-$RunId" }
 $composeFiles = @('-f', 'docker-compose.yml', '-f', 'docker-compose.baseline.yml')
 if ($RedisRollback) { $composeFiles += @('-f', 'docker-compose.redis-rollback.yml') }
+if ($PostgresRollback) { $composeFiles += @('-f', 'docker-compose.postgres-rollback.yml') }
 $outputDirectory = Join-Path $repositoryRoot "artifacts\validation\compose-baseline\$RunId"
 New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
 $envFile = Join-Path $outputDirectory 'baseline.env'
@@ -174,6 +177,9 @@ else {
 }
 
 $postgresImage = @($images | Where-Object { $_ -like 'postgres:*' })[0]
+# Phase 16: 16.15 by default; the rollback overlay selects the Phase 14 artifact 16.11.
+$expectedPostgres = if ($PostgresRollback) { 'postgres:16.11@sha256:056b54f0*' } else { 'postgres:16.15@sha256:ca0bd484*' }
+Write-Check 'postgres.expected-image' ($postgresImage -like $expectedPostgres) $postgresImage
 $initScript = Join-Path $repositoryRoot 'init-db.sh'
 docker run --rm -v "${initScript}:/tmp/init-db.sh:ro" --entrypoint bash $postgresImage -n /tmp/init-db.sh 2>&1 | Out-Null
 Write-Check 'init-db.syntax' ($LASTEXITCODE -eq 0) 'bash -n inside the pinned PostgreSQL image'
@@ -222,6 +228,8 @@ Write-Check 'postgres.init-script-ran-on-clean-volume' ($dbInitLog -match 'runni
 
 $databases = Invoke-Sql 'POSTGRES_USER' "SELECT count(*) FROM pg_database WHERE datname IN (:'app_db', :'identity_db') AND pg_get_userbyid(datdba) = current_user;"
 Write-Check 'postgres.both-databases-created-and-owned' ($databases -eq '2') "count=$databases"
+$postgresVersion = Invoke-Sql 'POSTGRES_USER' "SELECT current_setting('server_version');"
+Write-Check 'postgres.runtime-version' ($postgresVersion -like $(if ($PostgresRollback) { '16.11*' } else { '16.15*' })) "version=$postgresVersion"
 $createdAgain = Invoke-Compose exec -T db bash /docker-entrypoint-initdb.d/init-db.sh 2>&1 | Out-String
 $databasesAgain = Invoke-Sql 'POSTGRES_USER' "SELECT count(*) FROM pg_database WHERE datname IN (:'app_db', :'identity_db');"
 Write-Check 'init-db.rerun-idempotent' ($LASTEXITCODE -eq 0 -and $databasesAgain -eq '2') "count=$databasesAgain"
