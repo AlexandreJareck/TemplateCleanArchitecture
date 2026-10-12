@@ -1,0 +1,18 @@
+{
+  "description": "Phase 19 per-module coverage ratchet enforced by scripts/coverage-report.ps1. Inputs: merged coverlet.collector (XPlat Code Coverage, Cobertura) reports of Template.Unit.Tests, Template.Integration.Tests and Template.Functional.Tests. Minimums = floor(measured - 1) of the coverlet 10.1.0 baseline measured on 2026-10-12 (line and method data identical in three runs); minimumSources = measured source files after exclusions. Raise the numbers when coverage improves; lowering one weakens the gate and needs explicit justification and approval.",
+  "exclusions": [
+    { "pattern": "*/Migrations/*", "reason": "EF Core scaffolded migrations, designers and model snapshots (generated, never hand-edited)." },
+    { "pattern": "*.Designer.cs", "reason": "Generated .resx designer classes (never hand-edited)." }
+  ],
+  "modules": [
+    { "module": "Template.Domain", "layer": "Domain", "line": 99, "branch": null, "minimumSources": 5 },
+    { "module": "Template.Application", "layer": "Application", "line": 93, "branch": 88, "minimumSources": 41 },
+    { "module": "Template.Infrastructure.Caching", "layer": "Infrastructure", "line": 95, "branch": 92, "minimumSources": 4 },
+    { "module": "Template.Infrastructure.Identity", "layer": "Infrastructure", "line": 89, "branch": 79, "minimumSources": 14 },
+    { "module": "Template.Infrastructure.Messaging", "layer": "Infrastructure", "line": 58, "branch": 65, "minimumSources": 11 },
+    { "module": "Template.Infrastructure.Persistence", "layer": "Infrastructure", "line": 65, "branch": 55, "minimumSources": 9 },
+    { "module": "Template.Infrastructure.Resources", "layer": "Infrastructure", "line": 99, "branch": 99, "minimumSources": 2 },
+    { "module": "Template.Infrastructure.Search", "layer": "Infrastructure", "line": 95, "branch": 86, "minimumSources": 5 },
+    { "module": "Template.WebApi", "layer": "Presentation", "line": 67, "branch": 50, "minimumSources": 32 }
+  ]
+}
