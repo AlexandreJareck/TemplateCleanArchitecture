@@ -21,7 +21,10 @@ param(
     [switch]$PostgresRehearsal,
     # Optional Phase 17 RabbitMQ 4.2.2 -> 4.2.9 -> 4.3.6 rehearsal, broker suite against the 4.2.2 rollback source and
     # the 4.2.2 rollback-overlay baseline.
-    [switch]$RabbitMqRehearsal
+    [switch]$RabbitMqRehearsal,
+    # Optional Phase 18 Redis Insight 1.14.0 -> 3.8.0 rehearsal (new tooling volume, Redis 8 connection, restart, absence,
+    # rollback) and the Redis Insight 1.14.0 rollback-overlay baseline.
+    [switch]$RedisInsightRehearsal
 )
 
 $ErrorActionPreference = 'Continue'
@@ -80,6 +83,10 @@ if ($RabbitMqRehearsal) {
         finally { Remove-Item Env:TEMPLATE_RABBITMQ_TEST_IMAGE }
     }
     Invoke-Step '06m-compose-rabbitmq-rollback' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') -RabbitMqRollback }
+}
+if ($RedisInsightRehearsal) {
+    Invoke-Step '06n-redis-insight-upgrade-rehearsal' { & (Join-Path $PSScriptRoot 'redis-insight-upgrade-rehearsal.ps1') }
+    Invoke-Step '06o-compose-redis-insight-rollback' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') -RedisInsightRollback }
 }
 Invoke-Step '07-test-functional' { & $DotNetPath test Tests\Template.Functional.Tests\Template.Functional.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '08-vulnerable-packages' { & $DotNetPath list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive }
