@@ -18,7 +18,10 @@ param(
     # Optional Phase 15 isolated Redis migration rehearsal and rollback-topology baseline (new projects and volumes).
     [switch]$RedisRehearsal,
     # Optional Phase 16 PostgreSQL 16 backup/restore/patch/rollback rehearsal and 16.11 rollback-image baseline.
-    [switch]$PostgresRehearsal
+    [switch]$PostgresRehearsal,
+    # Optional Phase 17 RabbitMQ 4.2.2 -> 4.2.9 -> 4.3.6 rehearsal, broker suite against the 4.2.2 rollback source and
+    # the 4.2.2 rollback-overlay baseline.
+    [switch]$RabbitMqRehearsal
 )
 
 $ErrorActionPreference = 'Continue'
@@ -68,6 +71,15 @@ if ($RedisRehearsal) {
 if ($PostgresRehearsal) {
     Invoke-Step '06i-postgres16-patch-rehearsal' { & (Join-Path $PSScriptRoot 'postgres16-patch-rehearsal.ps1') }
     Invoke-Step '06j-compose-postgres-rollback' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') -PostgresRollback }
+}
+if ($RabbitMqRehearsal) {
+    Invoke-Step '06k-rabbitmq4-upgrade-rehearsal' { & (Join-Path $PSScriptRoot 'rabbitmq4-upgrade-rehearsal.ps1') }
+    Invoke-Step '06l-test-rabbitmq-rollback-source' {
+        $env:TEMPLATE_RABBITMQ_TEST_IMAGE = 'rabbitmq:4.2.2@sha256:18cc2597e9b07bc29f5f991ca2836555245b4f94563773c19b662944f4b6d870'
+        try { & $DotNetPath test Tests\Template.RabbitMq.Integration.Tests\Template.RabbitMq.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
+        finally { Remove-Item Env:TEMPLATE_RABBITMQ_TEST_IMAGE }
+    }
+    Invoke-Step '06m-compose-rabbitmq-rollback' { & (Join-Path $PSScriptRoot 'compose-baseline.ps1') -RabbitMqRollback }
 }
 Invoke-Step '07-test-functional' { & $DotNetPath test Tests\Template.Functional.Tests\Template.Functional.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '08-vulnerable-packages' { & $DotNetPath list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive }
