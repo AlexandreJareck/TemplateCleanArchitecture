@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Opt-in broker-backed suite: requires Docker and starts disposable rabbitmq:4.2.2 containers. -->
+  <!-- Opt-in broker-backed suite: requires Docker and starts disposable rabbitmq:4.3.6-management containers pinned by digest
+       (TEMPLATE_RABBITMQ_TEST_IMAGE selects another pinned image, e.g. the 4.2.2 rollback source). -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
