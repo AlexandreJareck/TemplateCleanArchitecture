@@ -1,0 +1,16 @@
+# Phase 18 Redis Insight rollback overlay. It selects the preserved Redis Insight 1.14.0 tooling instead of the 3.8.0
+# target, without touching the target volume:
+#   docker compose -f docker-compose.yml [-f docker-compose.override.yml] -f docker-compose.redis-insight-rollback.yml up -d redis-insight
+# The service goes back to the Phase 14 artifact on its original redis-insight-volume_data volume (/db). Never mount
+# redis-insight-data here: it holds 3.x state in another format. RIPORT makes 1.14 listen on 5540, so the loopback
+# port mapping of docker-compose.override.yml stays valid. 1.14 has no connection provisioning: its saved connections
+# live in its own volume. Nothing else depends on this service, so the switch does not touch Redis or WebApi.
+services:
+  redis-insight:
+    image: redislabs/redisinsight:1.14.0@sha256:b03ab1426d0d861b0370e05ee670a8819c8ab36b987ca59e4a3e92e0038d089c
+    environment: !override
+      RIPORT: "5540"
+    volumes: !override
+      - redis-insight-volume_data:/db
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5540/healthcheck/', timeout=4)"]

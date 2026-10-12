@@ -152,16 +152,34 @@ services:
       retries: 12
 
   redis-insight:
-    # Redis Insight 1.14.0 (EOL line); its upgrade belongs to Phase 18. It targets the single redis service.
-    image: redislabs/redisinsight:1.14.0@sha256:b03ab1426d0d861b0370e05ee670a8819c8ab36b987ca59e4a3e92e0038d089c
+    # Phase 18: Redis Insight 3.8.0 (official redis/redisinsight image, user node uid 1000, port 5540, state in /data)
+    # as disposable local tooling. Nothing depends on it: WebApi, Redis and the release gate start and pass without it.
+    # It uses the new redis-insight-data volume. Never mount redis-insight-volume_data here: it holds the Redis Insight
+    # 1.14 state (/db, different format) kept for rollback (docker-compose.redis-insight-rollback.yml).
+    image: redis/redisinsight:3.8.0@sha256:b5e19ee240abef6edb435871b90ff8a210995422e8e018ab61c0339d318a1f84
     container_name: redis-insight
     restart: always
     depends_on:
       - redis
+    # The single Redis 8 connection is recreated from these values at every start (it appears after the EULA is
+    # accepted in the UI; nothing accepts it automatically). The password comes from .env at runtime and is stored
+    # encrypted with REDIS_INSIGHT_ENCRYPTION_KEY; without that key Redis Insight stores it unencrypted in its volume.
+    environment:
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: "6379"
+      RI_REDIS_ALIAS: template-redis8
+      RI_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      RI_ENCRYPTION_KEY: ${REDIS_INSIGHT_ENCRYPTION_KEY:-}
     networks:
       - nw
     volumes:
-      - redis-insight-volume_data:/db
+      - redis-insight-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5540/api/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
 volumes:
   postgres-data:
@@ -176,7 +194,9 @@ volumes:
   # Redis 8.4.0 source data: no longer mounted by default, kept for rollback (docker-compose.redis-rollback.yml).
   redis-volume-data:
   redis8-data:
+  # Redis Insight 1.14 state: no longer mounted by default, kept for rollback (docker-compose.redis-insight-rollback.yml).
   redis-insight-volume_data:
+  redis-insight-data:
 
 configs:
   rabbitmq-plugins:
