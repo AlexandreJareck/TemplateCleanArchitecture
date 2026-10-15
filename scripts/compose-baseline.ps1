@@ -185,7 +185,7 @@ else {
     Write-Check 'redis.no-legacy-module-services' ($legacyRedisServices.Count -eq 0) ($services -join ',')
     Write-Check 'redis.insight-depends-on-redis-only' ($insightDependencies -eq 'redis') $insightDependencies
     $staleReferences = @(git grep -n -E 'redis-graph|redis-search|redis-timeseries|REDIS_(GRAPH|SEARCH|TIMESERIES)_PORT' -- docker-compose.yml docker-compose.override.yml docker-compose.baseline.yml .env.example scripts Tests Src 2>$null |
-        Where-Object { $_ -notmatch '^scripts/(compose-baseline|redis8-migration-rehearsal)\.ps1:' })
+        Where-Object { $_ -notmatch '^scripts/(compose-baseline|redis8-migration-rehearsal|redis-insight-upgrade-rehearsal)\.ps1:' })
     Write-Check 'redis.no-removed-service-references' ($staleReferences.Count -eq 0) ($staleReferences -join ' | ')
 }
 

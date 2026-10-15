@@ -38,6 +38,8 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
 
     public async Task DisposeAsync() => await container.DisposeAsync();
 
+    public string ConnectionString => container.GetConnectionString();
+
     public ApplicationDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -64,7 +66,7 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
         return (T)Convert.ChangeType(result!, typeof(T));
     }
 
-    private sealed record TestAuthenticatedUser : IAuthenticatedUserService
+    internal sealed record TestAuthenticatedUser : IAuthenticatedUserService
     {
         public string UserId { get; } = Guid.Empty.ToString();
         public string UserName { get; } = "phase7-test";
