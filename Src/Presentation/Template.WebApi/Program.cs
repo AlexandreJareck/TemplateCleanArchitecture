@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning.Builder;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Template.Application;
 using Template.Application.Interfaces;
@@ -11,8 +10,6 @@ using Template.Infrastructure.Caching;
 using Template.Infrastructure.Identity;
 using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
-using Template.Infrastructure.Persistence.Contexts;
-using Template.Infrastructure.Persistence.Seeds;
 using Template.Infrastructure.Resources;
 using Template.Infrastructure.Search;
 using Template.WebApi.Infrastructure.Extensions;
@@ -69,10 +66,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
 
     await services.InitializeIdentityDatabaseAsync(applyMigrations: !useInMemoryDatabase);
-    if (!useInMemoryDatabase)
-        await services.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
-
-    await DefaultData.SeedAsync(services.GetRequiredService<ApplicationDbContext>());
+    await services.InitializeApplicationDatabaseAsync(applyMigrations: !useInMemoryDatabase);
 }
 
 app.UseMiddleware<RequestLoggingMiddleware>();

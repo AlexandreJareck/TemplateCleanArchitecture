@@ -6,6 +6,7 @@ using Template.Application.Interfaces;
 using Template.Application.Interfaces.Repositories;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Repositories;
+using Template.Infrastructure.Persistence.Seeds;
 
 namespace Template.Infrastructure.Persistence;
 
@@ -33,6 +34,19 @@ public static class ServiceRegistration
         services.AddScoped<IProductRepository, ProductRepository>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Applies application migrations (relational providers only) and seeds the default products.
+    /// Keeps <see cref="ApplicationDbContext"/> inside this project.
+    /// </summary>
+    public static async Task InitializeApplicationDatabaseAsync(this IServiceProvider services, bool applyMigrations)
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        if (applyMigrations)
+            await context.Database.MigrateAsync();
+
+        await DefaultData.SeedAsync(context);
     }
 
     /// <summary>Readiness probe of the application database (EF Core <c>CanConnectAsync</c>), without exposing the context.</summary>
