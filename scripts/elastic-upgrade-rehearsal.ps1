@@ -230,6 +230,15 @@ try {
     if (-not (Test-Path (Join-Path $WebApi9xPath 'Template.WebApi.dll'))) { throw "9.x WebApi not found in $WebApi9xPath" }
     if (-not (docker network ls -q --filter "name=^$network$")) { docker network create $network | Out-Null }
     Save-Evidence 'images.json' ($images | ConvertTo-Json)
+    # Pull the digest-pinned images first: with ErrorActionPreference=Stop, the "Unable to find image locally" line that
+    # docker run writes to stderr on a cache miss would otherwise abort the run (Phase 21, after a host image prune).
+    foreach ($image in $images.Values) {
+        $ErrorActionPreference = 'Continue'
+        docker pull -q $image 2>&1 | Out-Null
+        $pulled = $LASTEXITCODE
+        $ErrorActionPreference = 'Stop'
+        if ($pulled -ne 0) { throw "docker pull failed for $image" }
+    }
 
     # 1. Source 8.17.4 (current compose version) with Kibana and data written by the 8.x WebApi.
     Write-Step 'Source 8.17.4 cluster and Kibana'
