@@ -49,12 +49,11 @@ public sealed class ArchitectureRulesTests
     }
 
     [Fact]
-    public void Presentation_Has_Only_Named_Temporary_Persistence_Exception()
+    public void Presentation_Has_No_Persistence_Context_Or_Repository_References()
     {
         var actual = SourceViolations("Src/Presentation", PresentationMarkers());
 
-        actual.ShouldBe(["Src/Presentation/Template.WebApi/Program.cs"]); // Phase 7: ApplicationDbContext migration
-        ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldNotContain("IdentityContext"); // Phase 12
+        actual.ShouldBeEmpty(); // Phase 21: the Phase 7 ApplicationDbContext migration exception was removed
     }
 
     [Fact]
@@ -369,6 +368,8 @@ public sealed class ArchitectureRulesTests
         ContainsAny("var key = new SymmetricSecurityKey(bytes);", JwtConstructionMarkers()).ShouldBeTrue();
         ContainsAny("public Handler(SignInManager<ApplicationUser> signInManager)", IdentityImplementationMarkers()).ShouldBeTrue();
         ContainsAny("await services.GetRequiredService<IdentityContext>().Database.MigrateAsync();", PresentationMarkers()).ShouldBeTrue();
+        ContainsAny("await services.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();", PresentationMarkers()).ShouldBeTrue();
+        ContainsAny("await services.InitializeApplicationDatabaseAsync(applyMigrations: true);", PresentationMarkers()).ShouldBeFalse();
         IsIdentityPackage("Microsoft.AspNetCore.Identity").ShouldBeTrue();
         IsIdentityPackage("System.IdentityModel.Tokens.Jwt").ShouldBeTrue();
         IsIdentityPackage("MediatR").ShouldBeFalse();

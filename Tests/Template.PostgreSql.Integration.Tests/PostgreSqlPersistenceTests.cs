@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Template.Application.Interfaces;
 using Template.Domain.Products.Entities;
+using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Repositories;
 
@@ -122,6 +126,29 @@ public sealed class PostgreSqlPersistenceTests(PostgreSqlFixture fixture)
         await using var verification = fixture.CreateContext();
         (await verification.Products.CountAsync(product => committedIds.Contains(product.Id))).ShouldBe(2);
         (await verification.Products.AnyAsync(product => product.Id == rolledBackId)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task InitializeApplicationDatabaseAsync_IsIdempotent_OnMigratedPostgreSql()
+    {
+        await fixture.ResetProductsAsync();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:DefaultConnection"] = fixture.ConnectionString })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddPersistenceInfrastructure(configuration, useInMemoryDatabase: false);
+        services.AddScoped<IAuthenticatedUserService>(_ => new PostgreSqlFixture.TestAuthenticatedUser());
+        await using var provider = services.BuildServiceProvider();
+
+        for (var run = 0; run < 2; run++)
+        {
+            await using var scope = provider.CreateAsyncScope();
+            await scope.ServiceProvider.InitializeApplicationDatabaseAsync(applyMigrations: true);
+        }
+
+        await using var verification = fixture.CreateContext();
+        (await verification.Database.GetPendingMigrationsAsync()).ShouldBeEmpty();
+        (await verification.Products.CountAsync()).ShouldBe(5);
     }
 
     [Fact]
