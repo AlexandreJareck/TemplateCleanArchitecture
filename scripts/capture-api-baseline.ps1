@@ -10,9 +10,16 @@ $project = Join-Path $repositoryRoot 'Src\Presentation\Template.WebApi\Template.
 $output = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $repositoryRoot 'docs\refactoring\baseline' } else { $OutputDirectory }
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 $baseUri = "http://127.0.0.1:$Port"
+# Phase 22: no committed file carries JwtSettings:Key, so the Test host gets a per-run key from a cryptographically
+# secure source. It lives only in this process environment and is never printed.
+$jwtKeyBytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($jwtKeyBytes)
 $environment = @{
     ASPNETCORE_ENVIRONMENT = 'Test'
     ASPNETCORE_URLS = $baseUri
+    JwtSettings__Key = [Convert]::ToBase64String($jwtKeyBytes)
+    # The Test host never contacts a broker, but the validated RabbitMqSettings require a password; it is synthetic.
+    RabbitMqSettings__Password = [guid]::NewGuid().ToString('N')
 }
 
 # Start-Process -Environment requires PowerShell 7.4+; set and restore process variables so Windows PowerShell 5.1 also works.

@@ -101,12 +101,15 @@ Invoke-Step '07b-coverage' {
     if ($collected -ne 0) { $global:LASTEXITCODE = $collected }
 }
 Invoke-Step '08-vulnerable-packages' { & $DotNetPath list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive }
-Invoke-Step '09-docker-compose-config' { docker compose config -q }
+# Phase 22: rendered with the placeholder template, never the user's .env (which may hold real values).
+Invoke-Step '09-docker-compose-config' { docker compose --env-file .env.example config -q }
 Invoke-Step '10-capture-openapi' { & (Join-Path $PSScriptRoot 'capture-api-baseline.ps1') -DotNetPath $DotNetPath -OutputDirectory (Join-Path $logDirectory 'openapi') }
 if (-not $SkipGraphify) {
     Invoke-Step '11-graphify' { graphify update . --force }
 }
 Invoke-Step '12-git-diff-check' { git diff --check; git diff --cached --check }
+# Phase 22: no secret value in committed configuration and the compromised JWT key nowhere, run evidence included.
+Invoke-Step '13-secret-scan' { & (Join-Path $PSScriptRoot 'secret-scan.ps1') -EvidencePath (Join-Path $repositoryRoot 'artifacts\validation') }
 
 "Validation finished $(Get-Date -Format o)" | Add-Content $summary
 Get-Content $summary

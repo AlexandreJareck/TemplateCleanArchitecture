@@ -22,6 +22,8 @@ services:
       - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD}
       - RabbitMqSettings__HostName=rabbitmq
       - RabbitMqSettings__Port=5672
+      # Phase 22: the JWT signing key is never committed; it comes from the git-ignored .env (see .env.example).
+      - JwtSettings__Key=${JwtSettings__Key}
       - RabbitMqSettings__UserName=${RABBITMQ_DEFAULT_USER}
       - RabbitMqSettings__Password=${RABBITMQ_DEFAULT_PASS}
     networks:

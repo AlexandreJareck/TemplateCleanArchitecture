@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using System.Security.Cryptography;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -8,8 +9,17 @@ using Microsoft.Extensions.Hosting;
 namespace Template.Functional.Tests.Common;
 public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
 {
+    /// <summary>Configuration key of the JWT signing key, which no committed appsettings file carries (Phase 22).</summary>
+    internal const string JwtSigningKeyName = "JwtSettings:Key";
+
     /// <summary>Extra configuration applied on top of appsettings.Test.json.</summary>
     protected virtual IReadOnlyDictionary<string, string?> AdditionalConfiguration { get; } = new Dictionary<string, string?>();
+
+    /// <summary>
+    /// When true (default) the host receives a random signing key generated for this factory instance. It stays in
+    /// memory and is never written to test output.
+    /// </summary>
+    protected virtual bool SupplyJwtSigningKey => true;
 
     /// <summary>Service overrides applied after the application's own registrations.</summary>
     protected virtual void ConfigureTestServices(IServiceCollection services)
@@ -26,8 +36,16 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         {
             var values = new Dictionary<string, string?>
             {
-                ["TestDatabaseName"] = Guid.NewGuid().ToString("N")
+                ["TestDatabaseName"] = Guid.NewGuid().ToString("N"),
+                // No committed file carries credentials (Phase 22). The Test host never contacts a broker, but the
+                // validated RabbitMqSettings still require one; a random synthetic value satisfies it.
+                ["RabbitMqSettings:Password"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(16))
             };
+            if (SupplyJwtSigningKey)
+            {
+                values[JwtSigningKeyName] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+            }
+
             foreach (var (key, value) in AdditionalConfiguration)
             {
                 values[key] = value;
