@@ -55,6 +55,10 @@ $env:POSTGRES_PASSWORD = New-Secret
 $env:PGPASSWORD = $env:POSTGRES_PASSWORD
 $env:POSTGRES_DB_NAME = $appDb
 $env:POSTGRES_IDENTITY_DB_NAME = $identityDb
+# Phase 22: per-run JWT signing key from a cryptographically secure source; `docker run -e NAME` copies it unprinted.
+$jwtKeyBytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($jwtKeyBytes)
+$env:JwtSettings__Key = [Convert]::ToBase64String($jwtKeyBytes)
 $user = $env:POSTGRES_USER
 
 function Invoke-Psql([string]$Container, [string]$Database, [string]$Sql) {
@@ -90,7 +94,7 @@ function Start-WebApi([string]$Name, [string]$DatabaseHost) {
     $env:ConnectionStrings__DefaultConnection = "Host=$DatabaseHost;Port=5432;Username=$user;Password=$($env:POSTGRES_PASSWORD);Database=$appDb;SearchPath=public"
     $env:ConnectionStrings__IdentityConnection = "Host=$DatabaseHost;Port=5432;Username=$user;Password=$($env:POSTGRES_PASSWORD);Database=$identityDb;SearchPath=public"
     $arguments = @('run', '-d', '--name', $Name, '--network', $network, '-p', "127.0.0.1:${WebApiPort}:8080",
-        '-e', 'ConnectionStrings__DefaultConnection', '-e', 'ConnectionStrings__IdentityConnection',
+        '-e', 'ConnectionStrings__DefaultConnection', '-e', 'ConnectionStrings__IdentityConnection', '-e', 'JwtSettings__Key',
         '-e', 'ASPNETCORE_ENVIRONMENT=Production', '-e', 'ASPNETCORE_HTTP_PORTS=8080',
         '-e', 'CacheSettings__Enabled=false', '-e', 'RabbitMqSettings__Enabled=false', '-e', 'PersonSearchSettings__Enabled=false',
         '-e', 'ElasticLoggingSettings__Enabled=false', '-e', 'ElasticsearchHealthCheckSettings__Enabled=false', $webApiImage)
@@ -454,10 +458,12 @@ Write-Check 'safety.backups-retained' (@(Get-ChildItem $backupDirectory -File).C
 Write-Check 'safety.normal-volumes-untouched' ((Get-NormalVolumes) -eq $normalVolumesBefore) ''
 $evidence = Get-ChildItem $outputDirectory -Recurse -File -Include *.txt, *.log, *.sql | Select-String -SimpleMatch $env:POSTGRES_PASSWORD
 Write-Check 'safety.no-password-in-evidence' (-not $evidence) ''
+$jwtEvidence = Get-ChildItem $outputDirectory -Recurse -File -Include *.txt, *.log, *.sql | Select-String -SimpleMatch $env:JwtSettings__Key
+Write-Check 'safety.no-jwt-key-in-evidence' (-not $jwtEvidence) ''
 
 Save 'timings.txt' ($timings.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 $results | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $outputDirectory 'results.json')
-foreach ($name in 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'PGPASSWORD', 'POSTGRES_DB_NAME', 'POSTGRES_IDENTITY_DB_NAME', 'ConnectionStrings__DefaultConnection', 'ConnectionStrings__IdentityConnection') {
+foreach ($name in 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'PGPASSWORD', 'POSTGRES_DB_NAME', 'POSTGRES_IDENTITY_DB_NAME', 'ConnectionStrings__DefaultConnection', 'ConnectionStrings__IdentityConnection', 'JwtSettings__Key') {
     Remove-Item "Env:$name" -ErrorAction SilentlyContinue
 }
 $failed = @($results | Where-Object { -not $_.Passed })

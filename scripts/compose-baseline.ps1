@@ -127,9 +127,13 @@ if ($existing -or $existingVolumes) { throw "Compose project $project already ha
 $normalVolumesBefore = Get-NormalVolumes
 
 function New-Secret { -join ((1..32) | ForEach-Object { '{0:x}' -f (Get-Random -Maximum 16) }) }
+# Phase 22: a per-run JWT signing key from a cryptographically secure source (48 bytes, above JwtSettings.MinimumKeyBytes).
+# It exists only in memory and in the git-ignored run env file, and is never printed or logged.
+function New-JwtSigningKey { $bytes = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes); [Convert]::ToBase64String($bytes) }
 $redisPassword = New-Secret
+$jwtSigningKey = New-JwtSigningKey
 $envLines = Get-Content .env.example | ForEach-Object {
-    if ($_ -match '^(\w+)=CHANGE_ME$') { "$($Matches[1])=$(if ($Matches[1] -eq 'REDIS_PASSWORD') { $redisPassword } else { New-Secret })" }
+    if ($_ -match '^(\w+)=CHANGE_ME$') { "$($Matches[1])=$(if ($Matches[1] -eq 'REDIS_PASSWORD') { $redisPassword } elseif ($Matches[1] -eq 'JwtSettings__Key') { $jwtSigningKey } else { New-Secret })" }
     elseif ($_ -match '^APPDATA=') { 'APPDATA=/nonexistent' }
     elseif ($_ -match '^(\w+)_PORT=') { $null }
     else { $_ }
@@ -229,6 +233,10 @@ else {
 }
 Write-Check 'redis-insight.no-dependents' ($insightDependents.Count -eq 0) ($insightDependents -join ',')
 Write-Check 'redis-insight.webapi-has-no-insight-setting' ($webApiEnvironment -notmatch '(?i)insight|RI_') ''
+# Phase 22: the WebApi receives the signing key from the run env file through interpolation (value never shown).
+Write-Check 'jwt.key-from-environment' ($configJson.services.webapi.environment.JwtSettings__Key -ceq $jwtSigningKey) ''
+$committedJwtKeys = @(git grep -n -E 'JwtSettings__Key[:=] *[^$C ]' -- 'docker-compose*.yml' .env.example 2>$null)
+Write-Check 'jwt.no-committed-key' ($committedJwtKeys.Count -eq 0) ''
 # Committed files reference the secrets only as ${VARIABLE} interpolations.
 $committedSecrets = @(git grep -n -E 'RI_(REDIS_PASSWORD|ENCRYPTION_KEY)[:=] *[^$ ]' -- 'docker-compose*.yml' .env.example 2>$null)
 Write-Check 'redis-insight.no-committed-credentials' ($committedSecrets.Count -eq 0) ($committedSecrets -join ' | ')
@@ -384,6 +392,13 @@ Write-Check 'integration.identity-authenticate-v2' ($auth.Status -eq 200 -and $t
 if ($token) {
     $badLogin = Get-Status 'POST' '/api/v2/account/authenticate' (@{ userName = $seedUser; password = 'synthetic-wrong-password' } | ConvertTo-Json -Compress)
     Write-Check 'integration.identity-wrong-password-rejected' ($badLogin.Status -ge 400 -and $badLogin.Status -lt 500) "status=$($badLogin.Status)"
+    # Phase 22: the issued token authorizes a protected endpoint (404 for an unknown id, nothing is written);
+    # the same call without a token is challenged.
+    $probePath = "/api/v2/product/$([guid]::NewGuid())"
+    $authorized = Get-Status 'DELETE' $probePath '' @{ Authorization = "Bearer $token" }
+    Write-Check 'integration.jwt-authorized-call' ($authorized.Status -eq 404) "status=$($authorized.Status)"
+    $anonymous = Get-Status 'DELETE' $probePath ''
+    Write-Check 'integration.jwt-anonymous-call-401' ($anonymous.Status -eq 401) "status=$($anonymous.Status)"
 }
 
 $order = @{ id = [guid]::Empty; productName = 'Phase14Synthetic'; quantity = 1; price = 1.5 } | ConvertTo-Json -Compress
@@ -481,6 +496,10 @@ Write-Check 'isolation.normal-volumes-untouched' ((Get-NormalVolumes) -eq $norma
 # Sanitized bounded logs for review (the env file stays local and git-ignored).
 Invoke-Compose logs --no-color --tail 400 webapi 2>&1 | ForEach-Object { $_ -replace '(?i)(password|pwd|token|authorization)[^\s,;]*', '$1=***' } |
     Set-Content (Join-Path $outputDirectory '11-webapi-tail.log')
+
+# Phase 22: the signing key appears in no evidence file (the run env file is the only place that holds it).
+$jwtLeaks = @(Get-ChildItem $outputDirectory -Recurse -File | Where-Object { $_.FullName -ne $envFile -and ([string](Get-Content $_.FullName -Raw)).Contains($jwtSigningKey) })
+Write-Check 'secrets.jwt-key-not-in-evidence' ($jwtLeaks.Count -eq 0) ($jwtLeaks.Name -join ',')
 
 $results | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $outputDirectory 'results.json')
 $failed = @($results | Where-Object { -not $_.Passed })

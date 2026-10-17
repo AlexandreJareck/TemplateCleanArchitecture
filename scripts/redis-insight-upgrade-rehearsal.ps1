@@ -45,6 +45,8 @@ function Write-Check([string]$Name, [bool]$Passed, [string]$Detail = '') {
 }
 
 function New-Secret { -join ((1..32) | ForEach-Object { '{0:x}' -f (Get-Random -Maximum 16) }) }
+# Phase 22: the per-run JWT signing key comes from a cryptographically secure source and is never printed or logged.
+function New-JwtSigningKey { $bytes = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes); [Convert]::ToBase64String($bytes) }
 
 function Invoke-Compose {
     $arguments = @('compose', '-p', $project, '--env-file', $envFile, '-f', 'docker-compose.yml', '-f', 'docker-compose.baseline.yml', '-f', $overlay) + $args
@@ -124,7 +126,7 @@ $normalVolumesBefore = Get-NormalVolumes
 
 $redisPassword = New-Secret
 $envLines = Get-Content .env.example | ForEach-Object {
-    if ($_ -match '^(\w+)=CHANGE_ME$') { "$($Matches[1])=$(if ($Matches[1] -eq 'REDIS_PASSWORD') { $redisPassword } else { New-Secret })" }
+    if ($_ -match '^(\w+)=CHANGE_ME$') { "$($Matches[1])=$(if ($Matches[1] -eq 'REDIS_PASSWORD') { $redisPassword } elseif ($Matches[1] -eq 'JwtSettings__Key') { New-JwtSigningKey } else { New-Secret })" }
     elseif ($_ -match '^APPDATA=') { 'APPDATA=/nonexistent' }
     elseif ($_ -match '^(\w+)_PORT=') { $null }
     else { $_ }
