@@ -72,6 +72,10 @@ $env:RABBITMQ_DEFAULT_USER = "p17_$((New-Secret).Substring(0, 8))"
 $env:RABBITMQ_DEFAULT_PASS = New-Secret
 $env:RabbitMqSettings__UserName = $env:RABBITMQ_DEFAULT_USER
 $env:RabbitMqSettings__Password = $env:RABBITMQ_DEFAULT_PASS
+# Phase 22: per-run JWT signing key from a cryptographically secure source; `docker run -e NAME` copies it unprinted.
+$jwtKeyBytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($jwtKeyBytes)
+$env:JwtSettings__Key = [Convert]::ToBase64String($jwtKeyBytes)
 $user = $env:RABBITMQ_DEFAULT_USER
 $authorization = 'Basic ' + [Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${user}:$($env:RABBITMQ_DEFAULT_PASS)"))
 
@@ -221,7 +225,7 @@ function Start-WebApi([string]$Name, [string]$BrokerHost, [bool]$Consumers) {
         '-e', 'CacheSettings__Enabled=false', '-e', 'PersonSearchSettings__Enabled=false',
         '-e', 'ElasticLoggingSettings__Enabled=false', '-e', 'ElasticsearchHealthCheckSettings__Enabled=false',
         '-e', "RabbitMqSettings__HostName=$BrokerHost", '-e', 'RabbitMqSettings__Port=5672',
-        '-e', 'RabbitMqSettings__UserName', '-e', 'RabbitMqSettings__Password',
+        '-e', 'RabbitMqSettings__UserName', '-e', 'RabbitMqSettings__Password', '-e', 'JwtSettings__Key',
         '-e', "RabbitMqSettings__ConsumersEnabled=$($Consumers.ToString().ToLowerInvariant())", $webApiImage)
     & docker @arguments | Out-Null
 }
@@ -544,6 +548,8 @@ Stop-Container $source
 Write-Check 'isolation.normal-volumes-untouched' ((Get-NormalVolumes) -eq $normalVolumesBefore) ''
 $leaks = @(Get-ChildItem $outputDirectory -Recurse -File | Where-Object { (Get-Content $_.FullName -Raw) -match [regex]::Escape($env:RABBITMQ_DEFAULT_PASS) })
 Write-Check 'secrets.no-password-in-evidence' ($leaks.Count -eq 0) ($leaks.Name -join ',')
+$jwtLeaks = @(Get-ChildItem $outputDirectory -Recurse -File | Where-Object { ([string](Get-Content $_.FullName -Raw)).Contains($env:JwtSettings__Key) })
+Write-Check 'secrets.no-jwt-key-in-evidence' ($jwtLeaks.Count -eq 0) ($jwtLeaks.Name -join ',')
 $hashOutsideSecure = @(Get-ChildItem $outputDirectory -Recurse -File | Where-Object { $_.FullName -notlike "$secureDirectory*" -and (Get-Content $_.FullName -Raw) -match '"password_hash"\s*:' })
 Write-Check 'secrets.hashes-only-in-secure-folder' ($hashOutsideSecure.Count -eq 0) ''
 $retained = @(docker ps -a --format '{{.Names}}|{{.Status}}' | Where-Object { $_ -like "p17-*-$RunId|*" })
@@ -552,6 +558,7 @@ Save '22-retained-volumes.txt' ((docker volume ls --format '{{.Name}}' | Where-O
 Write-Check 'retention.all-brokers-stopped-not-removed' (@($retained | Where-Object { $_ -match '\|Up ' }).Count -eq 0 -and $retained.Count -ge 9) "containers=$($retained.Count)"
 
 $timings | ConvertTo-Json | Set-Content (Join-Path $outputDirectory 'timings.json')
+Remove-Item Env:JwtSettings__Key -ErrorAction SilentlyContinue
 $results | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $outputDirectory 'results.json')
 $failed = @($results | Where-Object { -not $_.Passed })
 "run=$RunId checks=$($results.Count) failed=$($failed.Count) rollback-seconds=$($timings['rollback-to-source-seconds'])" | Tee-Object -FilePath (Join-Path $outputDirectory 'summary.txt')

@@ -139,9 +139,16 @@ function Start-Kibana([hashtable]$Node) {
     } 420 "$($Node.Name) available"
 }
 
+# Phase 22: one per-run JWT signing key from a cryptographically secure source, held only in this process and passed to
+# each WebApi process environment (it overrides any appsettings value of an older build). Never printed or logged.
+$jwtKeyBytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($jwtKeyBytes)
+$jwtSigningKey = [Convert]::ToBase64String($jwtKeyBytes)
+
 function Start-WebApi([string]$Path, [hashtable]$Node, [int]$Port, [string]$LogName) {
     $environment = @{
         ASPNETCORE_ENVIRONMENT = 'Development'
+        JwtSettings__Key = $jwtSigningKey
         ASPNETCORE_URLS = "http://127.0.0.1:$Port"
         UseInMemoryDatabase = 'true'
         RabbitMqSettings__Enabled = 'false'
