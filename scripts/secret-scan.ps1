@@ -7,15 +7,15 @@
        property whose name ends in Key, Password, Pwd, Secret or Token, or a connection string with a non-empty
        Password/Pwd segment, is a finding. Compose files and .env.example may reference JwtSettings__Key only as the
        ${JwtSettings__Key} interpolation or the CHANGE_ME placeholder.
-    2. Compromised value: the JwtSettings:Key committed at -CompromisedRef (the pre-Phase 22 state) is read into memory
-       from Git and searched in every tracked and untracked, non-ignored file, plus the optional -EvidencePath folders.
+    2. Compromised value: the JwtSettings:Key committed before Phase 22 is identified only by a fingerprint (length,
+       character set and SHA-256), because the D6 history rewrite removed it from Git. Every alphanumeric window of that
+       length in every tracked and untracked, non-ignored file, plus the optional -EvidencePath folders, is hashed and
+       compared. The value itself is not stored anywhere in the repository.
     Findings report file paths and key names only; no value is ever printed. Exit code 1 on any finding.
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\secret-scan.ps1 -EvidencePath artifacts\validation
 #>
 param(
-    # Commit that still holds the old committed key (Phase 21 merge).
-    [string]$CompromisedRef = '622e808',
     # Run only the structural rule (for example in a mutation check).
     [switch]$SkipCompromisedValue,
     # Extra folders to search for the compromised value (for example run evidence under artifacts/validation).
@@ -67,15 +67,22 @@ foreach ($file in $composeFiles) {
 "structural: $($settingsFiles.Count) settings file(s), $($composeFiles.Count) compose/env template file(s)"
 
 # ---------------------------------------------------------------- 2. Compromised value search
-if (-not $SkipCompromisedValue) {
-    $compromised = @()
-    foreach ($file in @(git ls-tree -r --name-only $CompromisedRef -- 'Src/Presentation/Template.WebApi')) {
-        if ($file -notmatch 'appsettings[^/]*\.json$') { continue }
-        $json = (git show "${CompromisedRef}:$file" | Out-String) | ConvertFrom-Json
-        if ($json.JwtSettings.Key) { $compromised += [string]$json.JwtSettings.Key }
+# Fingerprint of the compromised pre-Phase 22 JwtSettings:Key: 32 ASCII letters/digits with this SHA-256 (UTF-8).
+$compromisedLength = 32
+$compromisedSha256 = 'bcb4fc5a5b0591abf79db8006e56197fd97f79932669c965bb8f0c56bb4c2ecd'
+$sha256 = [System.Security.Cryptography.SHA256]::Create()
+function Test-Compromised([string]$Text) {
+    foreach ($run in [regex]::Matches($Text, "[A-Za-z0-9]{$compromisedLength,}")) {
+        for ($offset = 0; $offset -le $run.Length - $compromisedLength; $offset++) {
+            $window = $run.Value.Substring($offset, $compromisedLength)
+            $hash = [BitConverter]::ToString($sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($window))).Replace('-', '').ToLowerInvariant()
+            if ($hash -eq $compromisedSha256) { return $true }
+        }
     }
-    $compromised = @($compromised | Sort-Object -Unique)
-    if ($compromised.Count -eq 0) { throw "No JwtSettings:Key found at $CompromisedRef; pass the commit that still holds it, or -SkipCompromisedValue." }
+    return $false
+}
+
+if (-not $SkipCompromisedValue) {
 
     $candidates = @(git ls-files) + @(git ls-files --others --exclude-standard) | Sort-Object -Unique | ForEach-Object { Join-Path $repositoryRoot $_ }
     foreach ($folder in $EvidencePath) {
@@ -95,11 +102,9 @@ if (-not $SkipCompromisedValue) {
             $findings.Add("unreadable: $($item.FullName.Substring($repositoryRoot.Length).TrimStart('\') -replace '\\', '/')")
             continue
         }
-        foreach ($value in $compromised) {
-            if ($text.Contains($value)) { $findings.Add("compromised-value: $($item.FullName.Substring($repositoryRoot.Length).TrimStart('\') -replace '\\', '/')") }
-        }
+        if (Test-Compromised $text) { $findings.Add("compromised-value: $($item.FullName.Substring($repositoryRoot.Length).TrimStart('\') -replace '\\', '/')") }
     }
-    "compromised-value: $($compromised.Count) value(s) from $CompromisedRef searched in $scanned file(s)"
+    "compromised-value: fingerprint searched in $scanned file(s)"
 }
 
 if ($findings.Count -gt 0) {

@@ -31,7 +31,7 @@ Ações que continuam com o dono, fora do repositório e sem bloquear o release:
 | D3 | Fonte no Compose | **Confirmado:** `JwtSettings__Key` vem do `.env` git-ignored, com placeholder `CHANGE_ME` no `.env.example`. |
 | D4 | Transição de tokens | **Invalidar:** tokens assinados com a chave antiga passam a dar 401. Sem janela dual-key e sem código novo. |
 | D5 | Outras credenciais commitadas | **(b) remover nesta fase.** Saíram as connection strings locais (PostgreSQL e Redis) e, pelo mesmo critério, `RabbitMqSettings:Password`. |
-| D6 | Histórico do Git | **O dono autorizou reescrever.** Isso contradiz o "Do not rewrite Git history" de `execute-phase-22.md`. Por ser destrutivo e externo (force-push em `main`), fica como etapa separada, depois do merge, com confirmação final do plano concreto (§11). Nada foi reescrito nesta fase. |
+| D6 | Histórico do Git | **Executado em 2026-10-18 (§11).** **O dono autorizou reescrever.** Isso contradiz o "Do not rewrite Git history" de `execute-phase-22.md`. Por ser destrutivo e externo (force-push em `main`), fica como etapa separada, depois do merge, com confirmação final do plano concreto (§11). Nada foi reescrito nesta fase. |
 | — | Stores reais do dono | O dono **não** autorizou escrever no `.env` nem no user-secrets reais. Os comandos estão em `docs/configuration-secrets.md`. |
 | — | Redes Docker | Autorizada a remoção das redes vazias anteriores à Fase 21 (§13). |
 
@@ -80,7 +80,7 @@ O comando de Development foi verificado sem tocar no store real. Com `APPDATA` a
   - Falha quando qualquer `appsettings*.json` ou `launchSettings.json` em `Src`/`Tests` tem valor não vazio sob propriedade terminada em `Key`, `Password`, `Pwd`, `Secret` ou `Token`, ou connection string com senha.
   - Falha quando um `docker-compose*.yml` ou o `.env.example` atribui a `JwtSettings__Key` algo diferente de `${JwtSettings__Key}` ou `CHANGE_ME`.
   - Mutações sintéticas: 6 formas proibidas de JSON detectadas, 4 formas limpas aceitas, 5 linhas de Compose. Nenhum achado ecoa o valor.
-- **`scripts/secret-scan.ps1`**: aplica a mesma regra estrutural. Também procura o valor comprometido, lido em memória de `622e808`, em todos os arquivos rastreados, nos não rastreados e não ignorados, e nas evidências (`-EvidencePath`). Imprime só caminhos e nomes de chave.
+- **`scripts/secret-scan.ps1`**: aplica a mesma regra estrutural. Também procura o valor comprometido pela impressão digital commitada (32 caracteres alfanuméricos e SHA-256; desde o D6 o valor não existe mais no histórico), em todos os arquivos rastreados, nos não rastreados e não ignorados, e nas evidências (`-EvidencePath`). Imprime só caminhos e nomes de chave.
 - **Funcionais** (`IdentityOptionsStartupTests`):
   - `SigningKeyAbsentFromEverySource_FailsStartup_NamingTheKeyOnly`;
   - `TestSigningKey_IsGeneratedPerHost_AndNeverCommitted`, que compara as chaves de dois hosts sem ecoar os valores.
@@ -184,15 +184,27 @@ Ambiente:
 
 ## 11. Riscos residuais e próximas ações
 
-- **A chave antiga continua no histórico do Git** (commits até `e490767`, inclusive nos PRs mergeados). A rotação a torna inútil.
-  - D6 autoriza a reescrita, mas ela não foi feita.
-  - Plano proposto para uma etapa separada, depois do merge desta fase:
-    1. instalar `git-filter-repo` (não está instalado);
-    2. `--replace-text` só da chave, lida de arquivo temporário sem impressão;
-    3. force-push de `main` e das branches;
-    4. reclonar ou realinhar os worktrees.
-  - O GitHub mantém refs de PR (`refs/pull/*`) e caches. A remoção completa exige pedido ao GitHub Support.
-  - Exige confirmação final do dono.
+- **Histórico reescrito (D6, 2026-10-18, com confirmação do dono antes do force-push).** Evidências em `artifacts/validation/phase-22/d6/`.
+  - O passo a passo:
+    1. `git-filter-repo` (a40bce548d2c) foi instalado pelo PyPI.
+    2. Um clone espelho novo (`C:\p22mirror`) foi tirado depois do merge do PR #20 (`35df233`).
+    3. `--replace-text` trocou só o valor da chave por um marcador. O valor foi lido em memória de `622e808` e nunca impresso.
+    4. Antes da reescrita, 90 dos 100 commits tinham a chave na árvore. Depois, 0. Nenhuma mensagem de commit a continha.
+  - A árvore do `main` final ficou idêntica. `main` passou de `35df233` para `5da4660`, e `e490767` corresponde agora a `2c47194`.
+  - Push:
+    - antes de enviar, as refs remotas foram conferidas contra o clone (0 diferenças);
+    - as 21 branches foram enviadas com `--force-with-lease` por branch;
+    - nenhum `refs/pull/*` foi enviado.
+  - Em paralelo, a sessão do Codex publicou `codex/phase-23-33-product-roadmap` sobre o histórico antigo, trazendo a chave de volta. O Codex rebaseou a branch sobre o histórico novo. Depois disso, ela foi mergeada como PR #21 (`61daf4c`).
+  - Verificação final com um clone espelho novo: 22 branches, nenhuma com a chave em qualquer commit, e `e490767` inalcançável por qualquer branch.
+  - Checkout local: `git fetch --prune --force`. As branches que só estavam atrás foram movidas com `git branch -f`, inclusive `main`. Nenhuma branch local continua sobre o histórico antigo, exceto `claude/fase-8-redis-adapter-f4fda8`, que existe só localmente (outra worktree, nunca publicada) e não foi tocada.
+  - **Resíduo:**
+    - os 20 `refs/pull/*` do GitHub não aceitam push e ainda apontam para os commits antigos (90 com a chave). Commits antigos podem continuar acessíveis por SHA até a coleta do GitHub, e a remoção completa exige pedido ao GitHub Support;
+    - clones e objetos locais antigos (reflog, `C:\p22verify`, `C:\p22pub`) ainda guardam a chave.
+  - A rotação mantém a chave inútil de qualquer forma.
+  - Ajuste no `secret-scan.ps1`: ele lia o valor de `622e808`, commit que deixou de existir. Agora usa a impressão digital commitada (tamanho, conjunto de caracteres e SHA-256), com todas as janelas alfanuméricas de 32 caracteres hasheadas.
+    - Scan completo: OK, 4.019 arquivos em 170 s.
+    - Sonda com o valor real, também embutido no meio de uma sequência maior: detectada (exit 1, só o caminho). A sonda foi removida.
 - **Tokens emitidos antes da rotação ficam inválidos** (D4): os clientes precisam autenticar de novo.
 - **Stores reais ainda sem a chave nova.** Até o dono rodar os comandos de `docs/configuration-secrets.md`, `dotnet run` local e `docker compose up` normal falham no startup com `JwtSettings:Key is required.`. O fail-fast é intencional.
 - `dotnet run` local agora também exige as connection strings e `RabbitMqSettings:Password` no user-secrets (D5 b).
