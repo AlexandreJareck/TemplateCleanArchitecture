@@ -27,7 +27,13 @@ The owner was shown D23-1 through D23-18 with their recommended defaults and ans
 | D23-17 | Allocation by active fiscal period, cost center and currency; no silent overspend or cross-currency reservation; explicit precision/rounding |
 | D23-18 | Zero default over-receipt tolerance (configurable); compensating corrections with reason |
 
-Blueprint refinements B23-1 to B23-10 (award approval model, additional maker-checker constraints, direct purchase as an RFQ method, BRL base currency, `America/Sao_Paulo` time zone, late-quote rejection, terminal rejection with copy-to-draft, plain v2 representations for new endpoints, permission-only authorization without role bypass, policy v1 seeds) are recorded in the same log as design choices that refine, not change, the owner decisions.
+Blueprint refinements B23-1 to B23-11 (award approval model, additional maker-checker constraints, direct purchase as an RFQ method, BRL base currency, `America/Sao_Paulo` time zone, late-quote rejection, terminal rejection with copy-to-draft, plain v2 representations for new endpoints, permission-only authorization without role bypass, policy v1 seeds) are recorded in the same log as design choices that refine, not change, the owner decisions.
+
+### Follow-up owner confirmations (2026-10-18, same day)
+
+- B23-11: approval policy v1 step duration 120 h and reminder 72 h (calendar hours) instead of 72 h / 48 h, so steps opened on a Friday do not escalate over the weekend. Updated in `business-rules.md` (policy table, APR-011) and `workflows.md`.
+- Spikes SP-1 to SP-6: the recommended starting points (explicit `version` column; per-year counter row; Azure Storage provider on Azurite; Chromium-only Worker image with OFL fonts; closing PTAX selling rate with a 7-day look-back; `@angular/localize`) are approved as starting hypotheses, still verified by each phase.
+- Deferrals: all confirmed as out of scope because the project is academic; each has a recorded approach if ever reopened.
 
 ## 2. Product boundary
 
@@ -56,7 +62,7 @@ Single-organization purchase lifecycle from requisition to receipt and closure, 
 | `docs/product/frontend-information-architecture.md` | Routes and screens per phase, navigation, role entry points, screen states, WCAG 2.2 AA and responsive scope, layer map and rules, ports/errors, state ownership, architecture tests |
 | `docs/product/non-functional-requirements.md` | Security, audit, availability/degradation, performance budgets with dataset, retention, RPO/RTO, observability, localization, privacy classification |
 | `docs/product/event-catalog.md` | Domain vs integration events, envelope, 34 integration event types with producers, consumers, business keys and phases, cross-process commands |
-| `docs/product/decision-log.md` | D23-1..18, B23-1..10, deferrals, spikes SP-1..6 |
+| `docs/product/decision-log.md` | D23-1..18, B23-1..11, confirmed deferrals with recommendations, spikes SP-1..6 with approved starting points |
 | `docs/product/adr/0001`–`0007` + `README.md` | Modular monolith, Worker, Durable boundary, file/report engines, frontend stack/Clean Architecture, single organization, external enrichment |
 | `docs/refactoring/phases-23-33-product-roadmap.md` | Status line and a "Phase 23 outcome" section with the refinements that affect later phases (no phase removed or reordered) |
 | `AGENTS.md` | Pointer to `docs/product/` and Phase 23 execution status |
@@ -112,7 +118,7 @@ Hidden prerequisites found and recorded: between Phase 29 and Phase 31 awarded r
 
 ## 6. Ambiguities, deferrals and spikes
 
-- Ambiguities resolved by recorded blueprint choices: B23-1..B23-10 (decision log). Policy values (thresholds 5,000/10,000/100,000 BRL, 72 h steps, 30-day expiry grace, 24 h response window, file limits, retention periods, performance budgets) are seeded v1 defaults chosen by the blueprint and owner-adjustable as data.
+- Ambiguities resolved by recorded blueprint choices: B23-1..B23-11 (decision log). Policy values (thresholds 5,000/10,000/100,000 BRL, 120 h approval steps (B23-11), 30-day expiry grace, 24 h response window, file limits, retention periods, performance budgets) are seeded v1 defaults chosen by the blueprint and owner-adjustable as data.
 - Retention periods are assumptions, not legal advice.
 - Deferrals: split awards, supplier portal, PO amendments, returns/inventory/invoicing, FX revaluation of commitments, business-day calendars, category-specific approval chains, malware scanning, sample endpoint removal, multi-tenancy/MFA/BFF.
 - Spikes: SP-1 (row version mechanism, Phase 24), SP-2 (gapless PO numbering, Phase 32), SP-3 (Durable local provider and TFM, Phase 31), SP-4 (Playwright in the Worker image, Phase 30), SP-5 (BCB PTAX semantics, Phases 25/29), SP-6 (Angular localization runtime, Phase 26A).

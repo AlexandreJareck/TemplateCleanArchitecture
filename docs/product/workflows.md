@@ -128,8 +128,8 @@ sequenceDiagram
 | Step Pending (last) | Instance Approved | Assignee | APR-004/005/007/008/013 | See requisition table | `ApprovalCompleted.v1` | `approval.approved` | APR-014 |
 | Step Pending | Instance Rejected | Assignee | APR-009 reason | See requisition table | `ApprovalRejected.v1` | `approval.rejected` | APR-014 |
 | Step Pending | Step Pending (delegated) | Assignee | APR-010 | Assignee changed, due unchanged | `ApprovalStepAssigned.v1` | `approval.step.delegated` | `Idempotency-Key` |
-| Step Pending | Step Pending (reminded) | System timer at 48 h | APR-011 | Reminder notification queued | `ApprovalReminderDue.v1` | `approval.step.reminded` | keyed by (step, reminder) |
-| Step Pending | Step Pending (escalated) | System timer at 72 h | APR-011, escalations < max | Escalation group assigned, new due | `ApprovalStepEscalated.v1` | `approval.step.escalated` | keyed by (step, escalation n) |
+| Step Pending | Step Pending (reminded) | System timer at 72 h | APR-011 | Reminder notification queued | `ApprovalReminderDue.v1` | `approval.step.reminded` | keyed by (step, reminder) |
+| Step Pending | Step Pending (escalated) | System timer at 120 h | APR-011, escalations < max | Escalation group assigned, new due | `ApprovalStepEscalated.v1` | `approval.step.escalated` | keyed by (step, escalation n) |
 | Step Pending (escalated, overdue) | Instance Expired | System timer | APR-011 | See requisition table | `ApprovalExpired.v1` | `approval.expired` | keyed by instance |
 | Pending | Invalidated | System | APR-012 | Pending steps `Cancelled` | `ApprovalInvalidated.v1` | `approval.invalidated` | keyed by (instance, cause) |
 | Pending | Cancelled | System / ProcurementManager | REQ-008 / APR-015 reason | Pending steps `Cancelled` | `ApprovalCancelled.v1` | `approval.cancelled` / `approval.administered` | `Idempotency-Key` |
@@ -224,7 +224,7 @@ stateDiagram-v2
 | SC-02 low-value direct | Draft → Submitted (1,200.00) → RFQ `Direct` with `LowValueDirectPurchase` waiver → 1 quote → early close (reason) → award → approval L1 → PO → receipt |
 | SC-03 insufficient quotations | As SC-01 but 2 valid quotes at close → award blocked (SRC-017) → ProcurementManager records `InsufficientQuotations` waiver → award → approval |
 | SC-04 rejection / cancellation | Award → L2 rejects with reason → requisition Rejected, reservation Released once; separately Submitted → requester cancels → Cancelled, Released once |
-| SC-05 expiry | Award → L1 step reminded at 48 h → escalated at 72 h → overdue again → instance Expired → requisition Expired → Released |
+| SC-05 expiry | Award → L1 step reminded at 72 h → escalated at 120 h → overdue again → instance Expired → requisition Expired → Released |
 | SC-06 suspension | Award pending → supplier suspended (reason) → approval Invalidated → requisition InSourcing → PO cannot be issued for the suspended supplier (PUR-003) → buyer awards the best-ranked awardable quote (rank 2 in the frozen comparison) without a waiver (SRC-018) → new approval |
 | SC-07 partial receipt | PO 10 UN → receipt 4 (PartiallyReceived) → receipt 6 (Completed) → receipt 1 denied (RCV-003) → correction −1 (PartiallyReceived) → receipt 1 (Completed) |
 | SC-08 concurrency | Two submissions on an allocation with 5,000.00 available, each 5,000.00 → one Submitted, one `budget.insufficient`; two approvers on the same group step → one decision, one `approval.step-already-decided` |

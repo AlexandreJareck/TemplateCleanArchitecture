@@ -39,29 +39,37 @@ All D23 decisions were presented with their recommended defaults on 2026-10-18 a
 | B23-8 | New procurement endpoints return plain resource representations and a `PagedResult` envelope, not `BaseResult`; existing v1/v2 sample endpoints are unchanged. | API compatibility | See [api-guidelines.md](api-guidelines.md). |
 | B23-9 | Roles group permissions; authorization checks permissions only; no role is a business-rule bypass (including Administrator). | D23-13 | Required by the Phase 24 handoff. |
 | B23-10 | Seeded policy values in this blueprint are policy version 1 and are owner-adjustable data; a change creates a new version and never alters in-flight instances. | D23-13, D23-14, D23-17, D23-18 | Versioned policy requirement. |
+| B23-11 | Approval policy v1 uses 120 h step duration and a 72 h reminder (calendar hours), instead of the first draft's 72 h / 48 h, so a step opened on a Friday does not escalate over the weekend. Approved by the owner on 2026-10-18. | D23-13 | No business-day calendar in the first release. |
 
 ## Deferrals
 
-| Item | Reason | Earliest owner |
-|---|---|---|
-| Split awards and partial-coverage awards | D23-15 | Post-release |
-| Supplier portal, email parsing | D23-3 | Post-release |
-| Purchase-order amendments (change orders) | Not required by the release definition; a cancelled PO plus a new award covers corrections before receipt | Post-release |
-| Returns to supplier, inventory, invoices, payments, tax, NFe, three-way match | Roadmap exclusions | Out of program |
-| FX revaluation of committed budget | D23-17 | Post-release |
-| Holiday/business-day calendars | Durations are calendar hours in policy v1 | Post-release |
-| Category- or cost-center-specific approval chains | D23-13 amount-based only | Post-release |
-| Malware scanning of attachments | Extension point only (FIL-006) | Post-release |
-| Sample Product/Person/Order removal | Requires replacement and a separate sunset decision ([api-guidelines.md](api-guidelines.md#10-compatibility-and-legacy-samples)) | Separate approval |
-| Multi-tenancy, MFA, external identity providers, BFF | D23-1, D23-11 | Post-release |
+The owner confirmed every deferral on 2026-10-18: Procurement Hub is an academic study project, and these items stay outside Phases 23–33. The recommendation column records how each one would be approached if it is ever reopened, which needs a new owner decision.
+
+| Item | Reason | Recommendation if reopened | Existing preparation |
+|---|---|---|---|
+| Split awards and partial-coverage awards | D23-15 | Reopen only on real demand; introduce award lines and one PO per awarded supplier | Award references one quote revision |
+| Supplier portal, email parsing | D23-3 | Largest security-surface increase (external accounts); keep out | Quotes record `Source`; a portal would be a new source |
+| Purchase-order amendments (change orders) | Not required by the release definition; a cancelled PO plus a new award covers corrections before receipt | Versioned PO revisions: increases re-run approval, decreases release budget | Immutable PO snapshot and version |
+| Returns to supplier, inventory, invoices, payments, tax, NFe, three-way match | Roadmap exclusions | Integrate with an ERP instead of building | Integration events are the outbound seam |
+| FX revaluation of committed budget | D23-17 | Keep the commitment fixed by the recorded rate | Exchange-rate snapshots are stored |
+| Holiday/business-day calendars | Durations are calendar hours in policy v1 | Keep calendar hours; B23-11 lengthens step durations instead | Durations are policy data |
+| Category- or cost-center-specific approval chains | D23-13 amount-based only | Add an optional dimension to policy levels, never a rules engine | Policies are versioned and pinned per instance |
+| Malware scanning of attachments | Extension point only (FIL-006) | Optional ClamAV container adapter (Phase 33 at the earliest, separately approved) | Scan port with a no-op adapter |
+| Sample Product/Person/Order removal and API v1 sunset | Requires replacement and a separate sunset decision ([api-guidelines.md](api-guidelines.md#10-compatibility-and-legacy-samples)) | A dedicated post-release sunset phase: announcement, window, new contract baseline | Compatibility policy is written |
+| Multi-tenancy | D23-1 | Do not pursue | — |
+| MFA | D23-11 | First post-release candidate: TOTP through ASP.NET Core Identity | — |
+| External identity providers (for example Entra ID) | D23-11 | Optional post-release, only with a real corporate scenario | — |
+| Backend-for-frontend | D23-11 | Not needed: same-origin access with the HttpOnly refresh cookie and CSRF already covers the risk | — |
 
 ## Spikes for later phases
 
-| ID | Question | Phase | Exit criterion |
-|---|---|---|---|
-| SP-1 | PostgreSQL row versioning: `xmin` system column versus an explicit `version` column for ETags | 24 | Chosen mechanism proven by a 412 functional test and a PostgreSQL concurrency test |
-| SP-2 | Gapless purchase-order numbering under concurrency (counter row lock) | 32 | Concurrency test with parallel issues produces unique, gapless committed numbers |
-| SP-3 | Durable Functions local provider (Azurite storage provider vs. Durable Task Scheduler emulator) and the supported isolated-worker TFM | 31 | ADR addendum with current official sources |
-| SP-4 | Playwright browser in the Worker container (image size, fonts, non-root) | 30 | Worker image renders a PDF in an isolated Compose run |
-| SP-5 | BCB PTAX endpoint semantics (which bulletin, weekends/holidays fallback) | 25/29 | Fake-server contract tests from current official documentation |
-| SP-6 | Angular localization runtime option (D26A-10) | 26A | Decision recorded in Phase 26A |
+The recommendation is the approved starting hypothesis (owner, 2026-10-18). The phase still verifies it with the exit criterion and current official sources, and records any change in this log.
+
+| ID | Question | Phase | Recommended starting point | Exit criterion |
+|---|---|---|---|---|
+| SP-1 | PostgreSQL row versioning: `xmin` system column versus an explicit `version` column for ETags | 24 | Explicit `bigint` `version` column incremented by the aggregate on every change, including child-entity changes, mapped as the concurrency token. `xmin` changes only when the root row changes, is a wrapping 32-bit value, is PostgreSQL-specific and is not emulated by EF InMemory. | Chosen mechanism proven by a 412 functional test and a PostgreSQL concurrency test |
+| SP-2 | Gapless purchase-order numbering under concurrency | 32 | Per-year counter table updated with `UPDATE ... SET last_value = last_value + 1 RETURNING` inside the issue transaction; the row lock serializes issues and a rollback returns the number. No PostgreSQL `SEQUENCE` (it leaves gaps on rollback). | Concurrency test with parallel issues produces unique, gapless committed numbers |
+| SP-3 | Durable Functions local provider and the supported isolated-worker TFM | 31 | Default Azure Storage provider on Azurite (already present from Phase 30); Durable Task Scheduler emulator as the alternative if local reliability or diagnostics require it. TFM from the official isolated-worker support matrix; may differ from WebApi. | ADR addendum with current official sources |
+| SP-4 | Playwright browser in the Worker container | 30 | Install Chromium only with its minimal dependencies; embed versioned OFL fonts recorded in the license inventory; non-root; image pinned by digest. If the image grows too large (around 1 GB), publish the same Worker code as a report image and a lean messaging image. | Worker image renders a PDF in an isolated Compose run |
+| SP-5 | BCB PTAX endpoint semantics | 25/29 | Selling rate of the closing PTAX bulletin of the latest business day on or before the RFQ close date, from the BCB public data API; step back day by day for up to 7 days; beyond that the comparison is `Incomplete` and SRC-013 applies. | Fake-server contract tests from current official documentation |
+| SP-6 | Angular localization runtime option | 26A | `@angular/localize` (first-party, build-time per locale) because only pt-BR is required now; Transloco only if runtime language switching becomes a requirement. | Decision recorded in Phase 26A (D26A-10) |
