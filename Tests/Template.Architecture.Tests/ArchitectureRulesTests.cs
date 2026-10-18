@@ -375,6 +375,111 @@ public sealed class ArchitectureRulesTests
         IsIdentityPackage("MediatR").ShouldBeFalse();
     }
 
+    [Fact]
+    public void Controllers_Authorize_By_Permission_Never_By_Role()
+    {
+        // SEC-008-a: roles only group permissions; no controller may name a role.
+        SourceViolations("Src/Presentation/Template.WebApi/Controllers", RoleAuthorizationMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core", RoleAuthorizationMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Phase24_Controllers_Declare_Authorization_On_Every_Action()
+    {
+        // NFR-SEC-3: every action of a convention-following controller states its permission policy, [Authorize] or [AllowAnonymous].
+        var controllers = Directory.GetFiles(Path.Combine(Root, "Src/Presentation/Template.WebApi/Controllers"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => File.ReadAllText(path).Contains("[StableProblemCodes]", StringComparison.Ordinal))
+            .ToArray();
+
+        controllers.Length.ShouldBe(3);
+        foreach (var path in controllers)
+            ActionsWithoutExplicitAuthorization(File.ReadAllText(path)).ShouldBe(0, Relative(path));
+    }
+
+    [Fact]
+    public void Audit_Port_Is_Append_Only()
+    {
+        // AUD-002-a: no update or delete path for audit records.
+        ReadSource("Src/Core/Template.Application/Interfaces/Auditing/IAuditTrail.cs").ShouldContain("void Append(AuditRecord record);");
+        ContainsAny(ReadSource("Src/Core/Template.Application/Interfaces/Auditing/IAuditTrail.cs"), AuditMutationMarkers()).ShouldBeFalse();
+        ContainsAny(ReadSource("Src/Infrastructure/Template.Infrastructure.Persistence/Repositories/AuditRecordRepository.cs"), AuditMutationMarkers()).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Session_Cryptography_And_Token_Issuance_Live_In_Infrastructure_Identity()
+    {
+        // D23-11 / SEC-002: key material, random tokens, HMAC and JWT stay out of Core and Persistence.
+        SourceViolations("Src/Core", SessionCryptoMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Infrastructure/Template.Infrastructure.Persistence", SessionCryptoMarkers()).ShouldBeEmpty();
+        SourceViolations("Src", [": ISessionTokenService", ": IAccessTokenIssuer", ": IAccountDirectory"])
+            .ShouldAllBe(path => path.StartsWith(IdentityProject, StringComparison.Ordinal));
+        SourceViolations("Src", [": ISessionFamilyRepository", "IAuditTrail, IAuditRecordReader", ": IIdempotencyStore"])
+            .ShouldAllBe(path => path.StartsWith("Src/Infrastructure/Template.Infrastructure.Persistence/", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Cors_Never_Allows_Any_Origin()
+    {
+        SourceViolations("Src/Presentation", ["AllowAnyOrigin", "SetIsOriginAllowed(_ => true)", "AddAnyCors"]).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Phase24_Controlled_Mutations_Are_Detected()
+    {
+        ContainsAny("[Authorize(Roles = \"Admin\")]", RoleAuthorizationMarkers()).ShouldBeTrue();
+        ContainsAny("policy.RequireRole(\"Buyer\")", RoleAuthorizationMarkers()).ShouldBeTrue();
+        ContainsAny("[HasPermission(Permissions.AuditRead)]", RoleAuthorizationMarkers()).ShouldBeFalse();
+        ActionsWithoutExplicitAuthorization("""
+            [HttpGet]
+            [HasPermission(Permissions.AuditRead)]
+            public Task<IActionResult> List() => null!;
+            [HttpPost]
+            public Task<IActionResult> Create() => null!;
+            """).ShouldBe(1);
+        ActionsWithoutExplicitAuthorization("""
+            [HttpGet]
+            [Authorize]
+            public Task<IActionResult> Get() => null!;
+            [HttpDelete("current")]
+            [AllowAnonymous]
+            public Task<IActionResult> Delete() => null!;
+            """).ShouldBe(0);
+        ContainsAny("void Delete(AuditRecord record);", AuditMutationMarkers()).ShouldBeTrue();
+        ContainsAny("context.Remove(record);", AuditMutationMarkers()).ShouldBeTrue();
+        ContainsAny("await query.ExecuteDeleteAsync();", AuditMutationMarkers()).ShouldBeTrue();
+        ContainsAny("var bytes = RandomNumberGenerator.GetBytes(32);", SessionCryptoMarkers()).ShouldBeTrue();
+        ContainsAny("HMACSHA256.HashData(key, data)", SessionCryptoMarkers()).ShouldBeTrue();
+        ContainsAny("string? HashRefreshToken(string? token);", SessionCryptoMarkers()).ShouldBeFalse();
+    }
+
+    private static string[] RoleAuthorizationMarkers() => ["Roles =", "Roles=", "RequireRole(", "IsInRole("];
+
+    private static string[] AuditMutationMarkers() =>
+        ["Update(", "Delete(", "Remove(", "ExecuteUpdate", "ExecuteDelete", "Attach("];
+
+    private static string[] SessionCryptoMarkers() =>
+        ["RandomNumberGenerator", "HMACSHA256", "HKDF", "SymmetricSecurityKey", "JwtSecurityToken", "SHA256.HashData"];
+
+    /// <summary>Counts <c>[Http*]</c> action attributes whose attribute block has no explicit authorization attribute.</summary>
+    private static int ActionsWithoutExplicitAuthorization(string source)
+    {
+        var lines = source.Split('\n').Select(line => line.Trim()).ToArray();
+        var missing = 0;
+        for (var index = 0; index < lines.Length; index++)
+        {
+            if (!lines[index].StartsWith("[Http", StringComparison.Ordinal))
+                continue;
+
+            var block = lines.Skip(index).TakeWhile(line => line.StartsWith('[')).ToArray();
+            if (!block.Any(line => line.StartsWith("[HasPermission(", StringComparison.Ordinal)
+                    || line.StartsWith("[Authorize", StringComparison.Ordinal)
+                    || line.StartsWith("[AllowAnonymous]", StringComparison.Ordinal)))
+                missing++;
+        }
+
+        return missing;
+    }
+
     private static string[] ForbiddenApplicationPackages(IEnumerable<string> packages) => packages
         .Where(package => package.Contains("EntityFrameworkCore", StringComparison.Ordinal)
             || package.Contains("AspNetCore", StringComparison.Ordinal)

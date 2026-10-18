@@ -1,7 +1,9 @@
 using FluentValidation;
+using Template.Application.Common.Results;
 using Template.Application.Logging;
 using Template.Application.Wrappers;
 using Template.WebApi.Infrastructure.Http;
+using Template.WebApi.Infrastructure.Security;
 
 namespace Template.WebApi.Infrastructure.Middlewares;
 
@@ -55,7 +57,12 @@ public sealed class ErrorHandlerMiddleware(
                 return;
             }
 
-            await resultMapper.WriteAsync(context, resultMapper.FromResult(responseModel, context));
+            var problem = resultMapper.FromResult(responseModel, context);
+            // Phase 24 endpoints carry the stable code; legacy endpoints keep their previous body.
+            if (problem.Status == StatusCodes.Status400BadRequest
+                && context.GetEndpoint()?.Metadata.GetMetadata<StableProblemCodesAttribute>() is not null)
+                problem.Extensions["code"] = ProblemCodes.Validation;
+            await resultMapper.WriteAsync(context, problem);
         }
     }
 

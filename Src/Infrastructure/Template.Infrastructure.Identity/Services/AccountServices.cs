@@ -4,7 +4,9 @@ using Template.Application.DTOs.Account.Response;
 using Template.Application.Helpers;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.UserInterfaces;
+using Template.Application.Services.Access;
 using Template.Application.Wrappers;
+using Template.Domain.Access;
 using Template.Infrastructure.Identity.Authentication;
 using Template.Infrastructure.Identity.Models;
 
@@ -19,7 +21,8 @@ public class AccountServices(
     IAuthenticatedUserService authenticatedUser,
     SignInManager<ApplicationUser> signInManager,
     JwtTokenFactory tokenFactory,
-    ITranslator translator
+    ITranslator translator,
+    ISessionRevocationService sessionRevocation
     ) : IAccountServices
 {
     public async Task<BaseResult> ChangePassword(ChangePasswordRequest model, CancellationToken cancellationToken = default)
@@ -36,7 +39,12 @@ public class AccountServices(
         var identityResult = await userManager.ResetPasswordAsync(user, token, model.Password);
 
         if (identityResult.Succeeded)
+        {
+            // SEC-006: the stamp change already invalidates access tokens and any later refresh; revoking the
+            // families explicitly records the reason in the audit trail. The response shape is unchanged.
+            await sessionRevocation.RevokeAllAsync(user.Id, SessionRevocationReason.PasswordChanged, cancellationToken);
             return BaseResult.Ok();
+        }
 
         return identityResult.Errors.Select(p => new Error(ErrorCode.ErrorInIdentity, p.Description)).ToList();
     }

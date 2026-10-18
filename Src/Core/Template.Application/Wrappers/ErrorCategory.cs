@@ -13,7 +13,13 @@ public enum ErrorCategory
     Conflict,
     Unauthorized,
     Forbidden,
-    Unexpected
+    Unexpected,
+    // Phase 24 (docs/product/api-guidelines.md §5): appended, so existing members keep their values.
+    BusinessRule,
+    PreconditionFailed,
+    PreconditionRequired,
+    RateLimited,
+    Gone
 }
 
 /// <summary>
@@ -30,6 +36,12 @@ public static class ErrorCategoryExtensions
         ErrorCode.AccessDenied => ErrorCategory.Forbidden,
         ErrorCode.ErrorInIdentity => ErrorCategory.Unauthorized,
         ErrorCode.Exception => ErrorCategory.Unexpected,
+        ErrorCode.BusinessRuleViolation => ErrorCategory.BusinessRule,
+        ErrorCode.PreconditionFailed => ErrorCategory.PreconditionFailed,
+        ErrorCode.PreconditionRequired => ErrorCategory.PreconditionRequired,
+        ErrorCode.RateLimited => ErrorCategory.RateLimited,
+        ErrorCode.Gone => ErrorCategory.Gone,
+        ErrorCode.Conflict => ErrorCategory.Conflict,
         _ => ErrorCategory.Unexpected
     };
 

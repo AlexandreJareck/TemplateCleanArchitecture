@@ -3,8 +3,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Access;
+using Template.Application.Interfaces.Auditing;
+using Template.Application.Interfaces.Idempotency;
 using Template.Application.Interfaces.Repositories;
 using Template.Infrastructure.Persistence.Contexts;
+using Template.Infrastructure.Persistence.Idempotency;
 using Template.Infrastructure.Persistence.Repositories;
 using Template.Infrastructure.Persistence.Seeds;
 
@@ -32,6 +36,11 @@ public static class ServiceRegistration
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<ISessionFamilyRepository, SessionFamilyRepository>();
+        services.AddScoped<AuditRecordRepository>();
+        services.AddScoped<IAuditTrail>(provider => provider.GetRequiredService<AuditRecordRepository>());
+        services.AddScoped<IAuditRecordReader>(provider => provider.GetRequiredService<AuditRecordRepository>());
+        services.AddScoped<IIdempotencyStore, IdempotencyStore>();
 
         return services;
     }

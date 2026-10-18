@@ -1,14 +1,44 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
+using Template.Application.Common.Concurrency;
 using Template.Application.Interfaces;
 
 namespace Template.Infrastructure.Persistence.Contexts;
 
 public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
 {
+    /// <summary>
+    /// Unique indexes that guard aggregate concurrency in addition to the version token: two rotations of one session
+    /// family insert the same (family, sequence) pair, and PostgreSQL may report that before the version check.
+    /// </summary>
+    private static readonly HashSet<string> ConcurrencyGuardConstraints = new(StringComparer.Ordinal)
+    {
+        "IX_AccessRefreshTokens_FamilyId_Sequence"
+    };
+
     private IDbContextTransaction? transaction;
 
-    public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        await dbContext.SaveChangesAsync(cancellationToken) > 0;
+    public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await dbContext.SaveChangesAsync(cancellationToken) > 0;
+        }
+        catch (DbUpdateConcurrencyException error)
+        {
+            throw new ConcurrencyConflictException("A versioned aggregate changed after it was read.", error);
+        }
+        catch (DbUpdateException error) when (error.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: { } constraint
+        } && ConcurrencyGuardConstraints.Contains(constraint))
+        {
+            throw new ConcurrencyConflictException("A concurrent change of the same aggregate won.", error);
+        }
+    }
+
+    public void DiscardChanges() => dbContext.ChangeTracker.Clear();
 
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
@@ -25,7 +55,7 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
 
         try
         {
-            var changed = await dbContext.SaveChangesAsync(cancellationToken) > 0;
+            var changed = await SaveChangesAsync(cancellationToken);
             await activeTransaction.CommitAsync(cancellationToken);
             return changed;
         }

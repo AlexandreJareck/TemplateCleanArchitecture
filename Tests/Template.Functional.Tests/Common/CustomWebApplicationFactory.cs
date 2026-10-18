@@ -39,7 +39,10 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
                 ["TestDatabaseName"] = Guid.NewGuid().ToString("N"),
                 // No committed file carries credentials (Phase 22). The Test host never contacts a broker, but the
                 // validated RabbitMqSettings still require one; a random synthetic value satisfies it.
-                ["RabbitMqSettings:Password"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(16))
+                ["RabbitMqSettings:Password"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)),
+                // Shared fixtures make many session calls from one test address; SEC-007 is proven by a dedicated
+                // factory that restores the policy value (10 per minute).
+                ["SessionSettings:RateLimitPermitLimit"] = "100000"
             };
             if (SupplyJwtSigningKey)
             {

@@ -1,4 +1,4 @@
-using Shouldly;
+﻿using Shouldly;
 using Template.Application.Wrappers;
 
 namespace Template.Unit.Tests.ApplicationTests.Wrappers;
@@ -12,6 +12,12 @@ public class ErrorCategoryTests
     [InlineData(ErrorCode.AccessDenied, ErrorCategory.Forbidden)]
     [InlineData(ErrorCode.ErrorInIdentity, ErrorCategory.Unauthorized)]
     [InlineData(ErrorCode.Exception, ErrorCategory.Unexpected)]
+    [InlineData(ErrorCode.BusinessRuleViolation, ErrorCategory.BusinessRule)]
+    [InlineData(ErrorCode.PreconditionFailed, ErrorCategory.PreconditionFailed)]
+    [InlineData(ErrorCode.PreconditionRequired, ErrorCategory.PreconditionRequired)]
+    [InlineData(ErrorCode.RateLimited, ErrorCategory.RateLimited)]
+    [InlineData(ErrorCode.Gone, ErrorCategory.Gone)]
+    [InlineData(ErrorCode.Conflict, ErrorCategory.Conflict)]
     public void ToCategory_MapsEveryPublicErrorCode(ErrorCode errorCode, ErrorCategory expected)
     {
         errorCode.ToCategory().ShouldBe(expected);
@@ -34,7 +40,14 @@ public class ErrorCategoryTests
         ((short)ErrorCode.AccessDenied).ShouldBe((short)3);
         ((short)ErrorCode.ErrorInIdentity).ShouldBe((short)4);
         ((short)ErrorCode.Exception).ShouldBe((short)5);
-        Enum.GetValues<ErrorCode>().Length.ShouldBe(6);
+        // Phase 24 appended values (docs/product/api-guidelines.md §5); earlier values keep their numbers.
+        ((short)ErrorCode.BusinessRuleViolation).ShouldBe((short)6);
+        ((short)ErrorCode.PreconditionFailed).ShouldBe((short)7);
+        ((short)ErrorCode.PreconditionRequired).ShouldBe((short)8);
+        ((short)ErrorCode.RateLimited).ShouldBe((short)9);
+        ((short)ErrorCode.Gone).ShouldBe((short)10);
+        ((short)ErrorCode.Conflict).ShouldBe((short)11);
+        Enum.GetValues<ErrorCode>().Length.ShouldBe(12);
     }
 
     [Fact]

@@ -41,6 +41,23 @@ All D23 decisions were presented with their recommended defaults on 2026-10-18 a
 | B23-10 | Seeded policy values in this blueprint are policy version 1 and are owner-adjustable data; a change creates a new version and never alters in-flight instances. | D23-13, D23-14, D23-17, D23-18 | Versioned policy requirement. |
 | B23-11 | Approval policy v1 uses 120 h step duration and a 72 h reminder (calendar hours), instead of the first draft's 72 h / 48 h, so a step opened on a Friday does not escalate over the weekend. Approved by the owner on 2026-10-18. | D23-13 | No business-day calendar in the first release. |
 
+## Phase 24 implementation decisions (2026-10-18)
+
+Design choices made while implementing D23-11 and SEC-001..010 in Phase 24. They refine the blueprint without changing an owner decision; details and evidence are in `docs/refactoring/phase-24-report.md`.
+
+| ID | Decision | Refines | Rationale |
+|---|---|---|---|
+| D24-1 | `POST /api/v2/auth/sessions` verifies credentials without signing in and **does not rotate the security stamp**; the legacy `authenticate`/`start` routes keep rotating it on every sign-in, which revokes v2 families at their next refresh and rejects their access tokens immediately. | SEC-001, SEC-006 | Several concurrent sessions (SEC-010) are impossible if every login invalidates the others; the legacy behavior is preserved deliberately. |
+| D24-2 | Session families, refresh-token hashes, audit records and idempotency records live in the **application database**; Identity keeps users, roles and role claims. | AUD-001, ADR-0001 | Session changes and their audit records commit together, and later procurement changes can share the same audit table in one transaction. Password-change revocation crosses databases, so it is enforced twice: by the stamp binding and by an explicit revoke-all after the Identity commit. |
+| D24-3 | The CSRF HMAC key is derived with HKDF-SHA256 from `JwtSettings:Key` (info `template.session.csrf.v1`); **no new secret** is introduced. | NFR-SEC-1, api-guidelines §7 | Key separation without another secret to provision; rotating the signing key also rotates every CSRF binding. |
+| D24-4 | Access tokens issued by a session carry the registered `sid` claim (family ID); bearer validation rejects them as soon as the family is revoked or expired. Legacy tokens have no `sid` and are unaffected. | SEC-006 | Logout and revoke-all take effect immediately instead of after the 15-minute token lifetime. |
+| D24-5 | Login answers `200 OK` (credential exchange, like an OAuth token endpoint), not `201`. | api-guidelines §2 | No addressable session resource is returned. |
+| D24-6 | SEC-007 uses `System.Threading.RateLimiting` fixed-window partitions inside an action filter on the two endpoints (login: IP + normalized user name; refresh: IP), with SHA-256 partition keys. | SEC-007 | The user-name partition needs the bound body; no other endpoint is affected. |
+| D24-7 | The stable `code` extension is added only to Problem Details of Phase 24+ endpoints (marker attribute); legacy v1/v2 bodies stay byte-compatible. `ErrorCode` gains values 6–11 (appended). | api-guidelines §5, §10 | Contract compatibility. |
+| D24-8 | **SP-1 closed:** explicit `bigint Version` concurrency token on `VersionedAggregateRoot`; a guard unique index (`AccessRefreshTokens(FamilyId, Sequence)`) violated by a concurrent writer is translated to the same `ConcurrencyConflictException`. | SP-1 | Proven by the PostgreSQL concurrency tests and the 412/428 functional test. |
+| D24-9 | The seeded default user receives **no** role; roles are seeded with their permissions only when missing, and the legacy `Admin` role grants no permission. | B23-9, B23-10 | The default user's password is a committed sample value; assigning roles is Phase 25 user management. |
+| D24-10 | `Idempotency-Key`, `If-Match`/`ETag` and `202 Accepted` are reusable primitives exercised by a test-only fixture controller; the first production adopters arrive with Phase 25 resources. Session endpoints never use idempotency storage (it would persist tokens). | api-guidelines §4, §6, §8 | Avoids speculative production endpoints. |
+
 ## Deferrals
 
 The owner confirmed every deferral on 2026-10-18: Procurement Hub is an academic study project, and these items stay outside Phases 23–33. The recommendation column records how each one would be approached if it is ever reopened, which needs a new owner decision.

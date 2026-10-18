@@ -14,6 +14,26 @@ This page names configuration keys and environment variables only. Never copy a 
 | `ConnectionStrings:RedisConnection` | `ConnectionStrings__RedisConnection` | `CacheSettings:Enabled` is true outside Test | the product cache misses (fail-soft, unchanged) |
 | `RabbitMqSettings:Password` | `RabbitMqSettings__Password` | `RabbitMqSettings:Enabled` is true | `RabbitMqSettings requires ... credentials ...` |
 
+Phase 24 adds no new secret key. The CSRF HMAC key of the browser session is derived with HKDF-SHA256 from `JwtSettings:Key` (decision D24-3), so rotating the signing key also invalidates every CSRF binding and every access token, and every refresh then fails CSRF validation: users sign in again. Refresh tokens are never configuration; only their SHA-256 hashes are stored in the application database.
+
+## Non-secret session and browser settings (Phase 24)
+
+These keys are committed with their policy-version-1 values and may be overridden per profile like any other setting.
+
+| Configuration key | Environment variable | Default | Meaning |
+|---|---|---|---|
+| `SessionSettings:AbsoluteLifetime` | `SessionSettings__AbsoluteLifetime` | `7.00:00:00` | session family absolute limit (SEC-002) |
+| `SessionSettings:IdleTimeout` | `SessionSettings__IdleTimeout` | `12:00:00` | idle limit, slid by each refresh (SEC-002) |
+| `SessionSettings:ReuseGraceWindow` | `SessionSettings__ReuseGraceWindow` | `00:00:10` | concurrent-refresh grace (SEC-003/004) |
+| `SessionSettings:MaxActiveFamilies` | `SessionSettings__MaxActiveFamilies` | `5` | active sessions per user (SEC-010) |
+| `SessionSettings:RateLimitPermitLimit` | `SessionSettings__RateLimitPermitLimit` | `10` | login/refresh requests per partition per window (SEC-007) |
+| `SessionSettings:RateLimitWindow` | `SessionSettings__RateLimitWindow` | `00:01:00` | rate-limit window |
+| `Cors:AllowedOrigins` | `Cors__AllowedOrigins__0`, ... | empty (Development `https://localhost:4200`, Test `https://spa.template.test`) | explicit cross-origin browser origins; also the allow-list of the session `Origin` check besides the API's own origin |
+| `Cors:AllowCredentials` | `Cors__AllowCredentials` | `false` | the same-origin SPA does not need credentialed CORS |
+| `Cors:RequireAllowedOrigins` | `Cors__RequireAllowedOrigins` | `false` | `true` makes an empty origin list fail startup (`Cors:AllowedOrigins is required ...`) |
+
+Wildcard origins, origins with a path, query or user information and non-HTTP(S) schemes fail startup with a message naming the key position only. The session cookies (`__Secure-ph_refresh`, `XSRF-TOKEN`) are not configurable; they are `Secure` in every profile, so local browser use needs the HTTPS development certificate.
+
 ## Sources by profile
 
 | Profile | Source |

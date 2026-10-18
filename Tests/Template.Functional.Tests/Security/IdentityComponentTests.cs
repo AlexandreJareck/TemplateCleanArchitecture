@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Shouldly;
 using Template.Application.DTOs.Account.Request;
 using Template.Application.Interfaces;
+using Template.Application.Services.Access;
 using Template.Application.Wrappers;
 using Template.Functional.Tests.Common;
 using Template.Infrastructure.Identity.Authentication;
@@ -142,7 +143,8 @@ public sealed class IdentityComponentTests(CustomWebApplicationFactory<Program> 
     [InlineData(true)]
     public async Task AccountServices_WithoutCurrentUser_ReturnsIdentityError(bool unknownUser)
     {
-        using var scope = factory.Services.CreateScope();
+        // Async scope: AccountServices now depends on the unit of work, which is only IAsyncDisposable.
+        await using var scope = factory.Services.CreateAsyncScope();
         var services = CreateAccountServices(scope.ServiceProvider, new StubCurrentUser(unknownUser ? Guid.NewGuid().ToString() : null));
 
         var password = await services.ChangePassword(new ChangePasswordRequest { Password = SyntheticPassword, ConfirmPassword = SyntheticPassword });
@@ -159,7 +161,8 @@ public sealed class IdentityComponentTests(CustomWebApplicationFactory<Program> 
     [Fact]
     public async Task AccountServices_HonorsCanceledToken()
     {
-        using var scope = factory.Services.CreateScope();
+        // Async scope: AccountServices now depends on the unit of work, which is only IAsyncDisposable.
+        await using var scope = factory.Services.CreateAsyncScope();
         var services = CreateAccountServices(scope.ServiceProvider, new StubCurrentUser(Guid.NewGuid().ToString()));
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
@@ -253,7 +256,8 @@ public sealed class IdentityComponentTests(CustomWebApplicationFactory<Program> 
         currentUser,
         provider.GetRequiredService<SignInManager<ApplicationUser>>(),
         provider.GetRequiredService<JwtTokenFactory>(),
-        provider.GetRequiredService<ITranslator>());
+        provider.GetRequiredService<ITranslator>(),
+        provider.GetRequiredService<ISessionRevocationService>());
 
     private sealed record StubCurrentUser(string? UserId) : IAuthenticatedUserService
     {

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization.Policy;
+﻿using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning.Builder;
@@ -6,6 +6,7 @@ using Serilog;
 using Template.Application;
 using Template.Application.Interfaces;
 using Template.Application.Logging;
+using Template.Application.Settings;
 using Template.Infrastructure.Caching;
 using Template.Infrastructure.Identity;
 using Template.Infrastructure.Messaging;
@@ -18,6 +19,7 @@ using Template.WebApi.Infrastructure.Logging;
 using Template.WebApi.Infrastructure.Middlewares;
 using Template.WebApi.Infrastructure.Services;
 using Template.WebApi.Infrastructure.Http;
+using Template.WebApi.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 var isTestEnvironment = builder.Environment.IsEnvironment("Test");
@@ -36,6 +38,17 @@ builder.Services.AddMessagingInfrastructure(builder.Configuration, useBroker: !i
 builder.Services.AddSearchInfrastructure(builder.Configuration, useSearchEngine: !isTestEnvironment);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
+builder.Services.AddScoped<IRequestContext, HttpRequestContext>();
+builder.Services.AddOptions<SessionSettings>()
+    .Bind(builder.Configuration.GetSection(SessionSettings.SectionName))
+    .ValidateOnStart();
+
+// Phase 24: permission policies (SEC-008), authentication rate limiting (SEC-007) and sampled boundary audit.
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddSingleton<AuthenticationRateLimiter>();
+builder.Services.AddSingleton<SecurityEventSampler>();
+builder.Services.AddScoped<BoundarySecurityAudit>();
 
 builder.Services.AddSingleton<ApiResultMapper>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ProblemDetailsAuthorizationMiddlewareResultHandler>();
@@ -46,7 +59,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         context.HttpContext.RequestServices.GetRequiredService<ApiResultMapper>().FromModelState(context);
 });
 builder.Services.AddSwaggerWithVersioning();
-builder.Services.AddAnyCors();
+builder.Services.AddConfiguredCors(builder.Configuration);
 
 builder.Host.ConfigureLog(isTestEnvironment);
 builder.Services.AddCustomLocalization(builder.Configuration);
@@ -73,7 +86,7 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 app.ConfigureHealthCheck();
 
 app.UseCustomLocalization();
-app.UseAnyCors();
+app.UseConfiguredCors();
 // Before routing and authentication, so a failure anywhere in the pipeline maps to Problem Details and is logged once.
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseRouting();
