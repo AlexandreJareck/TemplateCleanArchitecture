@@ -2,6 +2,8 @@
 
 Status: proposed execution roadmap. No Phase 23+ implementation is authorized by this document alone.
 
+Phase 23 is complete (2026-10-18, `docs/refactoring/phase-23-report.md`): the approved blueprint, rule catalog and ADRs are in `docs/product/`, and owner decisions D23-1 through D23-18 are recorded in `docs/product/decision-log.md`. Where this roadmap and the blueprint differ in detail, the blueprint governs.
+
 This roadmap turns the academic Clean Architecture template into a realistic, local-first procurement application while preserving the completed architecture, compatibility, rollback, and evidence discipline from Phases 0–22.
 
 The working product name is **Procurement Hub**. The product models a single organization's purchase lifecycle:
@@ -102,6 +104,14 @@ Every execution phase must:
 ### Phase 23 — Product blueprint and architecture decisions
 
 Define the product language, actors, permissions, module ownership, state machines, corporate-style business rules, policy defaults/exceptions, domain events, API conventions, frontend information and Clean Architecture, non-functional requirements, and Architecture Decision Records. Record owner decisions for single organization, Angular, frontend layer boundaries, procurement policy, report engines, background execution, file storage, quote entry, budget reservation timing, and Azure deployment scope. This phase is documentation and executable design only.
+
+### Phase 23 outcome — refinements that affect later phases
+
+- Approval is an award approval started when the buyer submits an award (B23-1); requisitions sit in `PendingApproval` between Phase 29 and Phase 31.
+- Phase 24 seeds the permission catalog and roles from `docs/product/permissions.md` and creates the audit store (AUD-*); user lookup and user/role administration APIs move to Phase 25 (cost-center managers and department heads need them); the administration and global audit screens are Phase 33.
+- Phase 27 accepts attachment metadata only (FIL-002 placeholder); bytes arrive in Phase 30.
+- The requisition-expiry and RFQ-close sweeps are implemented as idempotent use cases in Phases 27 and 29 and wired to recurring triggers in Phase 33 (ADR-0003).
+- Spikes SP-1 to SP-6 in `docs/product/decision-log.md` are assigned to Phases 24, 25/29, 26A, 30, 31 and 32.
 
 ### Phase 24 — Identity, authorization, and API foundations
 
