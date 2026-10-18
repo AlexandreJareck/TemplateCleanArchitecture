@@ -391,7 +391,7 @@ public sealed class ArchitectureRulesTests
             .Where(path => File.ReadAllText(path).Contains("[StableProblemCodes]", StringComparison.Ordinal))
             .ToArray();
 
-        controllers.Length.ShouldBe(3);
+        controllers.Length.ShouldBe(12); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup controllers
         foreach (var path in controllers)
             ActionsWithoutExplicitAuthorization(File.ReadAllText(path)).ShouldBe(0, Relative(path));
     }
@@ -451,6 +451,99 @@ public sealed class ArchitectureRulesTests
         ContainsAny("HMACSHA256.HashData(key, data)", SessionCryptoMarkers()).ShouldBeTrue();
         ContainsAny("string? HashRefreshToken(string? token);", SessionCryptoMarkers()).ShouldBeFalse();
     }
+
+    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog"];
+
+    [Fact]
+    public void Domain_Modules_Reference_Each_Other_Only_Through_The_Shared_Kernel()
+    {
+        // ADR-0001 / domain-model §1: a module references another module's aggregates by ID only.
+        foreach (var module in MasterDataModules)
+            SourceViolations($"Src/Core/Template.Domain/{module}", OtherDomainModuleMarkers(module)).ShouldBeEmpty(module);
+        SourceViolations("Src/Core/Template.Domain/Common", MasterDataModules.Select(module => $"Template.Domain.{module}").ToArray()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void External_Provider_Code_Lives_In_Infrastructure_Integrations()
+    {
+        // ADR-0007 / INT-001: only the Integrations adapter talks HTTP to BrasilAPI or BCB; Core owns ports only.
+        SourceViolations("Src", ProviderMarkers()).ShouldAllBe(path => path.StartsWith(IntegrationsProject, StringComparison.Ordinal));
+        SourceViolations("Src", ProviderMarkers()).ShouldNotBeEmpty();
+        SourceViolations("Src/Core", HttpClientMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Infrastructure/Template.Infrastructure.Persistence", HttpClientMarkers()).ShouldBeEmpty();
+        Directory.GetFiles(Path.Combine(Root, "Src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(path => References(XDocument.Load(path), "PackageReference").Contains("Microsoft.Extensions.Http"))
+            .Select(Relative)
+            .ShouldBe([$"{IntegrationsProject}Template.Infrastructure.Integrations.csproj"]);
+    }
+
+    [Fact]
+    public void Infrastructure_Integrations_Implements_Application_Owned_Ports_Without_Leaking_Transport()
+    {
+        var project = LoadProject($"{IntegrationsProject}Template.Infrastructure.Integrations.csproj");
+
+        References(project, "ProjectReference").ShouldBe([@"..\..\Core\Template.Application\Template.Application.csproj"]);
+        ReadSource($"{IntegrationsProject}BrasilApi/BrasilApiClient.cs").ShouldContain(": ISupplierRegistryLookup, IPostalCodeLookup");
+        ReadSource($"{IntegrationsProject}Bcb/BcbPtaxClient.cs").ShouldContain(": IExchangeRateProvider");
+        ReadSource($"{IntegrationsProject}DisabledEnrichmentProviders.cs").ShouldContain(": ISupplierRegistryLookup, IPostalCodeLookup, IExchangeRateProvider");
+        SourceViolations("Src/Core/Template.Application/Interfaces/Integrations", EnrichmentPortLeakMarkers()).ShouldBeEmpty();
+        ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldContain("AddIntegrationsInfrastructure(");
+        SourceViolations("Src/Presentation/Template.WebApi/Controllers", ProviderMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Provider_Clients_Never_Log_Request_Urls()
+    {
+        // NFR §9: request URLs carry the CNPJ or CEP, so the default HttpClient request logging is removed and the
+        // adapters' own log templates name provider, operation and classification only.
+        var registration = ReadSource($"{IntegrationsProject}ServiceRegistration.cs");
+        registration.Split(".RemoveAllLoggers()").Length.ShouldBe(3);
+        registration.Split("AddHttpClient<").Length.ShouldBe(3);
+        SourceViolations(IntegrationsProject, UrlLoggingMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void MasterData_Controllers_Expose_No_Hard_Delete()
+    {
+        // ORG-005: referenced master data is deactivated, never deleted.
+        foreach (var controller in MasterDataControllers)
+            ReadSource($"Src/Presentation/Template.WebApi/Controllers/v2/{controller}.cs").ShouldNotContain("[HttpDelete", Case.Sensitive, controller);
+    }
+
+    [Fact]
+    public void Phase25_Controlled_Mutations_Are_Detected()
+    {
+        ContainsAny("using Template.Domain.Catalog;", OtherDomainModuleMarkers("Suppliers")).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Common;", OtherDomainModuleMarkers("Suppliers")).ShouldBeFalse();
+        ContainsAny("private readonly HttpClient client;", HttpClientMarkers()).ShouldBeTrue();
+        ContainsAny("var url = \"https://brasilapi.com.br/api/cnpj/v1/\";", ProviderMarkers()).ShouldBeTrue();
+        ContainsAny("Task<HttpResponseMessage> LookupAsync(string cnpj);", EnrichmentPortLeakMarkers()).ShouldBeTrue();
+        ContainsAny("Task<EnrichmentResult<PostalAddressSuggestion>> LookupAsync(string postalCode, CancellationToken cancellationToken);", EnrichmentPortLeakMarkers()).ShouldBeFalse();
+        ContainsAny("logger.LogWarning(\"Call to {Url} failed\", request.RequestUri);", UrlLoggingMarkers()).ShouldBeTrue();
+        ContainsAny("logger.LogWarning(\"Provider {Provider} failed\", Provider);", UrlLoggingMarkers()).ShouldBeFalse();
+        "[HttpDelete(\"{id:guid}\")]".Contains("[HttpDelete", StringComparison.Ordinal).ShouldBeTrue();
+    }
+
+    private const string IntegrationsProject = "Src/Infrastructure/Template.Infrastructure.Integrations/";
+
+    private static readonly string[] MasterDataControllers =
+    [
+        "DepartmentsController", "CostCentersController", "OrganizationSettingsController", "CategoriesController",
+        "UnitsOfMeasureController", "CatalogItemsController", "SuppliersController"
+    ];
+
+    private static string[] OtherDomainModuleMarkers(string module) =>
+        MasterDataModules.Where(other => other != module).SelectMany(other => new[] { $"Template.Domain.{other}", $"{other}." + "Entities" })
+            .Concat(["Template.Domain.Access", "Template.Domain.Products", "Template.Domain.Person", "Template.Domain.Order"])
+            .ToArray();
+
+    private static string[] ProviderMarkers() => ["brasilapi.com.br", "olinda.bcb.gov.br", "class BrasilApiClient", "class BcbPtaxClient", "CotacaoMoedaPeriodo"];
+
+    private static string[] HttpClientMarkers() => ["HttpClient", "HttpRequestMessage", "HttpResponseMessage"]; // "System.Net.Http" is an implicit global using
+
+    private static string[] EnrichmentPortLeakMarkers() => ["HttpClient", "HttpResponseMessage", "HttpStatusCode", "JsonElement", "JsonDocument", "Uri", "brasilapi", "olinda"];
+
+    private static string[] UrlLoggingMarkers() => ["{Url}", "{RequestUri}", "RequestUri", "{Path}", "{Cnpj}", "{Cep}", "{PostalCode}", "{TaxId}"];
 
     private static string[] RoleAuthorizationMarkers() => ["Roles =", "Roles=", "RequireRole(", "IsInRole("];
 

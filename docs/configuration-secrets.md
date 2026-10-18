@@ -34,6 +34,22 @@ These keys are committed with their policy-version-1 values and may be overridde
 
 Wildcard origins, origins with a path, query or user information and non-HTTP(S) schemes fail startup with a message naming the key position only. The session cookies (`__Secure-ph_refresh`, `XSRF-TOKEN`) are not configurable; they are `Secure` in every profile, so local browser use needs the HTTPS development certificate.
 
+## Optional enrichment providers (Phase 25)
+
+`BrasilApiSettings` (CNPJ and CEP lookups) and `BcbPtaxSettings` (Banco Central PTAX rates) carry no secret: both public services need no credential. Both are **disabled in every committed profile**, and the Test environment always uses the disabled adapter, so no build, test or Compose run calls a production provider. Enabling one is an explicit operator decision (`BrasilApiSettings__Enabled=true`) and is subject to the provider's usage terms (BrasilAPI asks for human-like request volumes; see `docs/refactoring/phase-25-report.md`).
+
+| Configuration key (both sections) | Default | Meaning |
+|---|---|---|
+| `Enabled` | `false` | `false` answers every lookup with `503 integration.provider-unavailable` (reason `disabled`) without network access |
+| `BaseUrl` | `https://brasilapi.com.br/api/`, `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/` | absolute https URL ending with `/`, without credentials or query (http only for loopback) |
+| `Timeout` | `00:00:05` | per-attempt timeout (INT-001), 0–30 s |
+| `MaxRetries` | `2` | retries for timeout, network error, 408 and 5xx only; never for 429 (0–2) |
+| `RetryDelay` | `00:00:00.200` | attempt n waits n × this value (0–5 s) |
+| `CircuitBreakerFailureThreshold` | `5` | consecutive failed calls that open the circuit (1–100) |
+| `CircuitBreakerBreakDuration` | `00:00:30` | open-circuit duration before one trial call (up to 30 min) |
+
+Environment variables follow the usual form, for example `BrasilApiSettings__Enabled` and `BcbPtaxSettings__Timeout`. Invalid values fail startup with a message naming the section only.
+
 ## Sources by profile
 
 | Profile | Source |

@@ -318,13 +318,13 @@ foreach ($path in '/health', '/health/live', '/health/ready') {
     Write-Check "smoke.$path" ($response.Status -eq 200) "status=$($response.Status)"
     $response.Content | Set-Content (Join-Path $outputDirectory ("health-" + ($path.Trim('/') -replace '/', '-') + '.json'))
 }
-# Contract baseline: Phase 24 (additive v2 session/audit endpoints over the Phase 6 baseline, classified in
-# docs/refactoring/phase-24-report.md section 7; baseline-phase-6 is kept unchanged as history).
+# Contract baseline: Phase 25 (additive v2 master-data, enrichment and user-lookup endpoints over the Phase 24
+# baseline, classified in docs/refactoring/phase-25-report.md; baseline-phase-6 and baseline-phase-24 are kept as history).
 foreach ($version in 'v1', 'v2') {
     $response = Get-Status 'GET' "/swagger/$version/swagger.json"
     $captured = Join-Path $outputDirectory "openapi-$version.json"
     [System.IO.File]::WriteAllText($captured, $response.Content)
-    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-24\openapi-$version.json"))
+    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-25\openapi-$version.json"))
     $bytesEqual = ($baseline -replace "`r`n", "`n") -ceq ($response.Content -replace "`r`n", "`n")
     $structuralEqual = (($baseline | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress) -ceq (($response.Content | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress)
     Write-Check "openapi.$version.byte-equal-normalized" $bytesEqual ''

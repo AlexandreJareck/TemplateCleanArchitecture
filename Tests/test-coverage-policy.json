@@ -1,18 +1,19 @@
 {
-  "description": "Phase 19 per-module coverage ratchet enforced by scripts/coverage-report.ps1. Inputs: merged coverlet.collector (XPlat Code Coverage, Cobertura) reports of Template.Unit.Tests, Template.Integration.Tests and Template.Functional.Tests. Minimums = floor(measured - 1) of the coverlet 10.1.0 baseline measured on 2026-10-12 (line and method data identical in three runs); minimumSources = measured source files after exclusions. Phase 21 (2026-10-14, owner-approved): Application minimumSources 41->40 and WebApi 32->31 after removing the dead ApiErrorResponse.cs and ApiResultFilterAttribute.cs, Application line raised 93->94 from the measured 95.12%. Raise the numbers when coverage improves; lowering one weakens the gate and needs explicit justification and approval.",
+  "description": "Phase 19 per-module coverage ratchet enforced by scripts/coverage-report.ps1. Inputs: merged coverlet.collector (XPlat Code Coverage, Cobertura) reports of Template.Unit.Tests, Template.Integration.Tests and Template.Functional.Tests. Minimums = floor(measured - 1) of the coverlet 10.1.0 baseline measured on 2026-10-12 (line and method data identical in three runs); minimumSources = measured source files after exclusions. Phase 21 (2026-10-14, owner-approved): Application minimumSources 41->40 and WebApi 32->31 after removing the dead ApiErrorResponse.cs and ApiResultFilterAttribute.cs, Application line raised 93->94 from the measured 95.12%. Raise the numbers when coverage improves; lowering one weakens the gate and needs explicit justification and approval. Phase 25 (2026-10-18): Template.Infrastructure.Integrations added (line 94, branch 83, 9 sources from the measured 95.35%/84.26%); Application raised to line 96/branch 90 (measured 97.76%/91.47%) and every minimumSources raised to the measured count (Domain 27, Application 87, Identity 18, Persistence 22, WebApi 59); nothing lowered.",
   "exclusions": [
     { "pattern": "*/Migrations/*", "reason": "EF Core scaffolded migrations, designers and model snapshots (generated, never hand-edited)." },
     { "pattern": "*.Designer.cs", "reason": "Generated .resx designer classes (never hand-edited)." }
   ],
   "modules": [
-    { "module": "Template.Domain", "layer": "Domain", "line": 99, "branch": null, "minimumSources": 5 },
-    { "module": "Template.Application", "layer": "Application", "line": 94, "branch": 88, "minimumSources": 40 },
+    { "module": "Template.Domain", "layer": "Domain", "line": 99, "branch": null, "minimumSources": 27 },
+    { "module": "Template.Application", "layer": "Application", "line": 96, "branch": 90, "minimumSources": 87 },
     { "module": "Template.Infrastructure.Caching", "layer": "Infrastructure", "line": 95, "branch": 92, "minimumSources": 4 },
-    { "module": "Template.Infrastructure.Identity", "layer": "Infrastructure", "line": 89, "branch": 79, "minimumSources": 14 },
+    { "module": "Template.Infrastructure.Identity", "layer": "Infrastructure", "line": 89, "branch": 79, "minimumSources": 18 },
+    { "module": "Template.Infrastructure.Integrations", "layer": "Infrastructure", "line": 94, "branch": 83, "minimumSources": 9 },
     { "module": "Template.Infrastructure.Messaging", "layer": "Infrastructure", "line": 58, "branch": 65, "minimumSources": 11 },
-    { "module": "Template.Infrastructure.Persistence", "layer": "Infrastructure", "line": 65, "branch": 55, "minimumSources": 9 },
+    { "module": "Template.Infrastructure.Persistence", "layer": "Infrastructure", "line": 65, "branch": 55, "minimumSources": 22 },
     { "module": "Template.Infrastructure.Resources", "layer": "Infrastructure", "line": 99, "branch": 99, "minimumSources": 2 },
     { "module": "Template.Infrastructure.Search", "layer": "Infrastructure", "line": 95, "branch": 86, "minimumSources": 5 },
-    { "module": "Template.WebApi", "layer": "Presentation", "line": 67, "branch": 50, "minimumSources": 31 }
+    { "module": "Template.WebApi", "layer": "Presentation", "line": 67, "branch": 50, "minimumSources": 59 }
   ]
 }

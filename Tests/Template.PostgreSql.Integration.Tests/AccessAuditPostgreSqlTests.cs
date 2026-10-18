@@ -283,6 +283,12 @@ public sealed class AccessAuditPostgreSqlTests(PostgreSqlFixture fixture) : IAsy
 
         public Task<AccountProfile?> GetProfileAsync(Guid userId, CancellationToken cancellationToken) =>
             Task.FromResult<AccountProfile?>(null);
+
+        public Task<bool> IsActiveUserAsync(Guid userId, CancellationToken cancellationToken) => Task.FromResult(userId == UserId);
+
+        public Task<Template.Application.Common.Paging.PagedResult<UserSummary>> SearchUsersAsync(
+            string? search, Template.Application.Common.Paging.PageRequest page, CancellationToken cancellationToken) =>
+            Task.FromResult(new Template.Application.Common.Paging.PagedResult<UserSummary>([], page.Page, page.PageSize, 0));
     }
 
     private sealed class Tokens : ISessionTokenService

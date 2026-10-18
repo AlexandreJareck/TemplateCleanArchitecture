@@ -7,6 +7,9 @@ public sealed record VerifiedAccount(Guid UserId, string SecurityStampFingerprin
 /// <summary>Approved current-user fields (SEC-009). No email, phone or other claim is exposed.</summary>
 public sealed record AccountProfile(Guid UserId, string UserName, string? DisplayName, IReadOnlyList<string> Roles);
 
+/// <summary>User shown by the assignment lookup (ORG-006): no email, phone or claim.</summary>
+public sealed record UserSummary(Guid UserId, string UserName, string? DisplayName, bool IsActive);
+
 /// <summary>
 /// Application-owned view of the user store. The Identity adapter implements it with ASP.NET Core Identity; no
 /// Identity, claims or HTTP type crosses this port.
@@ -23,4 +26,13 @@ public interface IAccountDirectory
     Task<string?> GetSecurityStampFingerprintAsync(Guid userId, CancellationToken cancellationToken);
 
     Task<AccountProfile?> GetProfileAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>ORG-006: the user exists and is not locked out.</summary>
+    Task<bool> IsActiveUserAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Users whose user name or display name contains <paramref name="search"/> (case-insensitive), ordered by
+    /// user name and ID, for manager and head assignment (permission <c>access.users.manage</c>).
+    /// </summary>
+    Task<Common.Paging.PagedResult<UserSummary>> SearchUsersAsync(string? search, Common.Paging.PageRequest page, CancellationToken cancellationToken);
 }

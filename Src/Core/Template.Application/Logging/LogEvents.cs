@@ -64,4 +64,11 @@ public static class LogEvents
     public static readonly EventId CsrfRejected = new(9004, nameof(CsrfRejected));
     public static readonly EventId AuthenticationRateLimited = new(9005, nameof(AuthenticationRateLimited));
     public static readonly EventId SecurityAuditFailed = new(9006, nameof(SecurityAuditFailed));
+
+    // Phase 25 optional enrichment (INT-001): provider, operation, outcome and safe reasons only, never CNPJ, CEP,
+    // names, addresses or contact data.
+    public static readonly EventId EnrichmentLookupCompleted = new(10000, nameof(EnrichmentLookupCompleted));
+    public static readonly EventId ProviderCallFailed = new(10001, nameof(ProviderCallFailed));
+    public static readonly EventId ProviderCircuitOpened = new(10002, nameof(ProviderCircuitOpened));
+    public static readonly EventId ProviderResponseInvalid = new(10003, nameof(ProviderResponseInvalid));
 }

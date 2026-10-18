@@ -130,6 +130,7 @@ public sealed class ApiResultMapper
         ErrorCategory.BusinessRule => StatusCodes.Status422UnprocessableEntity,
         ErrorCategory.PreconditionRequired => StatusCodes.Status428PreconditionRequired,
         ErrorCategory.RateLimited => StatusCodes.Status429TooManyRequests,
+        ErrorCategory.Unavailable => StatusCodes.Status503ServiceUnavailable,
         _ => StatusCodes.Status500InternalServerError
     };
 
@@ -147,6 +148,7 @@ public sealed class ApiResultMapper
             StatusCodes.Status422UnprocessableEntity => "The request violates a business rule.",
             StatusCodes.Status428PreconditionRequired => "The request requires a precondition.",
             StatusCodes.Status429TooManyRequests => "Too many requests.",
+            StatusCodes.Status503ServiceUnavailable => "An optional external provider is unavailable.",
             _ => "An unexpected error occurred."
         };
 
@@ -214,6 +216,7 @@ public sealed class ApiResultMapper
         // RFC 6585 status codes are not in RFC 9110.
         StatusCodes.Status428PreconditionRequired => "428-precondition-required",
         StatusCodes.Status429TooManyRequests => "429-too-many-requests",
+        StatusCodes.Status503ServiceUnavailable => "503-service-unavailable",
         _ => "500-internal-server-error"
     };
 }

@@ -60,6 +60,7 @@ public static class SwaggerExtensions
                 [new OpenApiSecuritySchemeReference("bearer", document)] = []
             });
             setup.OperationFilter<ApiConventionsOperationFilter>();
+            setup.SchemaFilter<StringEnumSchemaFilter>();
         });
         services.ConfigureOptions<ConfigureSwaggerOptions>();
 
