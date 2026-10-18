@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using Template.Application.Common.Concurrency;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Catalog;
+using Template.Application.Interfaces.Organization;
+using Template.Application.Interfaces.Suppliers;
 
 namespace Template.Infrastructure.Persistence.Contexts;
 
@@ -14,7 +17,23 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
     /// </summary>
     private static readonly HashSet<string> ConcurrencyGuardConstraints = new(StringComparer.Ordinal)
     {
-        "IX_AccessRefreshTokens_FamilyId_Sequence"
+        "IX_AccessRefreshTokens_FamilyId_Sequence",
+        "IX_SupplierStatusChanges_SupplierId_Sequence"
+    };
+
+    /// <summary>
+    /// Business-key unique indexes (ORG-001, CAT-001, SUP-001). A violation means a concurrent duplicate that raced past
+    /// the use-case pre-check; it surfaces as <see cref="UniqueConstraintViolationException"/> so the use case answers
+    /// with its duplicate code. Any other violation (primary keys, append-only audit IDs) keeps the original exception.
+    /// </summary>
+    private static readonly HashSet<string> BusinessKeyConstraints = new(StringComparer.Ordinal)
+    {
+        IDepartmentRepository.CodeUniqueKey,
+        ICostCenterRepository.CodeUniqueKey,
+        ICategoryRepository.CodeUniqueKey,
+        IUnitOfMeasureRepository.CodeUniqueKey,
+        ICatalogItemRepository.CodeUniqueKey,
+        ISupplierRepository.TaxIdUniqueKey
     };
 
     private IDbContextTransaction? transaction;
@@ -35,6 +54,13 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         } && ConcurrencyGuardConstraints.Contains(constraint))
         {
             throw new ConcurrencyConflictException("A concurrent change of the same aggregate won.", error);
+        }
+        catch (DbUpdateException error) when (error.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: { } constraint
+        } && BusinessKeyConstraints.Contains(constraint))
+        {
+            throw new UniqueConstraintViolationException(constraint, error);
         }
     }
 

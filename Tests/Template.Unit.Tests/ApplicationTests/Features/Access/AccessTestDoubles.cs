@@ -61,6 +61,17 @@ internal sealed class AccessTestDoubles
 
         public Task<AccountProfile?> GetProfileAsync(Guid userId, CancellationToken cancellationToken) =>
             Task.FromResult(userId == UserId ? new AccountProfile(UserId, "synthetic-user", "Synthetic", ["Buyer", "Auditor"]) : null);
+
+        /// <summary>Users considered active by ORG-006 checks; <see cref="UserId"/> is active by default.</summary>
+        public HashSet<Guid> ActiveUsers { get; } = [];
+
+        public Task<bool> IsActiveUserAsync(Guid userId, CancellationToken cancellationToken) =>
+            Task.FromResult(userId == UserId || ActiveUsers.Contains(userId));
+
+        public Task<Template.Application.Common.Paging.PagedResult<UserSummary>> SearchUsersAsync(
+            string? search, Template.Application.Common.Paging.PageRequest page, CancellationToken cancellationToken) =>
+            Task.FromResult(new Template.Application.Common.Paging.PagedResult<UserSummary>(
+                [new UserSummary(UserId, "synthetic-user", "Synthetic", true)], page.Page, page.PageSize, 1));
     }
 
     internal sealed class FakeTokens : ISessionTokenService

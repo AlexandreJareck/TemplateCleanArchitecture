@@ -23,7 +23,9 @@ public sealed class AuditRecord
     /// <summary>Detail keys allowed by AUD-003. Extend deliberately; never add credential, token, hash or address keys.</summary>
     public static readonly IReadOnlySet<string> AllowedDetailKeys = new HashSet<string>(StringComparer.Ordinal)
     {
-        "reason", "sessionFamilyId", "revokedCount", "permission", "policy", "endpoint"
+        "reason", "sessionFamilyId", "revokedCount", "permission", "policy", "endpoint",
+        // Phase 25 master data: stable codes, opaque IDs and field names only, never contact or address values.
+        "code", "fields", "provider", "departmentId", "categoryId", "unitOfMeasureId"
     };
 
     private AuditRecord()

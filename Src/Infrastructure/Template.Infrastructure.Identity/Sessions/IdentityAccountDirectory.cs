@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Template.Application.Common.Paging;
 using Template.Application.Interfaces.Access;
 using Template.Application.Security;
 using Template.Infrastructure.Identity.Contexts;
@@ -80,6 +81,41 @@ public sealed class IdentityAccountDirectory(
 
         // Unknown values (typos in edited role data) grant nothing.
         return values.Where(Permissions.IsKnown).Select(value => value!).ToHashSet(StringComparer.Ordinal);
+    }
+
+    public async Task<bool> IsActiveUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return await identityContext.Users
+            .AsNoTracking()
+            .AnyAsync(user => user.Id == userId && (user.LockoutEnd == null || user.LockoutEnd <= now), cancellationToken);
+    }
+
+    public async Task<PagedResult<UserSummary>> SearchUsersAsync(string? search, PageRequest page, CancellationToken cancellationToken)
+    {
+        var query = identityContext.Users.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToUpperInvariant();
+            query = query.Where(user => (user.NormalizedUserName != null && user.NormalizedUserName.Contains(term))
+                || (user.Name != null && user.Name.ToUpper().Contains(term)));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var total = await query.LongCountAsync(cancellationToken);
+        var users = await query
+            .OrderBy(user => user.UserName)
+            .ThenBy(user => user.Id)
+            .Skip(page.Skip)
+            .Take(page.PageSize)
+            .Select(user => new { user.Id, user.UserName, user.Name, user.LockoutEnd })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<UserSummary>(
+            users.Select(user => new UserSummary(user.Id, user.UserName ?? string.Empty, user.Name, user.LockoutEnd is null || user.LockoutEnd <= now)).ToArray(),
+            page.Page,
+            page.PageSize,
+            total);
     }
 
     /// <summary>SHA-256 fingerprint of a security stamp; the stamp itself never leaves this adapter.</summary>

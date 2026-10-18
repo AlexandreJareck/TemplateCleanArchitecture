@@ -9,6 +9,7 @@ using Template.Application.Logging;
 using Template.Application.Settings;
 using Template.Infrastructure.Caching;
 using Template.Infrastructure.Identity;
+using Template.Infrastructure.Integrations;
 using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Resources;
@@ -36,6 +37,7 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration, useInMemoryDat
 builder.Services.AddCachingInfrastructure(builder.Configuration, useInMemoryCache: isTestEnvironment);
 builder.Services.AddMessagingInfrastructure(builder.Configuration, useBroker: !isTestEnvironment);
 builder.Services.AddSearchInfrastructure(builder.Configuration, useSearchEngine: !isTestEnvironment);
+builder.Services.AddIntegrationsInfrastructure(builder.Configuration, useExternalProviders: !isTestEnvironment);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 builder.Services.AddScoped<IRequestContext, HttpRequestContext>();

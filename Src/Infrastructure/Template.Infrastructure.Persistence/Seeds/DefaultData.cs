@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Template.Domain.Organization;
 using Template.Domain.Products.Entities;
 using Template.Infrastructure.Persistence.Contexts;
 
@@ -19,6 +20,13 @@ public static class DefaultData
             ];
 
             await applicationDbContext.Products.AddRangeAsync(defaultProducts);
+            await applicationDbContext.SaveChangesAsync();
+        }
+
+        // D23-1: one organization per installation; the settings singleton is created once with the policy-v1 values.
+        if (!await applicationDbContext.Set<OrganizationSettings>().AnyAsync())
+        {
+            applicationDbContext.Add(OrganizationSettings.CreateDefault(DateTime.UtcNow));
             await applicationDbContext.SaveChangesAsync();
         }
     }

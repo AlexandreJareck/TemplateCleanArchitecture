@@ -19,7 +19,9 @@ public enum ErrorCategory
     PreconditionFailed,
     PreconditionRequired,
     RateLimited,
-    Gone
+    Gone,
+    // Phase 25: optional external provider unavailable (enrichment endpoints only, INT-001 → 503).
+    Unavailable
 }
 
 /// <summary>

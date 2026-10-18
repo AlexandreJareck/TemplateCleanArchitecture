@@ -30,6 +30,8 @@ public static class ServiceRegistration
         services.AddScoped<IOrderPlacedEventHandler, OrderPlacedEventHandler>();
 
         services.AddScoped<SecurityAuditRecorder>();
+        services.AddScoped<Services.MasterData.MasterDataWriter>();
+        services.AddScoped<Services.Integrations.PtaxRateResolver>();
         services.AddScoped<ISessionRevocationService, SessionRevocationService>();
         services.AddSingleton<IValidateOptions<SessionSettings>, SessionSettingsValidator>();
         // The composition root binds SessionSettings from configuration and validates it on start.
