@@ -53,7 +53,7 @@ Copy `.env.example` to `.env` (git-ignored) and replace every `CHANGE_ME`. For `
 1. Generate a new key with a cryptographically secure generator (at least 32 bytes; the commands above use 48).
 2. Store it in the profile's source: `dotnet user-secrets set "JwtSettings:Key" ...` (Development), `JwtSettings__Key` in `.env` (Compose), or the deployment's secret store (Production).
 3. Restart the WebApi. Every token signed with the previous key fails validation (401), and clients authenticate again. There is no dual-key window (owner decision D4, Phase 22).
-4. Never reuse a previous key. The key committed before Phase 22 is compromised: it remains in Git history and must not be used anywhere.
+4. Never reuse a previous key. The key committed before Phase 22 is compromised and must not be used anywhere. It was removed from every branch by the D6 history rewrite (2026-10-18), but old clones and GitHub pull-request refs may still hold it.
 
 ## Guard rails
 
