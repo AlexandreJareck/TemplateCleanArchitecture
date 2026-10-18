@@ -8,7 +8,7 @@ Especificação: `docs/refactoring/handoff-phase-22.md` (executada via `docs/ref
 
 Ações que continuam com o dono, fora do repositório e sem bloquear o release:
 
-- gerar a chave nova nos stores reais (§6), porque o dono preferiu não autorizar a escrita no `.env` e no user-secrets dele;
+- as connection strings e a senha do RabbitMQ no user-secrets real, para `dotnet run` local contra serviços reais. São as senhas reais do dono, e a chave JWT já foi gravada em 2026-10-18 (§11);
 - a reescrita do histórico autorizada em D6 (§11), que é uma etapa separada.
 
 ## 2. Pré-condições e ponto de partida
@@ -194,7 +194,10 @@ Ambiente:
   - O GitHub mantém refs de PR (`refs/pull/*`) e caches. A remoção completa exige pedido ao GitHub Support.
   - Exige confirmação final do dono.
 - **Tokens emitidos antes da rotação ficam inválidos** (D4): os clientes precisam autenticar de novo.
-- **Stores reais ainda sem a chave nova.** Até o dono rodar os comandos de `docs/configuration-secrets.md`, `dotnet run` local e `docker compose up` normal falham no startup com `JwtSettings:Key is required.`. O fail-fast é intencional.
+- **Chave nova nos stores reais (2026-10-18, autorizado pelo dono).** Foram geradas duas chaves independentes de 48 bytes com `RandomNumberGenerator`. Nenhum valor foi exibido.
+  - `JwtSettings:Key` foi gravada no user-secrets real de Development (exit 0; conferida em memória: 64 bytes).
+  - `JwtSettings__Key` foi acrescentada ao `.env` real. As outras 30 linhas ficaram intactas e não foram exibidas.
+  - O `docker compose config` entrega a chave nova à WebApi (conferido em memória). O `.env` continua não rastreado e git-ignored.
 - `dotnet run` local agora também exige as connection strings e `RabbitMqSettings:Password` no user-secrets (D5 b).
 - **Cópias locais da chave antiga fora do Git:**
   - `C:\p22pub\webapi8x` e `C:\p22pub\src8` (build 8.x de `31b1225`; o ensaio sobrepõe a chave por variável de ambiente);
@@ -214,13 +217,15 @@ Ambiente:
 ## 13. Recursos retidos e limpeza que exige autorização
 
 - **Redes removidas com autorização:** 10 redes vazias anteriores à Fase 21 (`p11-net-20261011*`, `p16-net-20261012*`, `p17-net-20261012*`, `p18-probe-nw`; 0 endpoints cada), registradas em `phase-22/network-removal.log`. Restam 26 redes.
-- **Retidos da Fase 22**, todos parados, nenhum removido, todos com dados sintéticos:
-  - containers, volumes e redes de `p14-baseline-p22start20261015010641`, `p14-baseline-20261017113518`;
+- **Recursos Docker da Fase 22 removidos com autorização (2026-10-18):** 75 containers parados, 52 volumes e 12 redes, todos com dados sintéticos e todos destes RunIds:
+  - `p14-baseline-p22start20261015010641`, `p14-baseline-20261017113518`;
   - `p15-src/tgt-20261017113814`, `p15-rollback-20261017114057`;
   - `p16-*-20261017114344`, `p16-rollback-20261017114532`;
   - `p17-*-20261017114811`, `p17-rollback-20261017115204`;
   - `p18-20261017115444`, `p18-rollback-20261017115539`;
   - `p11-*-20261017113100`.
+
+  Houve 0 falhas, e os volumes que não são de ensaio ficaram inalterados (`phase-22/docker-cleanup.log`). Recursos de ensaios de fases anteriores e as imagens `p16-webapi`/`p17-webapi` continuam.
 - **Fora do repositório:**
   - worktree `C:\p22s` (HEAD `e490767`, ponto de partida);
   - `C:\p22pub` (fontes 8.x e publicações 8.x/9.x);
