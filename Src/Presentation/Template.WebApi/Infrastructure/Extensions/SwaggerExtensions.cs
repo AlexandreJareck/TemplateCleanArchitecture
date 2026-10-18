@@ -59,6 +59,7 @@ public static class SwaggerExtensions
             {
                 [new OpenApiSecuritySchemeReference("bearer", document)] = []
             });
+            setup.OperationFilter<ApiConventionsOperationFilter>();
         });
         services.ConfigureOptions<ConfigureSwaggerOptions>();
 

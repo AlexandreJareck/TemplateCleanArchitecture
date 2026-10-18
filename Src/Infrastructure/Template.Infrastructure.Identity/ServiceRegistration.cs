@@ -5,12 +5,14 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.UserInterfaces;
 using Template.Infrastructure.Identity.Authentication;
 using Template.Infrastructure.Identity.Contexts;
 using Template.Infrastructure.Identity.Models;
 using Template.Infrastructure.Identity.Seeds;
 using Template.Infrastructure.Identity.Services;
+using Template.Infrastructure.Identity.Sessions;
 using Template.Infrastructure.Identity.Settings;
 
 namespace Template.Infrastructure.Identity;
@@ -37,6 +39,11 @@ public static class ServiceRegistration
         services.AddTransient<IGetUserServices, GetUserServices>();
         services.AddTransient<IAccountServices, AccountServices>();
         services.AddSingleton<JwtTokenFactory>();
+        services.AddSingleton<ISessionTokenService, SessionTokenService>();
+        services.AddScoped<IdentityAccountDirectory>();
+        services.AddScoped<IAccountDirectory>(provider => provider.GetRequiredService<IdentityAccountDirectory>());
+        services.AddScoped<IPermissionReader>(provider => provider.GetRequiredService<IdentityAccountDirectory>());
+        services.AddScoped<IAccessTokenIssuer, JwtAccessTokenIssuer>();
 
         services.AddSingleton<IValidateOptions<JwtSettings>, JwtSettingsValidator>();
         services.AddOptions<JwtSettings>().Bind(configuration.GetSection(JwtSettings.SectionName)).ValidateOnStart();
@@ -98,6 +105,7 @@ public static class ServiceRegistration
             await services.GetRequiredService<IdentityContext>().Database.MigrateAsync();
 
         await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
+        await PermissionRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
         await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
     }
 
