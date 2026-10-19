@@ -18,7 +18,7 @@ The planning review on 2026-10-18 found that Angular maintains an official Angul
 
 Execute `docs/refactoring/handoff-phase-26a.md` first. This is documentation-only.
 
-Research current primary sources and obtain explicit owner approval for D26A-1 through D26A-14: repository topology, workspace shape, package manager, Angular/Node/TypeScript/RxJS line, Tailwind, component library, state, forms, OpenAPI generator, localization, tests, Storybook, delivery boundary, and update policy.
+Research current primary sources and obtain explicit owner approval for D26A-1 through D26A-14: repository topology, workspace shape, package manager, Angular/Node/TypeScript/RxJS line, Tailwind, component library, state, forms, OpenAPI generator, localization, tests, Storybook, delivery boundary, and update policy. This gate was completed on 2026-10-18; the accepted record is `docs/frontend/technology-decisions.md` and `docs/refactoring/phase-26a-report.md` is `Ready`.
 
 Use the existing monorepo with `Client/Template.WebApp` as the recommended topology, but compare a separate repository and document its independent CI/release/OpenAPI consequences. Never create a remote repository or push without explicit authorization.
 
@@ -30,7 +30,7 @@ Explicitly compare:
 
 Verify maintenance, Angular/Tailwind compatibility, accessibility, component coverage, theming, bundle impact, copied-code ownership, supply-chain risk, licenses and upgrade strategy. Official shadcn/ui does not currently list Angular templates; do not install React/TSX shadcn code or call it Angular-compatible unless official documentation has changed.
 
-Recommended defaults are: existing monorepo, one Angular CLI application, pnpm with exact lockfile, current supported stable Angular toolchain, Tailwind, spartan/ui only if its evidence gate passes (otherwise Angular Material/CDK), Signals plus RxJS, no NgRx by default, stable Signal Forms when supported, the current Angular CLI unit runner, Playwright, and Storybook only when justified. Recommendations are not approvals.
+The approved baseline is: existing monorepo at `Client/Template.WebApp`; one CSR standalone Angular CLI application; pnpm 12.14.0; Angular/CLI/CDK 22.2.3; Node 24.22.0 LTS; TypeScript 6.0.3; RxJS 7.8.2; Tailwind 4.3.3; minimal spartan/ui 1.8.0 + CDK with Angular Material fallback only when its evidence gate fails; Signals plus RxJS; no NgRx; stable Signal Forms; Orval 8.43.0 Angular `HttpClient` generation with NSwag 14.7.1 fallback only when its evidence gate fails; Transloco 8.4.0; Vitest, Playwright, axe and dependency-cruiser; no Storybook; local HTTPS/proxy with deployment deferred to Phase 33; exact pins and deliberate upgrade rehearsals.
 
 Create the required English frontend decision documents/ADRs and `docs/refactoring/phase-26a-report.md`. Perform the three required reviews. If any blocking decision remains unapproved, report `Not ready` and stop. Do not install packages or generate code in 26A.
 

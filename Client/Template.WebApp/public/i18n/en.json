@@ -1,0 +1,125 @@
+{
+  "gallery": {
+    "title": "Frontend foundation",
+    "subtitle": "Internal gallery for the primitives approved in Phase 26.",
+    "developmentOnly": "Development only",
+    "controls": "Controls and form",
+    "states": "States",
+    "data": "Table and pagination",
+    "dialog": "Dialog"
+  },
+  "form": {
+    "name": "Name",
+    "help": "Example field using Signal Forms.",
+    "required": "Enter a name.",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "confirmed": "Confirmed"
+  },
+  "actions": {
+    "primary": "Continue",
+    "toast": "Show notification",
+    "dialog": "Open dialog",
+    "close": "Close"
+  },
+  "states": {
+    "errorTitle": "Unable to complete",
+    "errorBody": "Try again or review the supplied data.",
+    "emptyTitle": "No results",
+    "emptyBody": "Data will appear here when available.",
+    "toast": "Example operation completed."
+  },
+  "table": { "caption": "Example departments", "code": "Code", "name": "Name" },
+  "dialog": {
+    "title": "Confirmation",
+    "body": "This dialog demonstrates accessible focus, keyboard, and semantics."
+  },
+  "validation": { "required": "Required field" },
+  "auth": {
+    "signIn": "Sign in",
+    "userName": "User name",
+    "password": "Password",
+    "enter": "Continue",
+    "logout": "Sign out",
+    "logoutAll": "Sign out everywhere",
+    "failed": "Unable to sign in"
+  },
+  "shell": { "skip": "Skip to content", "breadcrumbHome": "Home" },
+  "nav": {
+    "dashboard": "Dashboard",
+    "departments": "Departments",
+    "costCenters": "Cost centers",
+    "suppliers": "Suppliers",
+    "categories": "Categories",
+    "units": "Units of measure",
+    "items": "Catalog items"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Hello, {{name}}. Open the modules available to your permissions."
+  },
+  "common": {
+    "loading": "Loading…",
+    "search": "Search",
+    "refresh": "Refresh",
+    "reload": "Reload current version",
+    "empty": "No results",
+    "emptyHelp": "Adjust the filters or create a new item.",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "edit": "Edit",
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "details": "Details",
+    "backHome": "Back home",
+    "reason": "Reason",
+    "confirm": "Confirm",
+    "confirmDeactivate": "Confirm deactivation",
+    "confirmReactivate": "Confirm reactivation",
+    "confirmStatus": "Confirm status change"
+  },
+  "fields": {
+    "code": "Code",
+    "name": "Name",
+    "status": "Status",
+    "relatedId": "Related ID",
+    "secondaryRelatedId": "Unit ID",
+    "ownerUserId": "Owner user ID",
+    "decimals": "Decimal places",
+    "kind": "Kind",
+    "good": "Good",
+    "service": "Service"
+  },
+  "supplier": {
+    "legalName": "Legal name",
+    "tradeName": "Trade name",
+    "country": "Country",
+    "enrich": "Look up registration",
+    "proposal": "Enrichment proposal",
+    "accept": "Accept proposal",
+    "contacts": "Primary contact",
+    "addresses": "Primary address",
+    "phone": "Phone",
+    "role": "Role",
+    "street": "Street",
+    "number": "Number",
+    "city": "City",
+    "categoryIds": "Category IDs (comma separated)"
+  },
+  "status": {
+    "forbidden": {
+      "title": "Access denied",
+      "body": "Your session does not have the required permission."
+    },
+    "unavailable": {
+      "title": "Service unavailable",
+      "body": "The service could not be reached. Try again."
+    },
+    "expired": { "title": "Session expired", "body": "Sign in again to continue." }
+  }
+}

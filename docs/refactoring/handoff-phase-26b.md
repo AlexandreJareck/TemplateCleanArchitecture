@@ -12,6 +12,8 @@ Create the approved frontend repository/workspace from zero and prove its toolch
 - Re-check the approved exact versions and peer requirements immediately before installation. If official support or licenses changed since 26A, stop and revise the decision instead of forcing installation.
 - If D26A selected a separate repository, require the exact approved local path, ownership and explicit authorization before creating it. Do not create a remote or push. Otherwise create `Client/Template.WebApp` in this repository.
 
+The accepted baseline is `Client/Template.WebApp` with pnpm 12.14.0, Angular/CLI/CDK 22.2.3, Node 24.22.0 LTS, TypeScript 6.0.3, RxJS 7.8.2, Tailwind 4.3.3, spartan/ui 1.8.0, Orval 8.43.0 and Transloco 8.4.0. Use Orval's Angular `HttpClient` output, not its `httpResource` output, so generated transport remains in Infrastructure. Angular Material and NSwag.ConsoleCore 14.7.1 are pre-approved fallbacks only for the explicit evidence failures in D26A-6 and D26A-9; record the trigger before using either.
+
 ## Reproducible creation
 
 Use the approved package manager and a pinned Angular CLI invocation; do not depend on an unrecorded global CLI. Capture the exact generator command and options. The baseline should be a client-rendered routed standalone Angular application with strict TypeScript/compiler settings and no SSR unless D26A explicitly approved it.

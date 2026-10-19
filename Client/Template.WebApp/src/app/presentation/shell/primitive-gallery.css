@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
+  align-items: start;
+  margin-bottom: var(--space-8);
+}
+.page-header h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: -0.04em;
+  margin: var(--space-2) 0;
+}
+.eyebrow {
+  color: var(--color-primary);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.status-badge {
+  background: var(--color-accent);
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-4);
+  white-space: nowrap;
+}
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+.panel h2 {
+  margin: 0 0 var(--space-5);
+}
+.panel form,
+.states {
+  display: grid;
+  gap: var(--space-3);
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.actions,
+.inline-control,
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.actions {
+  margin-top: var(--space-3);
+}
+.pagination {
+  justify-content: end;
+  margin-top: var(--space-4);
+}
+.error {
+  color: var(--color-danger);
+  margin: 0;
+}
+.skeleton-line {
+  height: 1rem;
+  width: 100%;
+}
+.skeleton-line.short {
+  margin-top: var(--space-2);
+  width: 60%;
+}
+.toast {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  background: var(--color-foreground);
+  color: var(--color-background);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+.toast button {
+  margin-left: var(--space-4);
+}
+@media (max-width: 48rem) {
+  :host {
+    padding: var(--space-4);
+  }
+  .gallery {
+    grid-template-columns: 1fr;
+  }
+  .wide {
+    grid-column: auto;
+  }
+  .page-header {
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+@media (forced-colors: active) {
+  .panel {
+    border: 1px solid CanvasText;
+  }
+}

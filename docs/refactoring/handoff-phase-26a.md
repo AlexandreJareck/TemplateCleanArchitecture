@@ -6,6 +6,8 @@ Produce an evidence-based, owner-approved frontend inception plan before any Jav
 
 This is a documentation and decision phase. Do not run project generators, install packages, create a Git repository, or change runtime code.
 
+Outcome recorded on 2026-10-18: the owner explicitly accepted D26A-1 through D26A-14 and `phase-26a-report.md` is `Ready`. D26A-6 selects minimal spartan/ui 1.8.0 + Angular CDK 22.2.3 with Angular Material as the evidence-gated fallback. D26A-9 selects Orval 8.43.0 Angular `HttpClient` generation with NSwag.ConsoleCore 14.7.1 as the evidence-gated fallback. This handoff remains the audit trail; Phase 26B must use the accepted record in `docs/frontend/technology-decisions.md`.
+
 ## Required context
 
 Read root/nested instructions, `docs/refactoring/handoff-phase-26.md`, Phase 23 frontend/API/security/business decisions, Phase 24–25 reports, current v2 OpenAPI, repository validation/package/license conventions, Compose, and API-v1 compatibility policy. Record HEAD and `git status --short` and preserve every pre-existing change.
@@ -23,10 +25,10 @@ Present alternatives, tradeoffs, evidence, recommendation, and consequence for e
 | D26A-3 | Package manager | `pnpm` with an exact `packageManager` declaration and committed lockfile; compare npm before approval |
 | D26A-4 | Framework toolchain | Current supported stable Angular/CLI with compatible supported Node LTS, TypeScript, and RxJS versions selected from official matrices |
 | D26A-5 | Styling | Tailwind CSS using the current official Angular installation path and design tokens expressed through controlled CSS variables |
-| D26A-6 | Component strategy | Prefer Tailwind + spartan/ui + Angular CDK only if the third-party health/license/accessibility evidence gate passes; otherwise choose Angular Material/CDK. Keep PrimeNG as the data-heavy alternative |
+| D26A-6 | Component strategy | **Accepted:** Tailwind 4.3.3 + minimal spartan/ui 1.8.0 + Angular CDK 22.2.3; Angular Material is the evidence-gated fallback; PrimeNG and unofficial Angular ports of shadcn are rejected |
 | D26A-7 | State | Angular Signals for presentation/application state and RxJS at asynchronous boundaries; no NgRx until measured complexity demonstrates a need |
 | D26A-8 | Forms | Stable Signal Forms when supported by the pinned Angular line and selected controls; otherwise typed Reactive Forms. Do not use an experimental API in the baseline |
-| D26A-9 | API generation | Select NSwag, OpenAPI Generator, or another approved generator through current evidence and explicit deterministic acceptance criteria; verify the selected generator in 26B and keep generated code in Infrastructure |
+| D26A-9 | API generation | **Accepted:** Orval 8.43.0 with Angular `HttpClient` output in Infrastructure; NSwag.ConsoleCore 14.7.1 is the evidence-gated fallback; Kiota and Java-based OpenAPI Generator are rejected |
 | D26A-10 | Localization | Runtime-capable pt-BR default with English-ready structure; compare Angular localization with an actively maintained Angular-native runtime alternative |
 | D26A-11 | Tests | Angular CLI's current supported unit runner, Playwright E2E, adapter contract tests, accessibility automation, and dependency-boundary tests |
 | D26A-12 | Component workbench | Storybook only if its current Angular support, maintenance cost, accessibility integration, and value for shared primitives justify it |

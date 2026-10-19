@@ -1,0 +1,63 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "paths": {
+      "@domain/*": ["./src/app/domain/*"],
+      "@application/*": ["./src/app/application/*"],
+      "@infrastructure/*": ["./src/app/infrastructure/*"],
+      "@presentation/*": ["./src/app/presentation/*"],
+      "@bootstrap/*": ["./src/app/bootstrap/*"],
+      "@presentation/shared-ui/button": ["./src/app/presentation/shared-ui/button/src/index.ts"],
+      "@presentation/shared-ui/utils": ["./src/app/presentation/shared-ui/utils/src/index.ts"],
+      "@presentation/shared-ui/input": ["./src/app/presentation/shared-ui/input/src/index.ts"],
+      "@presentation/shared-ui/native-select": [
+        "./src/app/presentation/shared-ui/native-select/src/index.ts"
+      ],
+      "@presentation/shared-ui/checkbox": [
+        "./src/app/presentation/shared-ui/checkbox/src/index.ts"
+      ],
+      "@presentation/shared-ui/dialog": ["./src/app/presentation/shared-ui/dialog/src/index.ts"],
+      "@presentation/shared-ui/alert": ["./src/app/presentation/shared-ui/alert/src/index.ts"],
+      "@presentation/shared-ui/table": ["./src/app/presentation/shared-ui/table/src/index.ts"],
+      "@presentation/shared-ui/pagination": [
+        "./src/app/presentation/shared-ui/pagination/src/index.ts"
+      ],
+      "@presentation/shared-ui/select": ["./src/app/presentation/shared-ui/select/src/index.ts"],
+      "@presentation/shared-ui/skeleton": [
+        "./src/app/presentation/shared-ui/skeleton/src/index.ts"
+      ],
+      "@presentation/shared-ui/empty": ["./src/app/presentation/shared-ui/empty/src/index.ts"],
+      "@presentation/shared-ui/field": ["./src/app/presentation/shared-ui/field/src/index.ts"],
+      "@presentation/shared-ui/label": ["./src/app/presentation/shared-ui/label/src/index.ts"],
+      "@presentation/shared-ui/separator": [
+        "./src/app/presentation/shared-ui/separator/src/index.ts"
+      ],
+      "@presentation/shared-ui/sonner": ["./src/app/presentation/shared-ui/sonner/src/index.ts"],
+      "@presentation/shared-ui/badge": ["./src/app/presentation/shared-ui/badge/src/index.ts"]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}
