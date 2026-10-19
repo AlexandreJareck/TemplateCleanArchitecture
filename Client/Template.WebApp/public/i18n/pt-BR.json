@@ -1,0 +1,125 @@
+{
+  "gallery": {
+    "title": "Fundação do frontend",
+    "subtitle": "Galeria interna dos primitives aprovados para a Fase 26.",
+    "developmentOnly": "Somente desenvolvimento",
+    "controls": "Controles e formulário",
+    "states": "Estados",
+    "data": "Tabela e paginação",
+    "dialog": "Diálogo"
+  },
+  "form": {
+    "name": "Nome",
+    "help": "Campo demonstrativo com Signal Forms.",
+    "required": "Informe o nome.",
+    "status": "Status",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "confirmed": "Confirmado"
+  },
+  "actions": {
+    "primary": "Continuar",
+    "toast": "Exibir aviso",
+    "dialog": "Abrir diálogo",
+    "close": "Fechar"
+  },
+  "states": {
+    "errorTitle": "Não foi possível concluir",
+    "errorBody": "Tente novamente ou revise os dados informados.",
+    "emptyTitle": "Nenhum resultado",
+    "emptyBody": "Os dados aparecerão aqui quando estiverem disponíveis.",
+    "toast": "Operação demonstrativa concluída."
+  },
+  "table": { "caption": "Departamentos de exemplo", "code": "Código", "name": "Nome" },
+  "dialog": {
+    "title": "Confirmação",
+    "body": "Este diálogo demonstra foco, teclado e semântica acessível."
+  },
+  "validation": { "required": "Campo obrigatório" },
+  "auth": {
+    "signIn": "Entrar",
+    "userName": "Usuário",
+    "password": "Senha",
+    "enter": "Acessar",
+    "logout": "Sair",
+    "logoutAll": "Encerrar todas",
+    "failed": "Não foi possível entrar"
+  },
+  "shell": { "skip": "Ir para o conteúdo", "breadcrumbHome": "Início" },
+  "nav": {
+    "dashboard": "Painel",
+    "departments": "Departamentos",
+    "costCenters": "Centros de custo",
+    "suppliers": "Fornecedores",
+    "categories": "Categorias",
+    "units": "Unidades de medida",
+    "items": "Itens de catálogo"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Olá, {{name}}. Acesse os módulos disponíveis para suas permissões."
+  },
+  "common": {
+    "loading": "Carregando…",
+    "search": "Pesquisar",
+    "refresh": "Atualizar",
+    "reload": "Recarregar versão atual",
+    "empty": "Nenhum resultado",
+    "emptyHelp": "Ajuste os filtros ou cadastre um novo item.",
+    "actions": "Ações",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "edit": "Editar",
+    "create": "Cadastrar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "deactivate": "Desativar",
+    "reactivate": "Reativar",
+    "details": "Detalhes",
+    "backHome": "Voltar ao início",
+    "reason": "Motivo",
+    "confirm": "Confirmar",
+    "confirmDeactivate": "Confirmar desativação",
+    "confirmReactivate": "Confirmar reativação",
+    "confirmStatus": "Confirmar alteração de status"
+  },
+  "fields": {
+    "code": "Código",
+    "name": "Nome",
+    "status": "Status",
+    "relatedId": "ID relacionado",
+    "secondaryRelatedId": "ID da unidade",
+    "ownerUserId": "ID do responsável",
+    "decimals": "Casas decimais",
+    "kind": "Tipo",
+    "good": "Bem",
+    "service": "Serviço"
+  },
+  "supplier": {
+    "legalName": "Razão social",
+    "tradeName": "Nome fantasia",
+    "country": "País",
+    "enrich": "Consultar CNPJ",
+    "proposal": "Proposta de enriquecimento",
+    "accept": "Aceitar proposta",
+    "contacts": "Contato principal",
+    "addresses": "Endereço principal",
+    "phone": "Telefone",
+    "role": "Função",
+    "street": "Logradouro",
+    "number": "Número",
+    "city": "Cidade",
+    "categoryIds": "IDs de categorias (separados por vírgula)"
+  },
+  "status": {
+    "forbidden": {
+      "title": "Acesso negado",
+      "body": "Sua sessão não possui a permissão necessária."
+    },
+    "unavailable": {
+      "title": "Serviço indisponível",
+      "body": "Não foi possível conectar ao serviço. Tente novamente."
+    },
+    "expired": { "title": "Sessão expirada", "body": "Entre novamente para continuar." }
+  }
+}

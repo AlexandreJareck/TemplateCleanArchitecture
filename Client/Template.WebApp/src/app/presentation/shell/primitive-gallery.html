@@ -1,0 +1,111 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">TemplateCleanArchNET</p>
+    <h1>{{ 'gallery.title' | transloco }}</h1>
+    <p>{{ 'gallery.subtitle' | transloco }}</p>
+  </div>
+  <span class="status-badge">{{ 'gallery.developmentOnly' | transloco }}</span>
+</header>
+
+<main class="gallery" aria-label="Primitive gallery">
+  <section class="panel">
+    <h2>{{ 'gallery.controls' | transloco }}</h2>
+    <form novalidate (submit)="$event.preventDefault()">
+      <label for="name">{{ 'form.name' | transloco }}</label>
+      <input
+        id="name"
+        hlmInput
+        [formField]="exampleForm.name"
+        aria-describedby="name-help name-error"
+      />
+      <small id="name-help">{{ 'form.help' | transloco }}</small>
+      @if (exampleForm.name().touched() && exampleForm.name().invalid()) {
+        <p id="name-error" class="error" role="alert">{{ 'form.required' | transloco }}</p>
+      }
+      <label for="status">{{ 'form.status' | transloco }}</label>
+      <hlm-native-select selectId="status">
+        <option hlmNativeSelectOption value="active">{{ 'form.active' | transloco }}</option>
+        <option hlmNativeSelectOption value="inactive">{{ 'form.inactive' | transloco }}</option>
+      </hlm-native-select>
+      <div class="inline-control">
+        <hlm-checkbox inputId="confirmed" aria-label="Confirmed" [checked]="true" />
+        <label for="confirmed">{{ 'form.confirmed' | transloco }}</label>
+      </div>
+      <div class="actions">
+        <button hlmBtn type="submit">{{ 'actions.primary' | transloco }}</button>
+        <button hlmBtn type="button" variant="outline" (click)="toastVisible.set(true)">
+          {{ 'actions.toast' | transloco }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel states">
+    <h2>{{ 'gallery.states' | transloco }}</h2>
+    <hlm-alert
+      ><h3 hlmAlertTitle>{{ 'states.errorTitle' | transloco }}</h3>
+      <p hlmAlertDescription>{{ 'states.errorBody' | transloco }}</p></hlm-alert
+    >
+    <div role="status" aria-label="Loading" aria-busy="true">
+      <div hlmSkeleton class="skeleton-line"></div>
+      <div hlmSkeleton class="skeleton-line short"></div>
+    </div>
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <h3 hlmEmptyTitle>{{ 'states.emptyTitle' | transloco }}</h3>
+        <p hlmEmptyDescription>{{ 'states.emptyBody' | transloco }}</p>
+      </div>
+    </div>
+    @if (toastVisible()) {
+      <div class="toast" role="status">
+        {{ 'states.toast' | transloco }}
+        <button type="button" (click)="toastVisible.set(false)" aria-label="Close">×</button>
+      </div>
+    }
+  </section>
+
+  <section class="panel wide">
+    <h2>{{ 'gallery.data' | transloco }}</h2>
+    <div hlmTableContainer>
+      <table hlmTable>
+        <caption hlmCaption>
+          {{
+            'table.caption' | transloco
+          }}
+        </caption>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>{{ 'table.code' | transloco }}</th>
+            <th hlmTh>{{ 'table.name' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          <tr hlmTr>
+            <td hlmTd>FIN</td>
+            <td hlmTd>Finance</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <nav class="pagination" aria-label="Pagination">
+      <button hlmBtn variant="outline" disabled>←</button><span>1 / 1</span
+      ><button hlmBtn variant="outline" disabled>→</button>
+    </nav>
+  </section>
+
+  <section class="panel wide">
+    <h2>{{ 'gallery.dialog' | transloco }}</h2>
+    <hlm-dialog>
+      <button hlmBtn hlmDialogTrigger>{{ 'actions.dialog' | transloco }}</button>
+      <hlm-dialog-content *hlmDialogPortal>
+        <div hlmDialogHeader>
+          <h3 hlmDialogTitle>{{ 'dialog.title' | transloco }}</h3>
+          <p hlmDialogDescription>{{ 'dialog.body' | transloco }}</p>
+        </div>
+        <div hlmDialogFooter>
+          <button hlmBtn hlmDialogClose>{{ 'actions.close' | transloco }}</button>
+        </div>
+      </hlm-dialog-content>
+    </hlm-dialog>
+  </section>
+</main>

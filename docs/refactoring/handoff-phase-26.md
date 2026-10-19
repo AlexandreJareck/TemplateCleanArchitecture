@@ -18,6 +18,8 @@ Execute and report each subphase in order:
 
 Do not begin 26B until all blocking D26A decisions are explicitly approved and `phase-26a-report.md` is `Ready`. Do not begin 26C until `phase-26b-report.md` is `Ready`. A handoff file is not implementation evidence.
 
+The 26A gate became `Ready` on 2026-10-18. The accepted implementation baseline is recorded in `docs/frontend/technology-decisions.md`: monorepo `Client/Template.WebApp`, one Angular CLI CSR application, pnpm 12.14.0, Angular/CLI/CDK 22.2.3, Node 24.22.0 LTS, TypeScript 6.0.3, RxJS 7.8.2, Tailwind 4.3.3, minimal spartan/ui 1.8.0 + CDK, Signals/RxJS, Signal Forms, Orval 8.43.0 Angular `HttpClient` generation, Transloco 8.4.0, Vitest/Playwright/axe/dependency-cruiser, no Storybook, and Phase 33 deployment. Angular Material and NSwag are evidence-gated fallbacks only.
+
 ## Global constraints
 
 - Phases 23–25 must be complete and green.

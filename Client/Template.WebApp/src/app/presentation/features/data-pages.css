@@ -1,0 +1,132 @@
+.page-title {
+  margin-bottom: var(--space-6);
+}
+.page-title h1 {
+  font-size: 2rem;
+  margin: 0.25rem 0;
+}
+.toolbar,
+.actions,
+.pager {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.toolbar {
+  margin-bottom: var(--space-4);
+}
+.toolbar input {
+  max-width: 24rem;
+}
+.feedback {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--destructive);
+  border-radius: var(--radius-md);
+  color: var(--destructive);
+  margin-bottom: var(--space-4);
+}
+.loading {
+  height: 8rem;
+}
+.empty,
+.editor,
+.proposal {
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  margin-top: var(--space-4);
+}
+.table-scroll {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  text-align: left;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.pager {
+  justify-content: flex-end;
+  margin: var(--space-4) 0;
+}
+.editor form {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) minmax(12rem, 30rem);
+  gap: var(--space-3);
+  align-items: center;
+}
+.editor form .actions {
+  grid-column: 2;
+}
+.status-actions {
+  margin-top: var(--space-4);
+}
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.related-grid form,
+.categories-form {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.categories-form {
+  margin-top: var(--space-4);
+}
+@media (max-width: 48rem) {
+  .editor form {
+    grid-template-columns: 1fr;
+  }
+  .editor form .actions {
+    grid-column: auto;
+  }
+  .related-grid {
+    grid-template-columns: 1fr;
+  }
+  .table-scroll {
+    border: 0;
+  }
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+  }
+  thead {
+    position: absolute;
+    clip: rect(0 0 0 0);
+  }
+  tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
+  }
+  td {
+    border: 0;
+    padding: var(--space-2);
+  }
+  td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    margin-right: var(--space-2);
+  }
+}
