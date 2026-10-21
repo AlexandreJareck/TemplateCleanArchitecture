@@ -45,7 +45,7 @@ internal sealed class ApiUser
         this.session = session;
     }
 
-    public static async Task<ApiUser> CreateAsync(MasterDataWebApplicationFactory factory, params string[] roles)
+    public static async Task<ApiUser> CreateAsync(CustomWebApplicationFactory<Program> factory, params string[] roles)
     {
         var session = SessionClient.Create(factory);
         await session.LoginOkAsync(await SessionUsers.CreateAsync(factory.Services, roles));
