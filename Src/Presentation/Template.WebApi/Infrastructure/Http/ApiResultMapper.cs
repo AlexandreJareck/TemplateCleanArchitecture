@@ -131,6 +131,8 @@ public sealed class ApiResultMapper
         ErrorCategory.PreconditionRequired => StatusCodes.Status428PreconditionRequired,
         ErrorCategory.RateLimited => StatusCodes.Status429TooManyRequests,
         ErrorCategory.Unavailable => StatusCodes.Status503ServiceUnavailable,
+        ErrorCategory.PayloadTooLarge => StatusCodes.Status413PayloadTooLarge,
+        ErrorCategory.UnsupportedMediaType => StatusCodes.Status415UnsupportedMediaType,
         _ => StatusCodes.Status500InternalServerError
     };
 
@@ -144,6 +146,8 @@ public sealed class ApiResultMapper
             StatusCodes.Status404NotFound => "The requested resource was not found.",
             StatusCodes.Status409Conflict => "The request conflicts with the current resource state.",
             StatusCodes.Status410Gone => "The requested resource is no longer available.",
+            StatusCodes.Status413PayloadTooLarge => "The declared content is larger than allowed.",
+            StatusCodes.Status415UnsupportedMediaType => "The declared media type is not allowed.",
             StatusCodes.Status412PreconditionFailed => "A request precondition failed.",
             StatusCodes.Status422UnprocessableEntity => "The request violates a business rule.",
             StatusCodes.Status428PreconditionRequired => "The request requires a precondition.",
@@ -212,6 +216,8 @@ public sealed class ApiResultMapper
         StatusCodes.Status409Conflict => "409-conflict",
         StatusCodes.Status410Gone => "410-gone",
         StatusCodes.Status412PreconditionFailed => "412-precondition-failed",
+        StatusCodes.Status413PayloadTooLarge => "413-content-too-large",
+        StatusCodes.Status415UnsupportedMediaType => "415-unsupported-media-type",
         StatusCodes.Status422UnprocessableEntity => "422-unprocessable-content",
         // RFC 6585 status codes are not in RFC 9110.
         StatusCodes.Status428PreconditionRequired => "428-precondition-required",
