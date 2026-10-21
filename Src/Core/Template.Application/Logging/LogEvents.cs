@@ -7,7 +7,7 @@ namespace Template.Application.Logging;
 /// Stable structured-log event identifiers shared by every layer. Ids and names are a dashboard contract: never
 /// reuse an id, never put dynamic values in a name, and document any rename with a compatibility mapping
 /// (see <c>docs/refactoring/phase-13-report.md</c>). Ranges: 1xxx HTTP, 2xxx lifecycle and configuration, 3xxx cache,
-/// 4xxx messaging, 5xxx search, 6xxx health, 7xxx orders, 8xxx products, 9xxx access (Phase 24).
+/// 4xxx messaging, 5xxx search, 6xxx health, 7xxx orders, 8xxx products, 9xxx access (Phase 24), 10xxx enrichment (Phase 25), 11xxx procurement (Phase 27).
 /// </summary>
 public static class LogEvents
 {
@@ -71,4 +71,10 @@ public static class LogEvents
     public static readonly EventId ProviderCallFailed = new(10001, nameof(ProviderCallFailed));
     public static readonly EventId ProviderCircuitOpened = new(10002, nameof(ProviderCircuitOpened));
     public static readonly EventId ProviderResponseInvalid = new(10003, nameof(ProviderResponseInvalid));
+
+    // Phase 27 procurement (BUD-*, REQ-*): opaque IDs, event types, revisions, states and amounts only; never purposes,
+    // line descriptions, attachment names or other free text.
+    public static readonly EventId ProcurementEventRecorded = new(11000, nameof(ProcurementEventRecorded));
+    public static readonly EventId ProcurementConcurrencyConflict = new(11001, nameof(ProcurementConcurrencyConflict));
+    public static readonly EventId BudgetReservationRejected = new(11002, nameof(BudgetReservationRejected));
 }

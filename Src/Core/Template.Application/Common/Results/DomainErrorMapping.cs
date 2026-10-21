@@ -22,6 +22,8 @@ public static class DomainErrorMapping
                 new Dictionary<string, string[]> { [error.Field ?? string.Empty] = [error.Message] }),
             DomainErrorKind.BusinessRule => new ApplicationError(error.Code, ErrorCategory.BusinessRule, error.Message, error.RuleId, extensions),
             DomainErrorKind.NotFound => new ApplicationError(ProblemCodes.NotFound, ErrorCategory.NotFound, error.Message),
+            DomainErrorKind.TooLarge => new ApplicationError(error.Code, ErrorCategory.PayloadTooLarge, error.Message, error.RuleId, extensions),
+            DomainErrorKind.UnsupportedMediaType => new ApplicationError(error.Code, ErrorCategory.UnsupportedMediaType, error.Message, error.RuleId, extensions),
             _ => new ApplicationError(error.Code, ErrorCategory.Conflict, error.Message, error.RuleId, extensions)
         };
     }
