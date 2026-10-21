@@ -30,12 +30,18 @@
     "emptyBody": "Data will appear here when available.",
     "toast": "Example operation completed."
   },
-  "table": { "caption": "Example departments", "code": "Code", "name": "Name" },
+  "table": {
+    "caption": "Example departments",
+    "code": "Code",
+    "name": "Name"
+  },
   "dialog": {
     "title": "Confirmation",
     "body": "This dialog demonstrates accessible focus, keyboard, and semantics."
   },
-  "validation": { "required": "Required field" },
+  "validation": {
+    "required": "Required field"
+  },
   "auth": {
     "signIn": "Sign in",
     "userName": "User name",
@@ -45,7 +51,10 @@
     "logoutAll": "Sign out everywhere",
     "failed": "Unable to sign in"
   },
-  "shell": { "skip": "Skip to content", "breadcrumbHome": "Home" },
+  "shell": {
+    "skip": "Skip to content",
+    "breadcrumbHome": "Home"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "departments": "Departments",
@@ -53,7 +62,11 @@
     "suppliers": "Suppliers",
     "categories": "Categories",
     "units": "Units of measure",
-    "items": "Catalog items"
+    "items": "Catalog items",
+    "myRequisitions": "My requisitions",
+    "teamRequisitions": "Team requisitions",
+    "budgetPeriods": "Fiscal periods",
+    "budgetAllocations": "Budget allocations"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -81,7 +94,8 @@
     "confirm": "Confirm",
     "confirmDeactivate": "Confirm deactivation",
     "confirmReactivate": "Confirm reactivation",
-    "confirmStatus": "Confirm status change"
+    "confirmStatus": "Confirm status change",
+    "pagination": "Pagination"
   },
   "fields": {
     "code": "Code",
@@ -120,6 +134,124 @@
       "title": "Service unavailable",
       "body": "The service could not be reached. Try again."
     },
-    "expired": { "title": "Session expired", "body": "Sign in again to continue." }
+    "expired": {
+      "title": "Session expired",
+      "body": "Sign in again to continue."
+    }
+  },
+  "statuses": {
+    "Draft": "Draft",
+    "Submitted": "Submitted",
+    "InSourcing": "In sourcing",
+    "PendingApproval": "Pending approval",
+    "Approved": "Approved",
+    "Ordered": "Ordered",
+    "Closed": "Closed",
+    "Rejected": "Rejected",
+    "Cancelled": "Cancelled",
+    "Expired": "Expired",
+    "Planned": "Planned",
+    "Open": "Open",
+    "Active": "Active",
+    "Reserved": "Reserved",
+    "Committed": "Committed",
+    "Released": "Released"
+  },
+  "problems": {
+    "cancelled": "Operation cancelled",
+    "not-authenticated": "Session expired",
+    "forbidden": "Action not allowed",
+    "not-found": "Record not found or not accessible",
+    "validation": "Review the highlighted fields",
+    "conflict": "The current state does not allow this action",
+    "version-mismatch": "Someone else changed this record. Reload the current version before continuing.",
+    "business-rule": "A business rule was not met",
+    "rate-limited": "Too many attempts; please wait",
+    "unavailable": "Service unavailable",
+    "unexpected": "Unexpected error"
+  },
+  "requisition": {
+    "new": "New requisition",
+    "editDraft": "Edit draft",
+    "searchNumber": "Requisition number",
+    "allStatuses": "All statuses",
+    "emptyHelp": "Create a requisition to start a purchase.",
+    "number": "Number",
+    "costCenter": "Cost center",
+    "neededBy": "Needed by",
+    "total": "Estimated total",
+    "currency": "Currency",
+    "purpose": "Purpose",
+    "header": "Requisition data",
+    "revision": "Revision",
+    "lines": "Lines",
+    "noLines": "Add at least one line before submitting.",
+    "description": "Description",
+    "quantity": "Quantity",
+    "unitPrice": "Estimated unit price",
+    "lineTotal": "Line total",
+    "removeLine": "Remove",
+    "serverTotal": "Server-calculated total",
+    "previewTotal": "Local preview (not official)",
+    "addLine": "Add line",
+    "editLine": "Edit line {{number}}",
+    "catalogItem": "Catalog item",
+    "freeLine": "Free line (no catalog item)",
+    "linePreview": "Line total preview",
+    "attachments": "Attachments",
+    "attachmentsNotice": "Metadata only in this phase; file upload arrives in Phase 30.",
+    "fileName": "File name",
+    "mediaType": "Type",
+    "length": "Size (bytes)",
+    "addAttachment": "Record attachment",
+    "submit": "Submit",
+    "discard": "Discard draft",
+    "confirmDiscard": "Discard this draft? This cannot be undone.",
+    "confirmSubmit": "Confirm submission",
+    "submitSummary": "Total {{total}} in {{lines}} line(s). Available budget: {{available}}. Submitting reserves the amount; the server confirms availability.",
+    "timeline": "History",
+    "stateEntry": "Status",
+    "reservationEntry": "Budget reservation",
+    "systemActor": "System",
+    "systemReason": "Automatic system transition",
+    "copiedFrom": "Copied from another requisition",
+    "withdraw": "Withdraw submission",
+    "cancel": "Cancel requisition",
+    "copy": "Copy as new draft",
+    "confirmCancel": "Cancel requisition",
+    "reasonHelp": "Enter the reason (10 to 500 characters). The reservation will be released.",
+    "confirmWithdraw": "Withdraw submission",
+    "withdrawHelp": "The requisition returns to draft with a new revision and the reservation is released.",
+    "linesTable": "Lines table"
+  },
+  "budget": {
+    "availability": "Budget availability",
+    "period": "Period",
+    "available": "Available",
+    "reserved": "Reserved",
+    "committed": "Committed",
+    "amount": "Allocated amount",
+    "insufficientPreview": "The preview shows insufficient funds; submission will be refused if the server confirms it.",
+    "noOpenAllocation": "No active allocation in an open period for this cost center and currency.",
+    "availabilityUnknown": "Availability is visible for your own draft or with budget permission.",
+    "range": "Range",
+    "open": "Open",
+    "close": "Close",
+    "newPeriod": "New fiscal period",
+    "startDate": "Start",
+    "endDate": "End",
+    "confirmOpen": "Open period {{code}}?",
+    "confirmClose": "Close period {{code}}? Closed periods accept no new reservations.",
+    "allPeriods": "All periods",
+    "newAllocation": "New allocation",
+    "allocation": "Budget allocation",
+    "summary": "Summary",
+    "changeAmount": "Change amount",
+    "amountHistory": "Amount history",
+    "reservations": "Reservations",
+    "requisition": "Requisition",
+    "releaseReason": "Release reason",
+    "confirmCloseAllocation": "Close allocation",
+    "reservationsTable": "Reservations table"
   }
 }

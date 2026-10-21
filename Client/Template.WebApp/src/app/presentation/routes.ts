@@ -83,6 +83,85 @@ export const routes: Routes = [
         title: 'Itens de catálogo',
       },
       {
+        path: 'budget/periods',
+        canActivate: [permissionGuard],
+        data: { permission: 'budget.read' },
+        loadComponent: () =>
+          import('./features/budget-periods.page').then((module) => module.BudgetPeriodsPage),
+        title: 'Períodos fiscais',
+      },
+      {
+        path: 'budget/allocations',
+        canActivate: [permissionGuard],
+        data: { permission: 'budget.read' },
+        loadComponent: () =>
+          import('./features/budget-allocations.page').then(
+            (module) => module.BudgetAllocationsPage,
+          ),
+        title: 'Alocações orçamentárias',
+      },
+      {
+        path: 'budget/allocations/:id',
+        canActivate: [permissionGuard],
+        data: { permission: 'budget.read' },
+        loadComponent: () =>
+          import('./features/budget-allocation-detail.page').then(
+            (module) => module.BudgetAllocationDetailPage,
+          ),
+        title: 'Alocação orçamentária',
+      },
+      {
+        path: 'requisitions/mine',
+        canActivate: [permissionGuard],
+        data: { permission: 'requisitions.create', scope: 'mine' },
+        loadComponent: () =>
+          import('./features/requisitions.page').then((module) => module.RequisitionsPage),
+        title: 'Minhas requisições',
+      },
+      {
+        path: 'requisitions/team',
+        canActivate: [permissionGuard],
+        data: {
+          anyPermission: ['requisitions.read-team', 'requisitions.read-all'],
+          scope: 'visible',
+        },
+        loadComponent: () =>
+          import('./features/requisitions.page').then((module) => module.RequisitionsPage),
+        title: 'Requisições da equipe',
+      },
+      {
+        path: 'requisitions/new',
+        canActivate: [permissionGuard],
+        data: { permission: 'requisitions.create' },
+        loadComponent: () =>
+          import('./features/requisition-editor.page').then(
+            (module) => module.RequisitionEditorPage,
+          ),
+        title: 'Nova requisição',
+      },
+      {
+        path: 'requisitions/:id/edit',
+        canActivate: [permissionGuard],
+        data: { permission: 'requisitions.create' },
+        loadComponent: () =>
+          import('./features/requisition-editor.page').then(
+            (module) => module.RequisitionEditorPage,
+          ),
+        title: 'Editar requisição',
+      },
+      {
+        path: 'requisitions/:id',
+        canActivate: [permissionGuard],
+        data: {
+          anyPermission: ['requisitions.create', 'requisitions.read-team', 'requisitions.read-all'],
+        },
+        loadComponent: () =>
+          import('./features/requisition-detail.page').then(
+            (module) => module.RequisitionDetailPage,
+          ),
+        title: 'Requisição',
+      },
+      {
         path: 'dev/primitives',
         loadComponent: () =>
           import('./shell/primitive-gallery').then((module) => module.PrimitiveGallery),

@@ -22,6 +22,15 @@ import { SessionFacade } from '../state/session.facade';
       }}</a
       ><a *appPermission="'catalog.read'" routerLink="/catalog/items">{{
         'nav.items' | transloco
+      }}</a
+      ><a *appPermission="'requisitions.create'" routerLink="/requisitions/new">{{
+        'requisition.new' | transloco
+      }}</a
+      ><a *appPermission="'requisitions.create'" routerLink="/requisitions/mine">{{
+        'nav.myRequisitions' | transloco
+      }}</a
+      ><a *appPermission="'budget.read'" routerLink="/budget/allocations">{{
+        'nav.budgetAllocations' | transloco
       }}</a>
     </div>`,
   styles: [

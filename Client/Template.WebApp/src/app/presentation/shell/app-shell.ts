@@ -64,6 +64,26 @@ import { filter } from 'rxjs';
         <a *appPermission="'catalog.read'" routerLink="/catalog/items" routerLinkActive="active">{{
           'nav.items' | transloco
         }}</a>
+        <a
+          *appPermission="'requisitions.create'"
+          routerLink="/requisitions/mine"
+          routerLinkActive="active"
+          >{{ 'nav.myRequisitions' | transloco }}</a
+        >
+        @if (session.can('requisitions.read-team') || session.can('requisitions.read-all')) {
+          <a routerLink="/requisitions/team" routerLinkActive="active">{{
+            'nav.teamRequisitions' | transloco
+          }}</a>
+        }
+        <a *appPermission="'budget.read'" routerLink="/budget/periods" routerLinkActive="active">{{
+          'nav.budgetPeriods' | transloco
+        }}</a>
+        <a
+          *appPermission="'budget.read'"
+          routerLink="/budget/allocations"
+          routerLinkActive="active"
+          >{{ 'nav.budgetAllocations' | transloco }}</a
+        >
       </nav>
       <main id="main-content" tabindex="-1"><router-outlet /></main>
     </div>

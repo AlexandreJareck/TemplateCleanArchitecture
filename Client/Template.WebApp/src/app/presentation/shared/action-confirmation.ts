@@ -15,6 +15,10 @@ import { HlmInput } from '@presentation/shared-ui/input';
 export interface ActionConfirmationRequest {
   readonly title: string;
   readonly actionLabel: string;
+  /** Optional context shown above the reason (for example the submission summary). */
+  readonly description?: string;
+  /** Defaults to true; transitions without a reason only confirm. */
+  readonly requireReason?: boolean;
 }
 
 @Component({
@@ -26,19 +30,30 @@ export interface ActionConfirmationRequest {
       <div class="dialog-backdrop" role="presentation" (keydown.escape)="cancel()">
         <section role="dialog" aria-modal="true" aria-labelledby="confirmation-title">
           <h2 id="confirmation-title">{{ current.title }}</h2>
-          <label for="action-reason">{{ 'common.reason' | transloco }}</label>
-          <input
-            id="action-reason"
-            #reasonInput
-            hlmInput
-            [value]="reason()"
-            (input)="reason.set($any($event.target).value)"
-          />
+          @if (current.description) {
+            <p class="description">{{ current.description }}</p>
+          }
+          @if (current.requireReason !== false) {
+            <label for="action-reason">{{ 'common.reason' | transloco }}</label>
+            <input
+              id="action-reason"
+              #reasonInput
+              hlmInput
+              [value]="reason()"
+              (input)="reason.set($any($event.target).value)"
+            />
+          }
           <div class="actions">
             <button hlmBtn variant="outline" type="button" (click)="cancel()">
               {{ 'common.cancel' | transloco }}
             </button>
-            <button hlmBtn type="button" [disabled]="!reason().trim()" (click)="confirm()">
+            <button
+              #confirmButton
+              hlmBtn
+              type="button"
+              [disabled]="current.requireReason !== false && !reason().trim()"
+              (click)="confirm()"
+            >
               {{ current.actionLabel }}
             </button>
           </div>
@@ -83,18 +98,19 @@ export class ActionConfirmation {
   readonly cancelled = output<void>();
   readonly reason = signal('');
   private readonly reasonInput = viewChild<ElementRef<HTMLInputElement>>('reasonInput');
+  private readonly confirmButton = viewChild<ElementRef<HTMLButtonElement>>('confirmButton');
 
   constructor() {
     effect(() => {
       this.request();
       this.reason.set('');
-      queueMicrotask(() => this.reasonInput()?.nativeElement.focus());
+      queueMicrotask(() => (this.reasonInput() ?? this.confirmButton())?.nativeElement.focus());
     });
   }
 
   confirm() {
     const reason = this.reason().trim();
-    if (reason) this.confirmed.emit(reason);
+    if (reason || this.request()?.requireReason === false) this.confirmed.emit(reason);
   }
 
   cancel() {

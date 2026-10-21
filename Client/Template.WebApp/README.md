@@ -40,7 +40,7 @@ Domain <- Application <- Infrastructure / Presentation <- Bootstrap
 
 ## API generation
 
-The v2 client is generated from `docs/refactoring/baseline-phase-25/openapi-v2.json` with Orval 8.43.0 and Angular `HttpClient` output:
+The v2 client is generated from `docs/refactoring/baseline-phase-27/openapi-v2.json` with Orval 8.43.0 and Angular `HttpClient` output:
 
 ```shell
 pnpm api:generate
