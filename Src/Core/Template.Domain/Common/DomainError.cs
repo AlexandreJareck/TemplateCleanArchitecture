@@ -15,7 +15,13 @@ public enum DomainErrorKind
     Conflict,
 
     /// <summary>A referenced child or resource does not exist (404).</summary>
-    NotFound
+    NotFound,
+
+    /// <summary>Declared content exceeds a size policy (413, FIL-002). Appended in Phase 27.</summary>
+    TooLarge,
+
+    /// <summary>Declared media type is not allowed (415, FIL-002). Appended in Phase 27.</summary>
+    UnsupportedMediaType
 }
 
 /// <summary>
