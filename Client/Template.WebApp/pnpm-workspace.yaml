@@ -3,3 +3,7 @@ allowBuilds:
   esbuild: true
   lmdb: true
   msgpackr-extract: true
+# Phase 27 security patch: @angular/build 22.2.3 pins vite 8.3.0, affected by GHSA-587h-7wmj-h5pm,
+# GHSA-698v-4r3x-3vcv and GHSA-r825-w8mm-5pxw (dev-server launch-editor). Remove once @angular/build depends on >= 8.3.3.
+overrides:
+  vite: 8.3.3

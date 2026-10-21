@@ -34,4 +34,29 @@ describe('ActionConfirmation', () => {
       .click();
     expect(confirmed).toHaveBeenCalledWith('Because it is obsolete');
   });
+
+  it('confirms a transition without reason when the request does not require one', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ActionConfirmation],
+      providers: [
+        provideTransloco({ config: { availableLangs: ['en'], defaultLang: 'en' }, loader: Loader }),
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ActionConfirmation);
+    const confirmed = vi.fn();
+    fixture.componentInstance.confirmed.subscribe(confirmed);
+    fixture.componentRef.setInput('request', {
+      title: 'Submit?',
+      actionLabel: 'Submit',
+      description: 'Total 300.00 BRL',
+      requireReason: false,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('input')).toBeNull();
+    expect(element.textContent).toContain('Total 300.00 BRL');
+    element.querySelector<HTMLButtonElement>('button:last-child')!.click();
+    expect(confirmed).toHaveBeenCalledWith('');
+  });
 });

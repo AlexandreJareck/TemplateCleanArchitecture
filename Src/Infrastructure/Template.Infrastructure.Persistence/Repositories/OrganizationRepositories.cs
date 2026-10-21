@@ -85,12 +85,3 @@ public sealed class OrganizationSettingsRepository(ApplicationDbContext context)
     public Task<OrganizationSettings?> GetAsync(CancellationToken cancellationToken) =>
         context.Set<OrganizationSettings>().SingleOrDefaultAsync(settings => settings.Id == OrganizationSettings.SingletonId, cancellationToken);
 }
-
-/// <summary>
-/// ORG-004 lock until Budgeting exists (Phase 27): no budget-allocation table exists yet, so no allocation can exist.
-/// Phase 27 replaces this adapter with a query on its allocation table; the port and the rule stay.
-/// </summary>
-public sealed class NoBudgetAllocationsYetSettingsLock : IOrganizationSettingsLock
-{
-    public Task<bool> HasBudgetAllocationsAsync(CancellationToken cancellationToken) => Task.FromResult(false);
-}

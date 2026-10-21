@@ -5,10 +5,16 @@ import { provideTransloco } from '@jsverse/transloco';
 import { DepartmentsService } from '@infrastructure/api/generated/departments/departments.service';
 import { DepartmentApiReader } from '@infrastructure/api/adapters/department-api-reader';
 import { MasterDataApiAdapter } from '@infrastructure/api/adapters/master-data-api-adapter';
+import { ProcurementApiAdapter } from '@infrastructure/api/adapters/procurement-api-adapter';
 import { TranslocoHttpLoader } from '@infrastructure/localization/transloco-http-loader';
 import type { RuntimeConfig } from '@infrastructure/runtime/runtime-config';
 import { routes } from '@presentation/routes';
-import { MASTER_DATA_PORT, SESSION_PORT } from '@presentation/state/ports';
+import {
+  BUDGET_PORT,
+  MASTER_DATA_PORT,
+  REQUISITION_PORT,
+  SESSION_PORT,
+} from '@presentation/state/ports';
 import { apiBaseUrlInterceptor } from './api-base-url.interceptor';
 import { authInterceptor } from '@infrastructure/session/auth.interceptor';
 import { SessionAdapter } from '@infrastructure/session/session-adapter';
@@ -41,6 +47,8 @@ export function createAppConfig(runtimeConfig: RuntimeConfig): ApplicationConfig
       },
       { provide: SESSION_PORT, useExisting: SessionAdapter },
       { provide: MASTER_DATA_PORT, useExisting: MasterDataApiAdapter },
+      { provide: REQUISITION_PORT, useExisting: ProcurementApiAdapter },
+      { provide: BUDGET_PORT, useExisting: ProcurementApiAdapter },
     ],
   };
 }

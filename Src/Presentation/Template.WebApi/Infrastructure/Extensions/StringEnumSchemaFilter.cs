@@ -11,7 +11,11 @@ namespace Template.WebApi.Infrastructure.Extensions;
 /// </summary>
 public sealed class StringEnumSchemaFilter : ISchemaFilter
 {
-    private static readonly string[] Namespaces = ["Template.Domain.Catalog", "Template.Domain.Suppliers", "Template.Domain.Organization"];
+    private static readonly string[] Namespaces =
+    [
+        "Template.Domain.Catalog", "Template.Domain.Suppliers", "Template.Domain.Organization", "Template.Domain.Budgeting",
+        "Template.Domain.Requisitions"
+    ];
 
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {

@@ -30,12 +30,18 @@
     "emptyBody": "Os dados aparecerão aqui quando estiverem disponíveis.",
     "toast": "Operação demonstrativa concluída."
   },
-  "table": { "caption": "Departamentos de exemplo", "code": "Código", "name": "Nome" },
+  "table": {
+    "caption": "Departamentos de exemplo",
+    "code": "Código",
+    "name": "Nome"
+  },
   "dialog": {
     "title": "Confirmação",
     "body": "Este diálogo demonstra foco, teclado e semântica acessível."
   },
-  "validation": { "required": "Campo obrigatório" },
+  "validation": {
+    "required": "Campo obrigatório"
+  },
   "auth": {
     "signIn": "Entrar",
     "userName": "Usuário",
@@ -45,7 +51,10 @@
     "logoutAll": "Encerrar todas",
     "failed": "Não foi possível entrar"
   },
-  "shell": { "skip": "Ir para o conteúdo", "breadcrumbHome": "Início" },
+  "shell": {
+    "skip": "Ir para o conteúdo",
+    "breadcrumbHome": "Início"
+  },
   "nav": {
     "dashboard": "Painel",
     "departments": "Departamentos",
@@ -53,7 +62,11 @@
     "suppliers": "Fornecedores",
     "categories": "Categorias",
     "units": "Unidades de medida",
-    "items": "Itens de catálogo"
+    "items": "Itens de catálogo",
+    "myRequisitions": "Minhas requisições",
+    "teamRequisitions": "Requisições da equipe",
+    "budgetPeriods": "Períodos fiscais",
+    "budgetAllocations": "Alocações orçamentárias"
   },
   "dashboard": {
     "title": "Painel",
@@ -81,7 +94,8 @@
     "confirm": "Confirmar",
     "confirmDeactivate": "Confirmar desativação",
     "confirmReactivate": "Confirmar reativação",
-    "confirmStatus": "Confirmar alteração de status"
+    "confirmStatus": "Confirmar alteração de status",
+    "pagination": "Paginação"
   },
   "fields": {
     "code": "Código",
@@ -120,6 +134,124 @@
       "title": "Serviço indisponível",
       "body": "Não foi possível conectar ao serviço. Tente novamente."
     },
-    "expired": { "title": "Sessão expirada", "body": "Entre novamente para continuar." }
+    "expired": {
+      "title": "Sessão expirada",
+      "body": "Entre novamente para continuar."
+    }
+  },
+  "statuses": {
+    "Draft": "Rascunho",
+    "Submitted": "Submetida",
+    "InSourcing": "Em cotação",
+    "PendingApproval": "Em aprovação",
+    "Approved": "Aprovada",
+    "Ordered": "Pedido emitido",
+    "Closed": "Encerrada",
+    "Rejected": "Rejeitada",
+    "Cancelled": "Cancelada",
+    "Expired": "Expirada",
+    "Planned": "Planejado",
+    "Open": "Aberto",
+    "Active": "Ativa",
+    "Reserved": "Reservada",
+    "Committed": "Comprometida",
+    "Released": "Liberada"
+  },
+  "problems": {
+    "cancelled": "Operação cancelada",
+    "not-authenticated": "Sessão expirada",
+    "forbidden": "Ação não permitida",
+    "not-found": "Registro não encontrado ou sem acesso",
+    "validation": "Revise os campos informados",
+    "conflict": "O estado atual não permite esta ação",
+    "version-mismatch": "Este registro foi alterado por outra pessoa. Recarregue a versão atual antes de continuar.",
+    "business-rule": "Regra de negócio não atendida",
+    "rate-limited": "Muitas tentativas; aguarde",
+    "unavailable": "Serviço indisponível",
+    "unexpected": "Erro inesperado"
+  },
+  "requisition": {
+    "new": "Nova requisição",
+    "editDraft": "Editar rascunho",
+    "searchNumber": "Número da requisição",
+    "allStatuses": "Todos os status",
+    "emptyHelp": "Crie uma requisição para iniciar uma compra.",
+    "number": "Número",
+    "costCenter": "Centro de custo",
+    "neededBy": "Necessário até",
+    "total": "Total estimado",
+    "currency": "Moeda",
+    "purpose": "Finalidade",
+    "header": "Dados da requisição",
+    "revision": "Revisão",
+    "lines": "Itens",
+    "noLines": "Adicione ao menos um item antes de submeter.",
+    "description": "Descrição",
+    "quantity": "Quantidade",
+    "unitPrice": "Preço unitário estimado",
+    "lineTotal": "Total do item",
+    "removeLine": "Remover",
+    "serverTotal": "Total calculado pelo servidor",
+    "previewTotal": "Prévia local (não oficial)",
+    "addLine": "Adicionar item",
+    "editLine": "Editar item {{number}}",
+    "catalogItem": "Item de catálogo",
+    "freeLine": "Item livre (sem catálogo)",
+    "linePreview": "Prévia do total do item",
+    "attachments": "Anexos",
+    "attachmentsNotice": "Somente metadados nesta fase; o envio do arquivo chega na Fase 30.",
+    "fileName": "Nome do arquivo",
+    "mediaType": "Tipo",
+    "length": "Tamanho (bytes)",
+    "addAttachment": "Registrar anexo",
+    "submit": "Submeter",
+    "discard": "Descartar rascunho",
+    "confirmDiscard": "Descartar este rascunho? Esta ação não pode ser desfeita.",
+    "confirmSubmit": "Confirmar submissão",
+    "submitSummary": "Total {{total}} em {{lines}} item(ns). Disponível no orçamento: {{available}}. A submissão reserva o valor; o servidor confirma a disponibilidade.",
+    "timeline": "Histórico",
+    "stateEntry": "Status",
+    "reservationEntry": "Reserva orçamentária",
+    "systemActor": "Sistema",
+    "systemReason": "Transição automática do sistema",
+    "copiedFrom": "Copiada de outra requisição",
+    "withdraw": "Retirar submissão",
+    "cancel": "Cancelar requisição",
+    "copy": "Copiar como novo rascunho",
+    "confirmCancel": "Cancelar requisição",
+    "reasonHelp": "Informe o motivo (10 a 500 caracteres). A reserva será liberada.",
+    "confirmWithdraw": "Retirar submissão",
+    "withdrawHelp": "A requisição volta para rascunho com nova revisão e a reserva é liberada.",
+    "linesTable": "Tabela de itens"
+  },
+  "budget": {
+    "availability": "Disponibilidade orçamentária",
+    "period": "Período",
+    "available": "Disponível",
+    "reserved": "Reservado",
+    "committed": "Comprometido",
+    "amount": "Valor alocado",
+    "insufficientPreview": "A prévia indica saldo insuficiente; a submissão será recusada se o servidor confirmar.",
+    "noOpenAllocation": "Não há alocação ativa em período aberto para este centro de custo e moeda.",
+    "availabilityUnknown": "Disponibilidade visível apenas para o próprio rascunho ou com permissão de orçamento.",
+    "range": "Vigência",
+    "open": "Abrir",
+    "close": "Encerrar",
+    "newPeriod": "Novo período fiscal",
+    "startDate": "Início",
+    "endDate": "Fim",
+    "confirmOpen": "Abrir o período {{code}}?",
+    "confirmClose": "Encerrar o período {{code}}? Períodos encerrados não aceitam novas reservas.",
+    "allPeriods": "Todos os períodos",
+    "newAllocation": "Nova alocação",
+    "allocation": "Alocação orçamentária",
+    "summary": "Resumo",
+    "changeAmount": "Alterar valor",
+    "amountHistory": "Histórico de valores",
+    "reservations": "Reservas",
+    "requisition": "Requisição",
+    "releaseReason": "Motivo da liberação",
+    "confirmCloseAllocation": "Encerrar alocação",
+    "reservationsTable": "Tabela de reservas"
   }
 }

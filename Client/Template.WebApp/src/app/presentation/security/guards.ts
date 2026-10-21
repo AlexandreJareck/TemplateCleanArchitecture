@@ -12,9 +12,14 @@ export const authenticatedGuard: CanActivateFn = async () => {
   return router.parseUrl('/login?reason=expired');
 };
 
+/** Requires `data.permission`, or any of `data.anyPermission` (resource-scoped reads such as REQ-011). */
 export const permissionGuard: CanActivateFn = (route) => {
+  const session = inject(SessionFacade);
   const permission = route.data['permission'];
-  return typeof permission === 'string' && inject(SessionFacade).can(permission)
-    ? true
-    : inject(Router).parseUrl('/forbidden');
+  const anyPermission = route.data['anyPermission'];
+  const allowed =
+    (typeof permission === 'string' && session.can(permission)) ||
+    (Array.isArray(anyPermission) &&
+      anyPermission.some((value) => typeof value === 'string' && session.can(value)));
+  return allowed ? true : inject(Router).parseUrl('/forbidden');
 };

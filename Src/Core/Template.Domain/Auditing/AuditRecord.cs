@@ -25,7 +25,11 @@ public sealed class AuditRecord
     {
         "reason", "sessionFamilyId", "revokedCount", "permission", "policy", "endpoint",
         // Phase 25 master data: stable codes, opaque IDs and field names only, never contact or address values.
-        "code", "fields", "provider", "departmentId", "categoryId", "unitOfMeasureId"
+        "code", "fields", "provider", "departmentId", "categoryId", "unitOfMeasureId",
+        // Phase 27 procurement: opaque IDs, numbers, revisions, amounts and reason codes only, never purposes, line
+        // descriptions or attachment names.
+        "number", "requisitionId", "allocationId", "reservationId", "fiscalPeriodId", "costCenterId", "revision",
+        "amount", "previousAmount", "currency", "releaseReason", "lineNumber", "attachmentId", "eventType"
     };
 
     private AuditRecord()

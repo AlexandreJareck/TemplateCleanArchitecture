@@ -391,7 +391,7 @@ public sealed class ArchitectureRulesTests
             .Where(path => File.ReadAllText(path).Contains("[StableProblemCodes]", StringComparison.Ordinal))
             .ToArray();
 
-        controllers.Length.ShouldBe(12); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup controllers
+        controllers.Length.ShouldBe(15); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers
         foreach (var path in controllers)
             ActionsWithoutExplicitAuthorization(File.ReadAllText(path)).ShouldBe(0, Relative(path));
     }
@@ -452,7 +452,7 @@ public sealed class ArchitectureRulesTests
         ContainsAny("string? HashRefreshToken(string? token);", SessionCryptoMarkers()).ShouldBeFalse();
     }
 
-    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog"];
+    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions"];
 
     [Fact]
     public void Domain_Modules_Reference_Each_Other_Only_Through_The_Shared_Kernel()
@@ -523,6 +523,59 @@ public sealed class ArchitectureRulesTests
         ContainsAny("logger.LogWarning(\"Provider {Provider} failed\", Provider);", UrlLoggingMarkers()).ShouldBeFalse();
         "[HttpDelete(\"{id:guid}\")]".Contains("[HttpDelete", StringComparison.Ordinal).ShouldBeTrue();
     }
+
+    [Fact]
+    public void Phase27_Raw_Sql_And_Row_Locks_Live_In_Persistence_Only()
+    {
+        // BUD-006 / BUD-011: row locks and the counter upsert are Persistence details behind Application ports.
+        SourceViolations("Src", RawSqlMarkers())
+            .ShouldAllBe(path => path.StartsWith("Src/Infrastructure/Template.Infrastructure.Persistence/", StringComparison.Ordinal));
+        SourceViolations("Src/Core", RawSqlMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Presentation", RawSqlMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Phase27_Budget_Reservations_Change_Only_Through_Requisition_Transitions()
+    {
+        // BUD-004..008 / REQ-005: reserve and release run inside the requisition transition use cases (one transaction);
+        // no controller or other use case reserves or releases funds directly.
+        SourceViolations("Src/Core/Template.Application", ReservationMutationMarkers())
+            .ShouldBe(["Src/Core/Template.Application/Features/Requisitions/RequisitionTransitionUseCases.cs"]);
+        SourceViolations("Src/Presentation/Template.WebApi/Controllers", ReservationMutationMarkers()).ShouldBeEmpty();
+        var budgetController = ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/BudgetAllocationsController.cs");
+        budgetController.ShouldNotContain("/reserve\"", Case.Insensitive);
+        budgetController.ShouldNotContain("/release\"", Case.Insensitive);
+    }
+
+    [Fact]
+    public void Phase27_Procurement_Aggregates_Expose_No_Public_Setters()
+    {
+        // Core instructions: transitions are behavior methods; public setters would bypass REQ-006 and BUD-003..008.
+        SourceViolations("Src/Core/Template.Domain/Budgeting", PublicSetterMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain/Requisitions", PublicSetterMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Phase27_Controlled_Mutations_Are_Detected()
+    {
+        ContainsAny("using Template.Domain.Organization;", OtherDomainModuleMarkers("Requisitions")).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Budgeting;", OtherDomainModuleMarkers("Requisitions")).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Common;", OtherDomainModuleMarkers("Budgeting")).ShouldBeFalse();
+        ContainsAny("await context.Database.ExecuteSqlRawAsync(sql);", RawSqlMarkers()).ShouldBeTrue();
+        ContainsAny("query.FromSqlInterpolated($\"SELECT 1\")", RawSqlMarkers()).ShouldBeTrue();
+        ContainsAny("allocation.Reserve(id, requisitionId, 1, amount, period, date, actor, now, correlation);", ReservationMutationMarkers()).ShouldBeTrue();
+        ContainsAny("allocation.Release(requisitionId, BudgetReleaseReason.Cancelled, actor, now, correlation);", ReservationMutationMarkers()).ShouldBeTrue();
+        ContainsAny("var available = allocation.AvailableAmount;", ReservationMutationMarkers()).ShouldBeFalse();
+        ContainsAny("public RequisitionStatus Status { get; set; }", PublicSetterMarkers()).ShouldBeTrue();
+        ContainsAny("public RequisitionStatus Status { get; private set; }", PublicSetterMarkers()).ShouldBeFalse();
+        ContainsAny("public decimal Amount { get; init; }", PublicSetterMarkers()).ShouldBeTrue();
+    }
+
+    private static string[] RawSqlMarkers() => ["ExecuteSqlRaw", "ExecuteSqlInterpolated", "FromSqlRaw", "FromSqlInterpolated", "SqlQuery<", "SqlQueryRaw<"];
+
+    private static string[] ReservationMutationMarkers() => [".Reserve(", ".Release(", ".Commit("];
+
+    private static string[] PublicSetterMarkers() => ["{ get; set; }", "{ get; init; }", "{ set; }", " public set "];
 
     private const string IntegrationsProject = "Src/Infrastructure/Template.Infrastructure.Integrations/";
 

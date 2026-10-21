@@ -17,7 +17,7 @@ function setup(snapshot: SessionSnapshot, error?: ApplicationError, allowed = fa
     snapshot: signal(snapshot),
     error: signal(error),
     restore: vi.fn(),
-    can: vi.fn(() => allowed),
+    can: vi.fn((permission: string) => allowed && permission.length > 0),
   };
   TestBed.configureTestingModule({
     providers: [provideRouter([]), { provide: SessionFacade, useValue: facade }],
@@ -53,5 +53,17 @@ describe('route guards', () => {
     );
     expect(result?.toString()).toBe('/forbidden');
     expect(TestBed.inject(Router)).toBeTruthy();
+  });
+
+  it('accepts any of the listed permissions for resource-scoped reads (REQ-011)', () => {
+    const facade = setup({ status: 'anonymous' });
+    facade.can.mockImplementation((permission: string) => permission === 'requisitions.read-all');
+    const route = {
+      data: { anyPermission: ['requisitions.read-team', 'requisitions.read-all'] },
+    } as unknown as ActivatedRouteSnapshot;
+    const result = TestBed.runInInjectionContext(() =>
+      permissionGuard(route, {} as RouterStateSnapshot),
+    );
+    expect(result).toBe(true);
   });
 });

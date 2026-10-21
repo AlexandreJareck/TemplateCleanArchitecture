@@ -21,7 +21,10 @@ public enum ErrorCategory
     RateLimited,
     Gone,
     // Phase 25: optional external provider unavailable (enrichment endpoints only, INT-001 → 503).
-    Unavailable
+    Unavailable,
+    // Phase 27: attachment metadata over the file policy (FIL-002 → 413 / 415).
+    PayloadTooLarge,
+    UnsupportedMediaType
 }
 
 /// <summary>
