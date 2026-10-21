@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using Template.Application.Common.Concurrency;
 using Template.Application.Interfaces;
+using Template.Application.Interfaces.Budgeting;
 using Template.Application.Interfaces.Catalog;
 using Template.Application.Interfaces.Organization;
 using Template.Application.Interfaces.Suppliers;
@@ -18,7 +19,15 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
     private static readonly HashSet<string> ConcurrencyGuardConstraints = new(StringComparer.Ordinal)
     {
         "IX_AccessRefreshTokens_FamilyId_Sequence",
-        "IX_SupplierStatusChanges_SupplierId_Sequence"
+        "IX_SupplierStatusChanges_SupplierId_Sequence",
+        // Phase 27: history sequences of the budget and requisition aggregates, and BUD-008 (one active reservation
+        // per requisition) when two writers race on different allocations.
+        "IX_BudgetAllocationAmountChanges_AllocationId_Sequence",
+        "IX_BudgetReservationChanges_ReservationId_Sequence",
+        "IX_PurchaseRequisitionStateChanges_RequisitionId_Sequence",
+        "IX_PurchaseRequisitionLines_RequisitionId_LineNumber",
+        "IX_PurchaseRequisitionSubmissions_RequisitionId_Revision",
+        IBudgetAllocationRepository.ActiveReservationUniqueKey
     };
 
     /// <summary>
@@ -33,10 +42,16 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         ICategoryRepository.CodeUniqueKey,
         IUnitOfMeasureRepository.CodeUniqueKey,
         ICatalogItemRepository.CodeUniqueKey,
-        ISupplierRepository.TaxIdUniqueKey
+        ISupplierRepository.TaxIdUniqueKey,
+        IFiscalPeriodRepository.CodeUniqueKey,
+        IFiscalPeriodRepository.NoOverlapKey,
+        IBudgetAllocationRepository.UniqueKey
     };
 
     private IDbContextTransaction? transaction;
+
+    /// <summary>EF InMemory has no transactions; a logical scope keeps the same call sequence (functional tests only).</summary>
+    private bool logicalTransaction;
 
     public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -57,25 +72,54 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         }
         catch (DbUpdateException error) when (error.InnerException is PostgresException
         {
-            SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: { } constraint
+            SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.ExclusionViolation, ConstraintName: { } constraint
         } && BusinessKeyConstraints.Contains(constraint))
         {
             throw new UniqueConstraintViolationException(constraint, error);
         }
+        catch (Exception error) when (IsTransientConflict(error))
+        {
+            // Phase 27: concurrent inserts checked by the period exclusion constraint (or rows locked in opposite
+            // order) can deadlock; PostgreSQL aborts one transaction, which then lost the race like a version conflict.
+            throw new ConcurrencyConflictException("A concurrent transaction won a deadlock or serialization race.", error);
+        }
+    }
+
+    private static bool IsTransientConflict(Exception error)
+    {
+        for (var current = error; current is not null; current = current.InnerException)
+        {
+            if (current is PostgresException { SqlState: PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.SerializationFailure })
+                return true;
+        }
+
+        return false;
     }
 
     public void DiscardChanges() => dbContext.ChangeTracker.Clear();
 
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
-        if (transaction is not null)
+        if (transaction is not null || logicalTransaction)
             throw new InvalidOperationException("A unit-of-work transaction is already active.");
+
+        if (!dbContext.Database.IsRelational())
+        {
+            logicalTransaction = true;
+            return;
+        }
 
         transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
     }
 
     public async Task<bool> CommitTransactionAsync(CancellationToken cancellationToken = default)
     {
+        if (logicalTransaction)
+        {
+            logicalTransaction = false;
+            return await SaveChangesAsync(cancellationToken);
+        }
+
         var activeTransaction = transaction
             ?? throw new InvalidOperationException("No unit-of-work transaction is active.");
 
@@ -98,6 +142,13 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
 
     public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
     {
+        if (logicalTransaction)
+        {
+            logicalTransaction = false;
+            dbContext.ChangeTracker.Clear();
+            return;
+        }
+
         var activeTransaction = transaction
             ?? throw new InvalidOperationException("No unit-of-work transaction is active.");
 
@@ -114,6 +165,7 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
 
     public async ValueTask DisposeAsync()
     {
+        logicalTransaction = false;
         if (transaction is null)
             return;
 

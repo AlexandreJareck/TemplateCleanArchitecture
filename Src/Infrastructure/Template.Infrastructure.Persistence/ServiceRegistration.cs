@@ -5,10 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Auditing;
+using Template.Application.Interfaces.Budgeting;
 using Template.Application.Interfaces.Catalog;
 using Template.Application.Interfaces.Idempotency;
 using Template.Application.Interfaces.Organization;
 using Template.Application.Interfaces.Repositories;
+using Template.Application.Interfaces.Requisitions;
 using Template.Application.Interfaces.Suppliers;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Idempotency;
@@ -47,11 +49,17 @@ public static class ServiceRegistration
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<ICostCenterRepository, CostCenterRepository>();
         services.AddScoped<IOrganizationSettingsRepository, OrganizationSettingsRepository>();
-        services.AddScoped<IOrganizationSettingsLock, NoBudgetAllocationsYetSettingsLock>();
+        services.AddScoped<IOrganizationSettingsLock, BudgetAllocationSettingsLock>();
         services.AddScoped<ISupplierRepository, SupplierRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IUnitOfMeasureRepository, UnitOfMeasureRepository>();
         services.AddScoped<ICatalogItemRepository, CatalogItemRepository>();
+        services.AddScoped<IFiscalPeriodRepository, FiscalPeriodRepository>();
+        services.AddScoped<IBudgetAllocationRepository, BudgetAllocationRepository>();
+        services.AddScoped<IPurchaseRequisitionRepository, PurchaseRequisitionRepository>();
+        services.AddScoped<IRequisitionNumberAllocator, RequisitionNumberAllocator>();
+        services.AddScoped<IOrganizationScopeReader, OrganizationScopeReader>();
+        services.AddScoped<IRequisitionReferenceReader, RequisitionReferenceReader>();
 
         return services;
     }
