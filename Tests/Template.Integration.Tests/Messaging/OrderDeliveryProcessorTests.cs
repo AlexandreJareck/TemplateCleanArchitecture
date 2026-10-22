@@ -200,6 +200,7 @@ public sealed class OrderDeliveryProcessorTests
 
         var store = new InMemoryProcessedMessageStore(capacity: 2);
         await store.MarkProcessedAsync("s", "1", CancellationToken.None);
+        await store.MarkProcessedAsync("s", "1", CancellationToken.None); // duplicate is an idempotent no-op
         await store.MarkProcessedAsync("s", "2", CancellationToken.None);
         await store.MarkProcessedAsync("s", "3", CancellationToken.None);
         (await store.WasProcessedAsync("s", "1", CancellationToken.None)).ShouldBeFalse();

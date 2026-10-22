@@ -57,4 +57,23 @@ public static class ServiceRegistration
         var settings = configuration.GetSection(RabbitMqSettings.SectionName).Get<RabbitMqSettings>() ?? new RabbitMqSettings();
         return settings.Enabled ? new DnsEndPoint(settings.HostName, settings.Port) : null;
     }
+
+    /// <summary>Registers only the Phase 28 procurement transport for the separately deployable Worker.</summary>
+    public static IServiceCollection AddProcurementMessagingInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        bool useBroker)
+    {
+        services.AddOptions<RabbitMqSettings>()
+            .Bind(configuration.GetSection(RabbitMqSettings.SectionName))
+            .Validate(RabbitMqSettings.IsValid, "RabbitMqSettings is invalid when procurement messaging is enabled.")
+            .ValidateOnStart();
+        if (!useBroker)
+            return services;
+        services.AddSingleton<ProcurementDeliveryProcessor>();
+        services.AddSingleton<RabbitMqProcurementEventPublisher>();
+        services.AddSingleton<IProcurementEventPublisher>(provider => provider.GetRequiredService<RabbitMqProcurementEventPublisher>());
+        services.AddHostedService<RabbitMqProcurementConsumerService>();
+        return services;
+    }
 }
