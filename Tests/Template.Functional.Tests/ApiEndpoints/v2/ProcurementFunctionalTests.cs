@@ -1,7 +1,11 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Template.Application.Security;
+using Template.Infrastructure.Persistence.Contexts;
+using Template.Infrastructure.Persistence.Messaging;
 
 namespace Template.Functional.Tests.ApiEndpoints.v2;
 
@@ -50,6 +54,13 @@ public sealed class ProcurementFunctionalTests(ProcurementWebApplicationFactory 
         var reservation = (await ApiUser.ReadAsync(reservations)).GetProperty("items")[0];
         reservation.GetProperty("requisitionId").GetGuid().ShouldBe(id);
         reservation.GetProperty("status").GetString().ShouldBe("Reserved");
+
+        // The Test host has no broker or messaging hosted service. HTTP success persists the versioned Outbox event
+        // and therefore does not depend on immediate broker availability.
+        await using var scope = factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        (await context.Set<OutboxMessage>().CountAsync(message =>
+            message.AggregateId == id && message.EventType == "procurement.requisition.submitted")).ShouldBe(1);
     }
 
     [Fact]

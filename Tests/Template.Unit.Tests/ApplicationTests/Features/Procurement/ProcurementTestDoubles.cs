@@ -6,6 +6,8 @@ using Template.Application.Interfaces;
 using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Budgeting;
 using Template.Application.Interfaces.Requisitions;
+using Template.Application.Interfaces.Messaging;
+using Template.Application.Messaging.Procurement;
 using Template.Application.Security;
 using Template.Application.Services.Procurement;
 using Template.Domain.Budgeting;
@@ -69,9 +71,10 @@ internal sealed class ProcurementTestDoubles
     public FakeNumbers Numbers { get; } = new();
     public FakeScope Scope { get; } = new();
     public FakeReferences References { get; } = new();
+    public FakeOutbox Outbox { get; } = new();
 
     public ProcurementWriter NewWriter() => new(
-        UnitOfWork, Audit, Clock, new AccessTestDoubles.FixedRequestContext(), User, Permissions, Settings, NullLogger<ProcurementWriter>.Instance);
+        UnitOfWork, Audit, Clock, new AccessTestDoubles.FixedRequestContext(), User, Permissions, Settings, Outbox, NullLogger<ProcurementWriter>.Instance);
 
     public RequisitionDraftCommandHandlers Drafts()
     {
@@ -105,6 +108,12 @@ internal sealed class ProcurementTestDoubles
         public Guid? Id { get; set; }
         public string? UserId => Id?.ToString();
         public string? UserName => Id is null ? null : "synthetic-user";
+    }
+
+    internal sealed class FakeOutbox : IIntegrationEventOutbox
+    {
+        public List<IntegrationEventEnvelope> Events { get; } = [];
+        public void Add(IntegrationEventEnvelope envelope) => Events.Add(envelope);
     }
 
     internal sealed class FakePermissions : IPermissionReader

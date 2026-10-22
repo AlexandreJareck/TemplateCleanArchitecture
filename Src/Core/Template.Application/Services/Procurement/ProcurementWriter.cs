@@ -8,6 +8,8 @@ using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Auditing;
 using Template.Application.Interfaces.Organization;
 using Template.Application.Logging;
+using Template.Application.Interfaces.Messaging;
+using Template.Application.Messaging.Procurement;
 using Template.Application.Wrappers;
 using Template.Domain.Auditing;
 using Template.Domain.Common;
@@ -29,6 +31,7 @@ public sealed class ProcurementWriter(
     IAuthenticatedUserService currentUser,
     IPermissionReader permissionReader,
     IOrganizationSettingsRepository organizationSettings,
+    IIntegrationEventOutbox outbox,
     ILogger<ProcurementWriter> logger)
 {
     public const string MeterName = "Template.Procurement";
@@ -164,6 +167,15 @@ public sealed class ProcurementWriter(
             DomainEventCounter.Add(1, new KeyValuePair<string, object?>("event_type", domainEvent.EventType));
             logger.LogInformation(LogEvents.ProcurementEventRecorded, "Procurement event {EventType} recorded", domainEvent.EventType);
         }
+    }
+
+    /// <summary>Maps and stages domain events before the business transaction commits (INT-004).</summary>
+    public IReadOnlyList<DomainEvent> Stage(IEnumerable<DomainEvent> domainEvents)
+    {
+        var staged = domainEvents.ToArray();
+        foreach (var domainEvent in staged)
+            outbox.Add(ProcurementIntegrationEventContract.FromDomainEvent(domainEvent, CorrelationId));
+        return staged;
     }
 
     /// <summary>Audit-safe log of a budget rejection (rule and currency only, never the requisition content).</summary>

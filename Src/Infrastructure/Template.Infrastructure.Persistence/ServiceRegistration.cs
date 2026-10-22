@@ -11,11 +11,13 @@ using Template.Application.Interfaces.Idempotency;
 using Template.Application.Interfaces.Organization;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Interfaces.Requisitions;
+using Template.Application.Interfaces.Messaging;
 using Template.Application.Interfaces.Suppliers;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Idempotency;
 using Template.Infrastructure.Persistence.Repositories;
 using Template.Infrastructure.Persistence.Seeds;
+using Template.Infrastructure.Persistence.Messaging;
 
 namespace Template.Infrastructure.Persistence;
 
@@ -60,6 +62,10 @@ public static class ServiceRegistration
         services.AddScoped<IRequisitionNumberAllocator, RequisitionNumberAllocator>();
         services.AddScoped<IOrganizationScopeReader, OrganizationScopeReader>();
         services.AddScoped<IRequisitionReferenceReader, RequisitionReferenceReader>();
+        services.AddScoped<PostgreSqlMessagingStore>();
+        services.AddScoped<IIntegrationEventOutbox>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
+        services.AddScoped<IOutboxStore>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
+        services.AddScoped<IProcurementEventEffectStore>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
 
         return services;
     }
@@ -68,13 +74,14 @@ public static class ServiceRegistration
     /// Applies application migrations (relational providers only) and seeds the default products.
     /// Keeps <see cref="ApplicationDbContext"/> inside this project.
     /// </summary>
-    public static async Task InitializeApplicationDatabaseAsync(this IServiceProvider services, bool applyMigrations)
+    public static async Task InitializeApplicationDatabaseAsync(this IServiceProvider services, bool applyMigrations, bool seedDefaultData = true)
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         if (applyMigrations)
             await context.Database.MigrateAsync();
 
-        await DefaultData.SeedAsync(context);
+        if (seedDefaultData)
+            await DefaultData.SeedAsync(context);
     }
 
     /// <summary>Readiness probe of the application database (EF Core <c>CanConnectAsync</c>), without exposing the context.</summary>
