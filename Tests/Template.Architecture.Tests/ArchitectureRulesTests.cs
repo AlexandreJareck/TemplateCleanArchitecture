@@ -84,16 +84,17 @@ public sealed class ArchitectureRulesTests
     }
 
     [Fact]
-    public void WebApi_Is_The_Only_Http_Context_Adapter_For_The_Current_User()
+    public void Composition_Roots_Own_Their_Current_User_Adapters()
     {
         SourceViolations("Src", [": IAuthenticatedUserService"])
             .ShouldBe(["Src/Presentation/Template.WebApi/Infrastructure/Services/AuthenticatedUserService.cs",
-                "Src/Infrastructure/Template.Infrastructure.Persistence/Contexts/ApplicationDbContextFactory.cs"], ignoreOrder: true);
+                "Src/Infrastructure/Template.Infrastructure.Persistence/Contexts/ApplicationDbContextFactory.cs",
+                "Src/Workers/Template.Worker/WorkerRequestContext.cs"], ignoreOrder: true);
         SourceViolations("Src/Infrastructure", ["IHttpContextAccessor"]).ShouldBeEmpty();
     }
 
     [Fact]
-    public void WebApi_Is_The_Only_Project_That_Composes_Infrastructure()
+    public void Only_Approved_Composition_Roots_And_Tests_Compose_Infrastructure()
     {
         var projects = Directory.GetFiles(Root, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
@@ -109,6 +110,7 @@ public sealed class ArchitectureRulesTests
 
         composers.ShouldBe([
             "Src/Presentation/Template.WebApi/Template.WebApi.csproj",
+            "Src/Workers/Template.Worker/Template.Worker.csproj",
             "Tests/Template.Elasticsearch.Integration.Tests/Template.Elasticsearch.Integration.Tests.csproj",
             "Tests/Template.Integration.Tests/Template.Integration.Tests.csproj",
             "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj",
@@ -135,7 +137,8 @@ public sealed class ArchitectureRulesTests
         var rabbitMqSources = SourceViolations("Src", ["using RabbitMQ"]);
 
         rabbitMqProjects.ShouldBe(["Src/Infrastructure/Template.Infrastructure.Messaging/Template.Infrastructure.Messaging.csproj"]);
-        hostedServiceSources.ShouldAllBe(path => path.StartsWith(MessagingProject, StringComparison.Ordinal));
+        hostedServiceSources.ShouldAllBe(path => path.StartsWith(MessagingProject, StringComparison.Ordinal)
+            || path.StartsWith(WorkerProject, StringComparison.Ordinal));
         hostedServiceSources.ShouldNotBeEmpty();
         rabbitMqSources.ShouldAllBe(path => path.StartsWith(MessagingProject, StringComparison.Ordinal));
         SourceViolations("Src", ["class RabbitMqSettings"]).ShouldBe([$"{MessagingProject}RabbitMqSettings.cs"]);
@@ -162,6 +165,21 @@ public sealed class ArchitectureRulesTests
         References(webApi, "PackageReference").ShouldNotContain(package => package.Contains("RabbitMQ", StringComparison.Ordinal));
         SourceViolations("Src/Presentation", MessagingPlumbingMarkers()).ShouldBeEmpty();
         ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldContain("AddMessagingInfrastructure(");
+        ReadSource("Src/Presentation/Template.WebApi/Program.cs").ShouldNotContain("AddProcurementMessagingInfrastructure(");
+    }
+
+    [Fact]
+    public void Worker_Is_A_Thin_Composition_Root_And_Owns_No_RabbitMq_Vendor_Code()
+    {
+        var worker = LoadProject($"{WorkerProject}Template.Worker.csproj");
+        References(worker, "ProjectReference").ShouldBe([
+            @"..\..\Core\Template.Application\Template.Application.csproj",
+            @"..\..\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj",
+            @"..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj"
+        ]);
+        References(worker, "PackageReference").ShouldNotContain(package => package.Contains("RabbitMQ", StringComparison.Ordinal));
+        SourceViolations(WorkerProject.TrimEnd('/'), ["using RabbitMQ", "IChannel", "BasicPublish", "BasicConsume"]).ShouldBeEmpty();
+        ReadSource($"{WorkerProject}Program.cs").ShouldContain("AddProcurementMessagingInfrastructure(");
     }
 
     [Fact]
@@ -706,6 +724,7 @@ public sealed class ArchitectureRulesTests
     ];
 
     private const string MessagingProject = "Src/Infrastructure/Template.Infrastructure.Messaging/";
+    private const string WorkerProject = "Src/Workers/Template.Worker/";
 
     private static string[] MessagingPlumbingMarkers() =>
     [

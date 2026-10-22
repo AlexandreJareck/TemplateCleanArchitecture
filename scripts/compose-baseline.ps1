@@ -97,6 +97,15 @@ function Wait-HttpOk([string]$Path, [int]$TimeoutSeconds) {
     return $false
 }
 
+function Wait-SqlValue([string]$DatabaseVariable, [string]$Sql, [string]$Expected, [int]$TimeoutSeconds = 90) {
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    do {
+        if ((Invoke-Sql $DatabaseVariable $Sql) -eq $Expected) { return $true }
+        Start-Sleep -Seconds 2
+    } while ((Get-Date) -lt $deadline)
+    return $false
+}
+
 function Get-Status([string]$Method, [string]$Path, [string]$Body, [hashtable]$Headers = @{}) {
     try {
         $parameters = @{ Uri = "$baseUri$Path"; Method = $Method; UseBasicParsing = $true; TimeoutSec = 30; Headers = $Headers }
@@ -149,7 +158,7 @@ $defaultConfig = docker compose --env-file .env.example config -q 2>&1
 Write-Check 'compose.default-config-renders' ($LASTEXITCODE -eq 0)
 
 $images = @(Invoke-Compose config --images 2>$null | Where-Object { $_ -and $_ -notlike "$project-*" })
-$dockerfileImages = @(Select-String -Path 'Src\Presentation\Template.WebApi\Dockerfile' -Pattern '^FROM\s+(\S+)' |
+$dockerfileImages = @(Select-String -Path 'Src\Presentation\Template.WebApi\Dockerfile','Src\Workers\Template.Worker\Dockerfile' -Pattern '^FROM\s+(\S+)' |
     ForEach-Object { $_.Matches[0].Groups[1].Value } | Where-Object { $_ -notin @('base', 'build', 'publish') })
 $allImages = $images + $dockerfileImages
 $mutable = @($allImages | Where-Object { $_ -notmatch '^[^@\s]+:[0-9][^@\s:]*@sha256:[0-9a-f]{64}$' })
@@ -221,6 +230,7 @@ $insightConfig = $configJson.services.'redis-insight'
 $insightMounts = @($insightConfig.volumes | ForEach-Object { "$($_.source):$($_.target)" }) -join ','
 $insightDependents = @($configJson.services.PSObject.Properties | Where-Object { $_.Value.depends_on -and $_.Value.depends_on.PSObject.Properties.Name -contains 'redis-insight' } | ForEach-Object { $_.Name })
 $webApiEnvironment = ($configJson.services.webapi.environment | ConvertTo-Json -Compress)
+$workerEnvironment = ($configJson.services.worker.environment | ConvertTo-Json -Compress)
 if ($RedisInsightRollback) {
     Write-Check 'redis-insight.rollback-image-1.14.0' ($insightImage -like 'redislabs/redisinsight:1.14.0@sha256:b03ab142*') $insightImage
     Write-Check 'redis-insight.rollback-legacy-volume' ($insightMounts -eq 'redis-insight-volume_data:/db') $insightMounts
@@ -233,6 +243,10 @@ else {
 }
 Write-Check 'redis-insight.no-dependents' ($insightDependents.Count -eq 0) ($insightDependents -join ',')
 Write-Check 'redis-insight.webapi-has-no-insight-setting' ($webApiEnvironment -notmatch '(?i)insight|RI_') ''
+Write-Check 'worker.no-public-port-or-fixed-container-name' (-not $configJson.services.worker.ports -and -not $configJson.services.worker.container_name) ''
+$workerCredentialsResolved = $configJson.services.worker.environment.ConnectionStrings__DefaultConnection -match [regex]::Escape([string]$configJson.services.db.environment.POSTGRES_PASSWORD) `
+    -and $configJson.services.worker.environment.RabbitMqSettings__Password -ceq $configJson.services.rabbitmq.environment.RABBITMQ_DEFAULT_PASS
+Write-Check 'worker.credentials-from-environment' $workerCredentialsResolved ''
 # Phase 22: the WebApi receives the signing key from the run env file through interpolation (value never shown).
 Write-Check 'jwt.key-from-environment' ($configJson.services.webapi.environment.JwtSettings__Key -ceq $jwtSigningKey) ''
 $committedJwtKeys = @(git grep -n -E 'JwtSettings__Key[:=] *[^$C ]' -- 'docker-compose*.yml' .env.example 2>$null)
@@ -256,7 +270,8 @@ Invoke-Compose up -d --build --wait --wait-timeout $StartupTimeoutSeconds 2>&1 |
 $upCode = $LASTEXITCODE
 $elapsed = [int]((Get-Date) - $started).TotalSeconds
 $webApiRunning = (Invoke-Compose ps --format '{{.Service}}|{{.State}}' 2>$null) -contains 'webapi|running'
-if (-not $webApiRunning) { $upCode = 1 }
+$workerRunning = (Invoke-Compose ps --format '{{.Service}}|{{.State}}' 2>$null) -contains 'worker|running'
+if (-not $webApiRunning -or -not $workerRunning) { $upCode = 1 }
 Write-Check 'startup.compose-up-wait' ($upCode -eq 0) "seconds=$elapsed states=$(Get-ServiceStates)"
 if ($upCode -ne 0) {
     # Later steps would only report noise; stop non-destructively and keep the resources for diagnosis.
@@ -280,8 +295,13 @@ $order | ForEach-Object { $parts = $_ -split '\|'; $startedAt[$parts[0]] = [date
 $prerequisites = 'db', 'elasticsearch', 'rabbitmq'
 $startedAfter = @($prerequisites | Where-Object { $startedAt[$_] -lt $startedAt['webapi'] }).Count -eq $prerequisites.Count
 Write-Check 'startup.webapi-started-after-prerequisites' $startedAfter (($order | ForEach-Object { ($_ -split '\|')[0] }) -join ' > ')
+$workerPrerequisites = 'db', 'rabbitmq'
+$workerStartedAfter = @($workerPrerequisites | Where-Object { $startedAt[$_] -lt $startedAt['worker'] }).Count -eq $workerPrerequisites.Count
+Write-Check 'startup.worker-started-after-prerequisites' $workerStartedAfter (($order | ForEach-Object { ($_ -split '\|')[0] }) -join ' > ')
 
 Write-Check 'webapi.ready' (Wait-HttpOk '/health/ready' 180) '/health/ready'
+$workerProbe = Invoke-Compose exec -T worker dotnet Template.Worker.dll --health-probe http://127.0.0.1:8080/health/ready 2>&1 | Out-String
+Write-Check 'worker.ready' ($LASTEXITCODE -eq 0) ($workerProbe.Trim())
 Invoke-Compose logs --no-color db 2>&1 | Select-String 'init-db.sh|database system is ready|Skipping initialization|CREATE DATABASE' |
     ForEach-Object { $_.Line } | Set-Content (Join-Path $outputDirectory '03-db-init.log')
 $dbInitLog = Get-Content (Join-Path $outputDirectory '03-db-init.log') -Raw
@@ -303,6 +323,8 @@ $migrationFiles = @{
 # database connection: migrations ran once, against databases that already accepted queries.
 $firstStartLog = Invoke-Compose logs --no-color webapi 2>&1 | Out-String
 Write-Check 'startup.webapi-no-database-connection-errors' ($firstStartLog -notmatch '(?i)Failed to connect|Connection refused|database .* does not exist|NpgsqlException') ''
+$firstWorkerLog = Invoke-Compose logs --no-color worker 2>&1 | Out-String
+Write-Check 'startup.worker-no-database-connection-errors' ($firstWorkerLog -notmatch '(?i)Failed to connect|Connection refused|database .* does not exist|NpgsqlException') ''
 $snapshot1 = Get-DatabaseSnapshot
 $snapshot1 | Set-Content (Join-Path $outputDirectory '04-db-snapshot-run1.txt')
 $appMigrations = [regex]::Matches($snapshot1, 'migrations=(\d+)')
@@ -318,13 +340,12 @@ foreach ($path in '/health', '/health/live', '/health/ready') {
     Write-Check "smoke.$path" ($response.Status -eq 200) "status=$($response.Status)"
     $response.Content | Set-Content (Join-Path $outputDirectory ("health-" + ($path.Trim('/') -replace '/', '-') + '.json'))
 }
-# Contract baseline: Phase 25 (additive v2 master-data, enrichment and user-lookup endpoints over the Phase 24
-# baseline, classified in docs/refactoring/phase-25-report.md; baseline-phase-6 and baseline-phase-24 are kept as history).
+# Contract baseline: Phase 27 is the last approved HTTP surface. Phase 28 changes messaging internals only.
 foreach ($version in 'v1', 'v2') {
     $response = Get-Status 'GET' "/swagger/$version/swagger.json"
     $captured = Join-Path $outputDirectory "openapi-$version.json"
     [System.IO.File]::WriteAllText($captured, $response.Content)
-    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-25\openapi-$version.json"))
+    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-27\openapi-$version.json"))
     $bytesEqual = ($baseline -replace "`r`n", "`n") -ceq ($response.Content -replace "`r`n", "`n")
     $structuralEqual = (($baseline | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress) -ceq (($response.Content | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress)
     Write-Check "openapi.$version.byte-equal-normalized" $bytesEqual ''
@@ -425,6 +446,55 @@ if (-not $RabbitMqRollback) {
     Write-Check 'rabbitmq.fixed-node-name' ($rabbitStatus -match 'Node name: rabbit@rabbitmq\s') ''
 }
 
+# Phase 28: WebApi and Worker deploy and stop independently.
+Invoke-Compose stop worker 2>&1 | Out-Null
+$webApiWithoutWorker = Get-Status 'GET' "/api/v2/product/$productId"
+Write-Check 'worker-absent.webapi-operates' ($webApiWithoutWorker.Status -eq 200) "status=$($webApiWithoutWorker.Status)"
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 worker 2>&1 | Out-Null
+Write-Check 'worker-absent.worker-recovers' ($LASTEXITCODE -eq 0 -and (Get-ServiceStates) -match 'worker\|running\|healthy') ''
+
+# Phase 28: an Outbox row accumulated while the broker is unavailable remains pending, then the Worker publishes it
+# after recovery and the Inbox applies its protected effect once.
+$backlogEventId = [guid]::NewGuid().ToString('D')
+$backlogAggregateId = [guid]::NewGuid().ToString('D')
+Invoke-Compose stop rabbitmq 2>&1 | Out-Null
+$backlogSql = @'
+INSERT INTO "MessagingOutbox"
+    ("EventId", "EventType", "EventVersion", "OccurredAtUtc", "CorrelationId", "CausationId",
+     "AggregateType", "AggregateId", "AggregateVersion", "PayloadJson", "CreatedAtUtc", "AttemptCount",
+     "NextAttemptAtUtc", "ClaimOwner", "ClaimExpiresAtUtc", "DispatchedAtUtc", "PoisonedAtUtc", "LastFailureCode")
+VALUES ('__EVENT__', 'procurement.requisition.expired', 1, now(), 'compose-phase28', NULL,
+        'PurchaseRequisition', '__AGGREGATE__', '1', '{"requisitionId":"__AGGREGATE__","revision":1}'::jsonb,
+        now(), 0, now(), NULL, NULL, NULL, NULL, NULL);
+'@
+$backlogSql = $backlogSql.Replace('__EVENT__', $backlogEventId).Replace('__AGGREGATE__', $backlogAggregateId)
+Invoke-Sql 'POSTGRES_DB_NAME' $backlogSql | Out-Null
+Start-Sleep -Seconds 3
+$pendingDuringOutage = Invoke-Sql 'POSTGRES_DB_NAME' "SELECT count(*) FROM ""MessagingOutbox"" WHERE ""EventId"" = '$backlogEventId' AND ""DispatchedAtUtc"" IS NULL;"
+Write-Check 'worker.broker-outage-keeps-outbox-pending' ($pendingDuringOutage -eq '1') "pending=$pendingDuringOutage"
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 rabbitmq 2>&1 | Out-Null
+$recovered = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT count(*) FROM ""MessagingOutbox"" WHERE ""EventId"" = '$backlogEventId' AND ""DispatchedAtUtc"" IS NOT NULL;" '1'
+$inboxApplied = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT count(*) FROM ""MessagingInbox"" WHERE ""EventId"" = '$backlogEventId' AND ""CompletedAtUtc"" IS NOT NULL;" '1'
+Write-Check 'worker.broker-recovery-drains-backlog' ($recovered -and $inboxApplied) "dispatched=$recovered inbox=$inboxApplied"
+
+# A database outage must not kill the process: liveness stays up, readiness fails, and both recover after PostgreSQL.
+Invoke-Compose stop db 2>&1 | Out-Null
+$workerLiveWithoutDb = Invoke-Compose exec -T worker dotnet Template.Worker.dll --health-probe http://127.0.0.1:8080/health/live 2>&1 | Out-String
+$workerLiveCode = $LASTEXITCODE
+$workerReadyWithoutDb = Invoke-Compose exec -T worker dotnet Template.Worker.dll --health-probe http://127.0.0.1:8080/health/ready 2>&1 | Out-String
+$workerReadyCode = $LASTEXITCODE
+Write-Check 'worker.postgres-outage-is-observable' ($workerLiveCode -eq 0 -and $workerReadyCode -ne 0) "live=$workerLiveCode ready=$workerReadyCode"
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 db 2>&1 | Out-Null
+$workerReadyAfterDbCode = 1
+$workerReadyAfterDb = ''
+for ($attempt = 0; $attempt -lt 30 -and $workerReadyAfterDbCode -ne 0; $attempt++) {
+    $workerReadyAfterDb = Invoke-Compose exec -T worker dotnet Template.Worker.dll --health-probe http://127.0.0.1:8080/health/ready 2>&1 | Out-String
+    $workerReadyAfterDbCode = $LASTEXITCODE
+    if ($workerReadyAfterDbCode -ne 0) { Start-Sleep -Seconds 2 }
+}
+Write-Check 'worker.postgres-recovery-restores-readiness' ($workerReadyAfterDbCode -eq 0) ($workerReadyAfterDb.Trim())
+Write-Check 'webapi.postgres-recovery-restores-readiness' (Wait-HttpOk '/health/ready' 120) ''
+
 $createIndex = Get-Status 'POST' '/api/v1/person/create-index?indexName=persons'
 $addPerson = Get-Status 'POST' '/api/v1/person/add-person' (@{ id = 9014; firstName = 'Synthetic' } | ConvertTo-Json -Compress)
 $getPerson = Get-Status 'GET' '/api/v1/person/get-person/9014'
@@ -458,8 +528,8 @@ Write-Check 'restart.webapi-ready-again' (Wait-HttpOk '/health/ready' 180) ''
 $snapshot2 = Get-DatabaseSnapshot
 $snapshot2 | Set-Content (Join-Path $outputDirectory '06-db-snapshot-run2.txt')
 Write-Check 'idempotency.second-startup-same-state' ($snapshot1 -ceq $snapshot2) ''
-$firstRunMigrations = (Invoke-Compose logs --no-color --until $secondStart webapi 2>&1 | Select-String 'Applying migration').Count
-$secondRunMigrations = (Invoke-Compose logs --no-color --since $secondStart webapi 2>&1 | Select-String 'Applying migration').Count
+$firstRunMigrations = ((Invoke-Compose logs --no-color --until $secondStart webapi worker 2>&1) | Select-String 'Applying migration').Count
+$secondRunMigrations = ((Invoke-Compose logs --no-color --since $secondStart webapi worker 2>&1) | Select-String 'Applying migration').Count
 Write-Check 'idempotency.no-migration-applied-on-second-startup' ($firstRunMigrations -gt 0 -and $secondRunMigrations -eq 0) "first=$firstRunMigrations second=$secondRunMigrations"
 
 # ---------------------------------------------------------------- 5. Non-destructive full stop/start
@@ -491,6 +561,8 @@ $states = Get-ServiceStates
 Write-Check 'shutdown.all-stopped' ($states -notmatch '\|running\|') $states
 $webApiLog = Invoke-Compose logs --no-color --since $stackRestart webapi 2>&1 | Out-String
 Write-Check 'shutdown.webapi-graceful' ($webApiLog -match 'Application stopping') ''
+$workerLog = Invoke-Compose logs --no-color --since $stackRestart worker 2>&1 | Out-String
+Write-Check 'shutdown.worker-graceful' ($workerLog -match 'Application (is shutting down|stopping)') ''
 $volumesAfter = (docker volume ls --filter "label=com.docker.compose.project=$project" --format '{{.Name}}' | Sort-Object) -join ','
 Write-Check 'shutdown.project-volumes-retained' ($volumesAfter -eq $volumes) $volumesAfter
 Write-Check 'isolation.normal-volumes-untouched' ((Get-NormalVolumes) -eq $normalVolumesBefore) ''
@@ -498,6 +570,8 @@ Write-Check 'isolation.normal-volumes-untouched' ((Get-NormalVolumes) -eq $norma
 # Sanitized bounded logs for review (the env file stays local and git-ignored).
 Invoke-Compose logs --no-color --tail 400 webapi 2>&1 | ForEach-Object { $_ -replace '(?i)(password|pwd|token|authorization)[^\s,;]*', '$1=***' } |
     Set-Content (Join-Path $outputDirectory '11-webapi-tail.log')
+Invoke-Compose logs --no-color --tail 400 worker 2>&1 | ForEach-Object { $_ -replace '(?i)(password|pwd|token|authorization)[^\s,;]*', '$1=***' } |
+    Set-Content (Join-Path $outputDirectory '12-worker-tail.log')
 
 # Phase 22: the signing key appears in no evidence file (the run env file is the only place that holds it).
 $jwtLeaks = @(Get-ChildItem $outputDirectory -Recurse -File | Where-Object { $_.FullName -ne $envFile -and ([string](Get-Content $_.FullName -Raw)).Contains($jwtSigningKey) })

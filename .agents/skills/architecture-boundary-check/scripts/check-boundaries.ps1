@@ -45,7 +45,7 @@ foreach ($file in $applicationPorts) {
 $presentationFiles = Get-ChildItem 'Src/Presentation' -Recurse -Filter *.cs
 foreach ($file in $presentationFiles) {
     $source = Get-Content -Raw -LiteralPath $file.FullName
-    if ($source -match '\b(DbContext|IGenericRepository|IProductRepository)\b') { $violations.Add("Presentation directly references persistence in $($file.FullName).") }
+    if ($source -match '\b(ApplicationDbContext|IdentityContext|IGenericRepository|IProductRepository)\b') { $violations.Add("Presentation directly references persistence in $($file.FullName).") }
 }
 
 $controllerFiles = Get-ChildItem 'Src/Presentation/Template.WebApi/Controllers' -Recurse -Filter *.cs

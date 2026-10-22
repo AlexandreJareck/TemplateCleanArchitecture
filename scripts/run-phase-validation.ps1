@@ -54,6 +54,7 @@ function Invoke-Step([string]$Name, [scriptblock]$Command) {
 Invoke-Step '00-git-status' { git status --short }
 Invoke-Step '01-restore' { & $DotNetPath restore TemplateCleanArchitecture.App.slnf --verbosity minimal --disable-parallel }
 Invoke-Step '02-build-webapi' { & $DotNetPath build Src\Presentation\Template.WebApi\Template.WebApi.csproj --no-restore --verbosity minimal --maxcpucount:1 /p:UseSharedCompilation=false }
+Invoke-Step '02b-build-worker' { & $DotNetPath build Src\Workers\Template.Worker\Template.Worker.csproj --no-restore --verbosity minimal --maxcpucount:1 /p:UseSharedCompilation=false }
 Invoke-Step '03-test-architecture' { & $DotNetPath test Tests\Template.Architecture.Tests\Template.Architecture.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '04-test-unit' { & $DotNetPath test Tests\Template.Unit.Tests\Template.Unit.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '05-test-integration' { & $DotNetPath test Tests\Template.Integration.Tests\Template.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
