@@ -46,7 +46,12 @@ public sealed class ProcurementPermissionMatrixTests(ProcurementWebApplicationFa
         ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/quotes/{Guid.Empty}/revisions", [Permissions.SourcingQuotesEnter]),
         ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/quotes/{Guid.Empty}/withdraw", [Permissions.SourcingQuotesEnter]),
         ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/exchange-rates", [Permissions.SourcingRatesManual]),
-        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/award", [Permissions.SourcingAwardsSubmit])
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/award", [Permissions.SourcingAwardsSubmit]),
+        // Phase 30 reports (RPT-001/006; data permissions are checked by the use case per report type).
+        ("GET", "/api/v2/report-jobs", [Permissions.ReportsRequest, Permissions.ReportsReadAll]),
+        ("GET", "/api/v2/report-jobs?scope=all", [Permissions.ReportsReadAll]),
+        ("POST", "/api/v2/report-jobs", [Permissions.ReportsRequest]),
+        ("POST", $"/api/v2/report-jobs/{Guid.Empty}/cancel", [Permissions.ReportsRequest])
     ];
 
     public static TheoryData<string> Roles => new(SeededRoles.All);

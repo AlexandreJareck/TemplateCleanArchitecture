@@ -111,6 +111,7 @@ public sealed class ArchitectureRulesTests
         composers.ShouldBe([
             "Src/Presentation/Template.WebApi/Template.WebApi.csproj",
             "Src/Workers/Template.Worker/Template.Worker.csproj",
+            "Tests/Template.Azurite.Integration.Tests/Template.Azurite.Integration.Tests.csproj",
             "Tests/Template.Elasticsearch.Integration.Tests/Template.Elasticsearch.Integration.Tests.csproj",
             "Tests/Template.Integration.Tests/Template.Integration.Tests.csproj",
             "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj",
@@ -174,8 +175,11 @@ public sealed class ArchitectureRulesTests
         var worker = LoadProject($"{WorkerProject}Template.Worker.csproj");
         References(worker, "ProjectReference").ShouldBe([
             @"..\..\Core\Template.Application\Template.Application.csproj",
+            // Phase 30: blob storage and the PDF/XLSX renderers run only in the Worker.
+            @"..\..\Infrastructure\Template.Infrastructure.Files\Template.Infrastructure.Files.csproj",
             @"..\..\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj",
-            @"..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj"
+            @"..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj",
+            @"..\..\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj"
         ]);
         References(worker, "PackageReference").ShouldNotContain(package => package.Contains("RabbitMQ", StringComparison.Ordinal));
         SourceViolations(WorkerProject.TrimEnd('/'), ["using RabbitMQ", "IChannel", "BasicPublish", "BasicConsume"]).ShouldBeEmpty();
@@ -409,7 +413,7 @@ public sealed class ArchitectureRulesTests
             .Where(path => File.ReadAllText(path).Contains("[StableProblemCodes]", StringComparison.Ordinal))
             .ToArray();
 
-        controllers.Length.ShouldBe(16); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers; Phase 29: +1 requests for quotation
+        controllers.Length.ShouldBe(17); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers; Phase 29: +1 requests for quotation; Phase 30: +1 report jobs
         foreach (var path in controllers)
             ActionsWithoutExplicitAuthorization(File.ReadAllText(path)).ShouldBe(0, Relative(path));
     }
@@ -470,7 +474,7 @@ public sealed class ArchitectureRulesTests
         ContainsAny("string? HashRefreshToken(string? token);", SessionCryptoMarkers()).ShouldBeFalse();
     }
 
-    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions", "Sourcing"];
+    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions", "Sourcing", "Files", "Reporting"];
 
     [Fact]
     public void Domain_Modules_Reference_Each_Other_Only_Through_The_Shared_Kernel()
@@ -635,6 +639,69 @@ public sealed class ArchitectureRulesTests
         ContainsAny("entries.sort((a, b) => a.normalizedTotal - b.normalizedTotal);", BrowserRankingMarkers()).ShouldBeTrue();
         ContainsAny("formatMoney(entry.normalizedTotal)", BrowserRankingMarkers()).ShouldBeFalse();
     }
+
+    [Fact]
+    public void Phase30_Rendering_And_Storage_Vendors_Stay_In_Their_Adapters()
+    {
+        // ADR-0004 / FIL-001: Core never sees Playwright, ClosedXML, Open XML or Azure types; the browser and the
+        // spreadsheet engine live only in Infrastructure.Reporting (composed by the Worker), blob storage only in Files.
+        SourceViolations("Src/Core", ReportingVendorMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core", BlobVendorMarkers()).ShouldBeEmpty();
+        foreach (var project in Directory.GetDirectories(Path.Combine(Root, "Src/Infrastructure")).Select(Relative))
+        {
+            if (!project.EndsWith("Template.Infrastructure.Reporting", StringComparison.Ordinal))
+                SourceViolations(project, ReportingVendorMarkers()).ShouldBeEmpty(project);
+            if (!project.EndsWith("Template.Infrastructure.Files", StringComparison.Ordinal))
+                SourceViolations(project, BlobVendorMarkers()).ShouldBeEmpty(project);
+        }
+
+        SourceViolations("Src/Presentation", ReportingVendorMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Presentation", BlobVendorMarkers()).ShouldBeEmpty();
+        References(LoadProject("Src/Presentation/Template.WebApi/Template.WebApi.csproj"), "ProjectReference")
+            .ShouldNotContain(reference => reference.Contains("Template.Infrastructure.Reporting", StringComparison.Ordinal));
+        foreach (var project in new[] { "Src/Core/Template.Application/Template.Application.csproj", "Src/Core/Template.Domain/Template.Domain.csproj" })
+            References(LoadProject(project), "PackageReference").ShouldNotContain(package =>
+                package.StartsWith("Azure.", StringComparison.Ordinal) || package == "ClosedXML" || package == "Microsoft.Playwright");
+    }
+
+    [Fact]
+    public void Phase30_Files_Domain_Holds_Metadata_Only_And_Reports_Accept_No_Templates()
+    {
+        // FIL-001: no bytes, streams or storage keys in the Files/Reporting domain; RPT-008: the HTTP request carries no
+        // template, markup or script and the HTML template encodes every value.
+        SourceViolations("Src/Core/Template.Domain/Files", FileBytesMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain/Reporting", FileBytesMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain/Files", PublicSetterMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain/Reporting", PublicSetterMarkers()).ShouldBeEmpty();
+        ContainsAny(ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/ReportingRequests.cs"), TemplateInputMarkers()).ShouldBeFalse();
+        var template = ReadSource("Src/Infrastructure/Template.Infrastructure.Reporting/Pdf/ReportHtmlTemplate.cs");
+        template.ShouldContain("WebUtility.HtmlEncode");
+        template.ShouldContain("default-src 'none'");
+        ReadSource("Src/Infrastructure/Template.Infrastructure.Reporting/Pdf/PlaywrightPdfRenderer.cs").ShouldContain("JavaScriptEnabled = false");
+    }
+
+    [Fact]
+    public void Phase30_Controlled_Mutations_Are_Detected()
+    {
+        ContainsAny("using ClosedXML.Excel;", ReportingVendorMarkers()).ShouldBeTrue();
+        ContainsAny("using Microsoft.Playwright;", ReportingVendorMarkers()).ShouldBeTrue();
+        ContainsAny("using Azure.Storage.Blobs;", BlobVendorMarkers()).ShouldBeTrue();
+        ContainsAny("using Template.Application.Interfaces.Files;", BlobVendorMarkers()).ShouldBeFalse();
+        ContainsAny("public byte[] Content { get; private set; }", FileBytesMarkers()).ShouldBeTrue();
+        ContainsAny("public string StorageKey { get; private set; }", FileBytesMarkers()).ShouldBeTrue();
+        ContainsAny("public string Sha256 { get; private set; }", FileBytesMarkers()).ShouldBeFalse();
+        ContainsAny("public sealed record RequestReportBody(string? ReportType, string? Markup);", TemplateInputMarkers()).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Reporting;", OtherDomainModuleMarkers("Files")).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Requisitions;", OtherDomainModuleMarkers("Reporting")).ShouldBeTrue();
+    }
+
+    private static string[] ReportingVendorMarkers() => ["using ClosedXML", "using Microsoft.Playwright", "using DocumentFormat.OpenXml", "ClosedXML.Excel.", "Microsoft.Playwright."];
+
+    private static string[] BlobVendorMarkers() => ["using Azure.Storage", "using Azure;", "Azure.Storage.Blobs."];
+
+    private static string[] FileBytesMarkers() => ["byte[]", "Stream ", "StorageKey", "BlobName", "ContainerName"];
+
+    private static string[] TemplateInputMarkers() => ["Html", "Script", "Css", "Markup", "string? Template"];
 
     private static string[] AwardAdjustmentMarkers() => [".AdjustForAward("];
 
