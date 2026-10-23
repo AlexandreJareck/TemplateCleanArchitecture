@@ -33,6 +33,7 @@ public static class ServiceRegistration
         services.AddScoped<Services.MasterData.MasterDataWriter>();
         services.AddScoped<Services.Integrations.PtaxRateResolver>();
         services.AddScoped<Services.Procurement.ProcurementWriter>();
+        services.AddScoped<IProcurementIntegrationEventHandler, Services.Procurement.ProcurementIntegrationEventHandler>();
         services.AddScoped<Features.Requisitions.RequisitionAccess>();
         services.AddScoped<ISessionRevocationService, SessionRevocationService>();
         services.AddSingleton<IValidateOptions<SessionSettings>, SessionSettingsValidator>();

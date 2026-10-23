@@ -12,6 +12,7 @@
       "Src\\Infrastructure\\Template.Infrastructure.Resources\\Template.Infrastructure.Resources.csproj",
       "Src\\Infrastructure\\Template.Infrastructure.Search\\Template.Infrastructure.Search.csproj",
       "Src\\Presentation\\Template.WebApi\\Template.WebApi.csproj",
+      "Src\\Workers\\Template.Worker\\Template.Worker.csproj",
       "Tests\\Template.Architecture.Tests\\Template.Architecture.Tests.csproj",
       "Tests\\Template.Elasticsearch.Integration.Tests\\Template.Elasticsearch.Integration.Tests.csproj",
       "Tests\\Template.Functional.Tests\\Template.Functional.Tests.csproj",

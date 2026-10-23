@@ -77,4 +77,10 @@ public static class LogEvents
     public static readonly EventId ProcurementEventRecorded = new(11000, nameof(ProcurementEventRecorded));
     public static readonly EventId ProcurementConcurrencyConflict = new(11001, nameof(ProcurementConcurrencyConflict));
     public static readonly EventId BudgetReservationRejected = new(11002, nameof(BudgetReservationRejected));
+    public static readonly EventId OutboxBatchClaimed = new(11003, nameof(OutboxBatchClaimed));
+    public static readonly EventId OutboxEventDispatched = new(11004, nameof(OutboxEventDispatched));
+    public static readonly EventId OutboxDispatchFailed = new(11005, nameof(OutboxDispatchFailed));
+    public static readonly EventId InboxEffectApplied = new(11006, nameof(InboxEffectApplied));
+    public static readonly EventId InboxDuplicateSkipped = new(11007, nameof(InboxDuplicateSkipped));
+    public static readonly EventId ProcurementMessageDeadLettered = new(11008, nameof(ProcurementMessageDeadLettered));
 }

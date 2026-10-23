@@ -1448,6 +1448,153 @@ namespace Template.Infrastructure.Persistence.Migrations
                     b.ToTable("ApiIdempotencyRecords", (string)null);
                 });
 
+            modelBuilder.Entity("Template.Infrastructure.Persistence.Messaging.InboxMessage", b =>
+                {
+                    b.Property<string>("ConsumerName")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ConsumerName", "EventId");
+
+                    b.HasIndex("CompletedAtUtc");
+
+                    b.HasIndex("ReceivedAtUtc");
+
+                    b.ToTable("MessagingInbox", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Infrastructure.Persistence.Messaging.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AggregateType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("AggregateVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("CausationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ClaimExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClaimOwner")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DispatchedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<int>("EventVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastFailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("NextAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("PoisonedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("EventId");
+
+                    b.HasIndex("ClaimExpiresAtUtc");
+
+                    b.HasIndex("AggregateId", "CreatedAtUtc", "EventId");
+
+                    b.HasIndex("DispatchedAtUtc", "PoisonedAtUtc", "NextAttemptAtUtc");
+
+                    b.ToTable("MessagingOutbox", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Infrastructure.Persistence.Messaging.ProcurementProjectionState", b =>
+                {
+                    b.Property<string>("ConsumerName")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("AggregateType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("AggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EventType")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("LastAggregateVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("LastEventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProcessedCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ConsumerName", "AggregateType", "AggregateId", "EventType");
+
+                    b.HasIndex("LastEventId");
+
+                    b.HasIndex("UpdatedAtUtc");
+
+                    b.ToTable("MessagingProcurementProjections", (string)null);
+                });
+
             modelBuilder.Entity("Template.Domain.Access.RefreshTokenRecord", b =>
                 {
                     b.HasOne("Template.Domain.Access.SessionFamily", null)

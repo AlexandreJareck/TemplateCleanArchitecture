@@ -1,4 +1,30 @@
 services:
+  worker:
+    build:
+      context: .
+      dockerfile: Src/Workers/Template.Worker/Dockerfile
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB_NAME};SearchPath=public
+      - RabbitMqSettings__HostName=rabbitmq
+      - RabbitMqSettings__Port=5672
+      - RabbitMqSettings__UserName=${RABBITMQ_DEFAULT_USER}
+      - RabbitMqSettings__Password=${RABBITMQ_DEFAULT_PASS}
+    networks:
+      - nw
+    healthcheck:
+      test: ["CMD", "dotnet", "Template.Worker.dll", "--health-probe", "http://127.0.0.1:8080/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   webapi:
     build:
       context: .

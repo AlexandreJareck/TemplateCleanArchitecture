@@ -216,10 +216,11 @@ public sealed class RequisitionTransitionHandlers(
                 details: new Dictionary<string, string> { ["revision"] = Text(requisition.Revision) });
             AuditRelease(requisition, released, BudgetReleaseReason.Expired);
 
+            var events = writer.Stage(Events(requisition, allocation));
             var commit = await writer.CommitAsync(token => requisitions.GetVersionAsync(requisition.Id, token), null, cancellationToken);
             if (commit is null)
             {
-                writer.Record(Events(requisition, allocation));
+                writer.Record(events);
                 return true;
             }
 
@@ -301,11 +302,12 @@ public sealed class RequisitionTransitionHandlers(
 
     private async Task<Result<RequisitionView>> CommitAsync(PurchaseRequisition requisition, BudgetAllocation? allocation, CancellationToken cancellationToken)
     {
+        var events = writer.Stage(Events(requisition, allocation));
         var commit = await writer.CommitAsync(token => requisitions.GetVersionAsync(requisition.Id, token), null, cancellationToken);
         if (commit is not null)
             return commit;
 
-        writer.Record(Events(requisition, allocation));
+        writer.Record(events);
         return await access.ViewAsync(requisition, cancellationToken);
     }
 

@@ -82,10 +82,20 @@ public sealed class FiscalPeriodCommandHandlers(
             return FiscalPeriodView.From(period);
 
         // A concurrent creation that lost a deadlock on the exclusion constraint is re-evaluated against the winner.
-        if (commit.Category == ErrorCategory.PreconditionFailed && await periods.CodeExistsAsync(period.Code, cancellationToken))
-            return BudgetMoney.PeriodCodeDuplicate;
-        if (commit.Category == ErrorCategory.PreconditionFailed && await periods.OverlapsAsync(period.StartDate, period.EndDate, null, cancellationToken))
-            return BudgetMoney.PeriodOverlap;
+        // PostgreSQL can release the deadlock victim a few milliseconds before the winning transaction commits, so
+        // use a small bounded observation window rather than leaking an unrelated 412 for a business-key race.
+        if (commit.Category == ErrorCategory.PreconditionFailed)
+        {
+            for (var attempt = 0; attempt < 5; attempt++)
+            {
+                if (await periods.CodeExistsAsync(period.Code, cancellationToken))
+                    return BudgetMoney.PeriodCodeDuplicate;
+                if (await periods.OverlapsAsync(period.StartDate, period.EndDate, null, cancellationToken))
+                    return BudgetMoney.PeriodOverlap;
+                if (attempt < 4)
+                    await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
+            }
+        }
         return commit;
     }
 
