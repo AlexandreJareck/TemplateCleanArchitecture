@@ -67,7 +67,8 @@
     "teamRequisitions": "Requisições da equipe",
     "budgetPeriods": "Períodos fiscais",
     "budgetAllocations": "Alocações orçamentárias",
-    "sourcing": "Cotações"
+    "sourcing": "Cotações",
+    "reports": "Relatórios"
   },
   "dashboard": {
     "title": "Painel",
@@ -164,7 +165,11 @@
     "Superseded": "Substituída",
     "Withdrawn": "Retirada",
     "Complete": "Completa",
-    "Incomplete": "Incompleta"
+    "Incomplete": "Incompleta",
+    "Pending": "Na fila",
+    "Running": "Em processamento",
+    "Ready": "Pronto",
+    "Failed": "Falhou"
   },
   "problems": {
     "cancelled": "Operação cancelada",
@@ -177,7 +182,8 @@
     "business-rule": "Regra de negócio não atendida",
     "rate-limited": "Muitas tentativas; aguarde",
     "unavailable": "Serviço indisponível",
-    "unexpected": "Erro inesperado"
+    "unexpected": "Erro inesperado",
+    "gone": "O recurso não está mais disponível"
   },
   "requisition": {
     "new": "Nova requisição",
@@ -397,5 +403,53 @@
     },
     "queueTable": "Tabela de requisições aguardando cotação",
     "rfqsTable": "Tabela de solicitações de cotação"
+  },
+  "reports": {
+    "request": "Solicitar relatório",
+    "type": "Tipo de relatório",
+    "submit": "Gerar relatório",
+    "noTypes": "Você não tem permissão para solicitar relatórios.",
+    "asOfHelp": "O relatório reflete a posição dos dados no momento da solicitação e é gerado em segundo plano; acompanhe abaixo.",
+    "jobs": "Meus relatórios",
+    "jobsTable": "Tabela de relatórios solicitados",
+    "noJobs": "Nenhum relatório solicitado.",
+    "requestedAt": "Solicitado em",
+    "progress": "Progresso",
+    "details": "Detalhes",
+    "download": "Baixar",
+    "retry": "Gerar novamente",
+    "expired": "O arquivo expirou; gere novamente.",
+    "expiresAt": "disponível até",
+    "asOf": "Posição em",
+    "stillRunning": "Ainda em processamento; volte mais tarde.",
+    "downloaded": "Download de {{name}} iniciado.",
+    "announce": "{{type}}: {{status}}",
+    "requisitionId": "Requisição (ID)",
+    "rfqId": "Cotação (ID)",
+    "fiscalPeriod": "Período fiscal",
+    "currency": "Moeda (opcional)",
+    "costCenterId": "Centro de custo (ID, opcional)",
+    "from": "Recebidas de",
+    "to": "Recebidas até",
+    "supplierId": "Fornecedor (ID, opcional)",
+    "requisitionPdf": "Gerar PDF da requisição",
+    "comparisonPdf": "Gerar mapa comparativo (PDF)",
+    "types": {
+      "RequisitionPdf": "Requisição de compra",
+      "QuoteComparisonPdf": "Mapa comparativo de cotações",
+      "BudgetConsumptionXlsx": "Consumo orçamentário",
+      "SupplierQuotesXlsx": "Cotações de fornecedores"
+    },
+    "failures": {
+      "source-not-found": "Os dados de origem não existem mais.",
+      "source-changed": "O rascunho mudou depois da solicitação; gere novamente.",
+      "too-large": "O relatório excede o limite de tamanho; restrinja os filtros.",
+      "renderer-unavailable": "O gerador de documentos ficou indisponível.",
+      "storage-unavailable": "O armazenamento de arquivos ficou indisponível.",
+      "timeout": "A geração excedeu o tempo limite.",
+      "attempts-exhausted": "A geração falhou após 3 tentativas.",
+      "output-invalid": "O arquivo gerado foi rejeitado na verificação.",
+      "unexpected": "Falha inesperada na geração."
+    }
   }
 }

@@ -345,7 +345,7 @@ foreach ($version in 'v1', 'v2') {
     $response = Get-Status 'GET' "/swagger/$version/swagger.json"
     $captured = Join-Path $outputDirectory "openapi-$version.json"
     [System.IO.File]::WriteAllText($captured, $response.Content)
-    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-29\openapi-$version.json"))
+    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-30\openapi-$version.json"))
     $bytesEqual = ($baseline -replace "`r`n", "`n") -ceq ($response.Content -replace "`r`n", "`n")
     $structuralEqual = (($baseline | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress) -ceq (($response.Content | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress)
     Write-Check "openapi.$version.byte-equal-normalized" $bytesEqual ''
@@ -521,6 +521,113 @@ Write-Check 'insight-absent.redis-ping' ($pingWithoutInsight -eq 'PONG') $pingWi
 Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 redis-insight 2>&1 | Out-Null
 Write-Check 'insight-absent.restarted-healthy' ((Get-ServiceStates) -match 'redis-insight\|running\|healthy') ''
 
+# Phase 30: reports end to end on the isolated stack. The seed user receives the Administrator, BudgetController and
+# Requester roles in the run's own identity database; the WebApi queues the job (202), the Worker renders it (ClosedXML
+# for XLSX, the container's headless Chromium for PDF), stores it in the private Azurite container and the API streams it.
+function Wait-ReportReady([string]$JobId, [hashtable]$Headers, [int]$TimeoutSeconds = 180) {
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    do {
+        $state = Get-Status 'GET' "/api/v2/report-jobs/$JobId" '' $Headers
+        if ($state.Status -eq 200) {
+            $view = $state.Content | ConvertFrom-Json
+            if ($view.status -in @('Ready', 'Failed', 'Cancelled', 'Expired')) { return $view }
+        }
+        Start-Sleep -Seconds 2
+    } while ((Get-Date) -lt $deadline)
+    return $null
+}
+
+function Save-ReportContent([string]$JobId, [hashtable]$Headers, [string]$Name) {
+    $target = Join-Path $outputDirectory $Name
+    try {
+        $response = Invoke-WebRequest -Uri "$baseUri/api/v2/report-jobs/$JobId/content" -Headers $Headers -UseBasicParsing -TimeoutSec 60 -OutFile $target -PassThru
+        return [pscustomobject]@{ Status = [int]$response.StatusCode; Disposition = [string]$response.Headers['Content-Disposition']; CacheControl = [string]$response.Headers['Cache-Control']; Path = $target }
+    }
+    catch {
+        $status = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
+        return [pscustomobject]@{ Status = $status; Disposition = ''; CacheControl = ''; Path = $target }
+    }
+}
+
+function Test-Signature([string]$Path, [byte[]]$Signature) {
+    if (-not (Test-Path $Path)) { return $false }
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -lt $Signature.Length) { return $false }
+    for ($index = 0; $index -lt $Signature.Length; $index++) { if ($bytes[$index] -ne $Signature[$index]) { return $false } }
+    return $true
+}
+
+$reportHeaders = @{ Authorization = "Bearer $token" }
+$grantSql = @'
+INSERT INTO "Identity"."UserRoles" ("UserId", "RoleId")
+SELECT u."Id", r."Id" FROM "Identity"."User" u CROSS JOIN "Identity"."Role" r
+WHERE u."NormalizedUserName" = 'ADMIN' AND r."NormalizedName" IN ('ADMINISTRATOR', 'BUDGETCONTROLLER', 'REQUESTER')
+ON CONFLICT DO NOTHING;
+SELECT count(*) FROM "Identity"."UserRoles" ur JOIN "Identity"."User" u ON u."Id" = ur."UserId" WHERE u."NormalizedUserName" = 'ADMIN';
+'@
+$granted = Invoke-Sql 'POSTGRES_IDENTITY_DB_NAME' $grantSql
+Write-Check 'reports.synthetic-roles-granted' ([int](($granted -split "`n")[-1]) -ge 3) "roles=$granted"
+
+$azuriteImage = [string]$configJson.services.azurite.image
+Write-Check 'azurite.image-3.37.0-pinned' ($azuriteImage -like 'mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1*') $azuriteImage
+Write-Check 'azurite.no-published-port' (-not $configJson.services.azurite.ports) ''
+Write-Check 'azurite.account-from-environment' ($configJson.services.azurite.environment.AZURITE_ACCOUNTS -notmatch 'Eby8vdM02x' -and $configJson.services.azurite.environment.AZURITE_ACCOUNTS -match ':') ''
+Write-Check 'service.azurite-healthy' ((Get-ServiceStates) -match 'azurite\|running\|healthy') ''
+
+$fyStart = (Get-Date).AddDays(-30).ToString('yyyy-MM-dd'); $fyEnd = (Get-Date).AddDays(330).ToString('yyyy-MM-dd')
+$period = Get-Status 'POST' '/api/v2/fiscal-periods' (@{ code = 'P30-FY'; name = 'Synthetic report period'; startDate = $fyStart; endDate = $fyEnd } | ConvertTo-Json -Compress) ($reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() })
+$periodId = if ($period.Status -eq 201) { ($period.Content | ConvertFrom-Json).id } else { $null }
+Write-Check 'reports.fiscal-period-created' ($null -ne $periodId) "status=$($period.Status)"
+
+$xlsxRequest = Get-Status 'POST' '/api/v2/report-jobs' (@{ reportType = 'BudgetConsumptionXlsx'; fiscalPeriodId = $periodId } | ConvertTo-Json -Compress) ($reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() })
+$xlsxJob = if ($xlsxRequest.Status -eq 202) { ($xlsxRequest.Content | ConvertFrom-Json).id } else { $null }
+Write-Check 'reports.xlsx-accepted-202' ($null -ne $xlsxJob) "status=$($xlsxRequest.Status)"
+$xlsxView = if ($xlsxJob) { Wait-ReportReady $xlsxJob $reportHeaders } else { $null }
+Write-Check 'reports.worker-renders-xlsx' ($xlsxView -and $xlsxView.status -eq 'Ready' -and $xlsxView.contentUrl -eq "/api/v2/report-jobs/$xlsxJob/content") "status=$($xlsxView.status) failure=$($xlsxView.failureCode)"
+$xlsxFile = Save-ReportContent $xlsxJob $reportHeaders 'report-budget.xlsx'
+Write-Check 'reports.xlsx-download-streamed' ($xlsxFile.Status -eq 200 -and (Test-Signature $xlsxFile.Path ([byte[]](0x50, 0x4B, 0x03, 0x04))) -and $xlsxFile.Disposition -match 'attachment' -and $xlsxFile.CacheControl -match 'no-store') "status=$($xlsxFile.Status)"
+$storedRow = Invoke-Sql 'POSTGRES_DB_NAME' "SELECT ""Status"" || ':' || char_length(""Sha256"") FROM ""FilesStoredFiles"" WHERE ""OwnerId"" = '$xlsxJob';"
+Write-Check 'reports.metadata-in-postgres-bytes-in-azurite' ($storedRow -eq 'Available:64') $storedRow
+
+$department = Get-Status 'POST' '/api/v2/departments' (@{ code = 'P30-D'; name = 'Synthetic reports department' } | ConvertTo-Json -Compress) ($reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() })
+$departmentId = if ($department.Status -eq 201) { ($department.Content | ConvertFrom-Json).id } else { $null }
+$costCenter = Get-Status 'POST' '/api/v2/cost-centers' (@{ code = 'P30-C'; name = 'Synthetic reports cost center'; departmentId = $departmentId } | ConvertTo-Json -Compress) ($reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() })
+$costCenterId = if ($costCenter.Status -eq 201) { ($costCenter.Content | ConvertFrom-Json).id } else { $null }
+$draft = Get-Status 'POST' '/api/v2/purchase-requisitions' (@{ costCenterId = $costCenterId; currency = 'BRL'; purpose = 'Synthetic requisition for the report baseline'; neededBy = (Get-Date).AddDays(20).ToString('yyyy-MM-dd') } | ConvertTo-Json -Compress) ($reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() })
+$requisitionId = if ($draft.Status -eq 201) { ($draft.Content | ConvertFrom-Json).id } else { $null }
+Write-Check 'reports.synthetic-requisition-created' ($null -ne $requisitionId) "department=$($department.Status) costCenter=$($costCenter.Status) draft=$($draft.Status)"
+
+# Worker restart recovery: a job requested while the Worker is stopped stays Pending and completes after it starts.
+Invoke-Compose stop worker 2>&1 | Out-Null
+$pdfRequest = Get-Status 'POST' '/api/v2/report-jobs' (@{ reportType = 'RequisitionPdf'; requisitionId = $requisitionId } | ConvertTo-Json -Compress) ($reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() })
+$pdfJob = if ($pdfRequest.Status -eq 202) { ($pdfRequest.Content | ConvertFrom-Json).id } else { $null }
+Start-Sleep -Seconds 4
+$pendingWithoutWorker = (Get-Status 'GET' "/api/v2/report-jobs/$pdfJob" '' $reportHeaders).Content | ConvertFrom-Json
+Write-Check 'reports.pending-while-worker-stopped' ($pendingWithoutWorker.status -eq 'Pending') "status=$($pendingWithoutWorker.status)"
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 worker 2>&1 | Out-Null
+$pdfView = if ($pdfJob) { Wait-ReportReady $pdfJob $reportHeaders } else { $null }
+Write-Check 'reports.worker-restart-renders-pdf-with-container-chromium' ($pdfView -and $pdfView.status -eq 'Ready') "status=$($pdfView.status) failure=$($pdfView.failureCode)"
+$pdfFile = Save-ReportContent $pdfJob $reportHeaders 'report-requisition.pdf'
+Write-Check 'reports.pdf-download-streamed' ($pdfFile.Status -eq 200 -and (Test-Signature $pdfFile.Path ([System.Text.Encoding]::ASCII.GetBytes('%PDF-')))) "status=$($pdfFile.Status)"
+
+# Storage outage: downloads answer 503 and a new job retries; procurement and the API stay available; then it recovers.
+Invoke-Compose stop azurite 2>&1 | Out-Null
+$outageDownload = Save-ReportContent $xlsxJob $reportHeaders 'report-outage.bin'
+Write-Check 'reports.storage-outage-download-503' ($outageDownload.Status -eq 503) "status=$($outageDownload.Status)"
+$outageRequest = Get-Status 'POST' '/api/v2/report-jobs' (@{ reportType = 'BudgetConsumptionXlsx'; fiscalPeriodId = $periodId; currency = 'BRL' } | ConvertTo-Json -Compress) ($reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() })
+$outageJob = if ($outageRequest.Status -eq 202) { ($outageRequest.Content | ConvertFrom-Json).id } else { $null }
+$retried = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT ""FailureCode"" FROM ""ReportingReportJobs"" WHERE ""Id"" = '$outageJob';" 'report.storage-unavailable' 120
+Write-Check 'reports.storage-outage-retries-with-safe-code' $retried ''
+Write-Check 'reports.storage-outage-api-operates' ((Get-Status 'GET' "/api/v2/purchase-requisitions/$requisitionId" '' $reportHeaders).Status -eq 200) ''
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 azurite 2>&1 | Out-Null
+$recoveredView = if ($outageJob) { Wait-ReportReady $outageJob $reportHeaders 240 } else { $null }
+Write-Check 'reports.storage-recovery-completes-job' ($recoveredView -and $recoveredView.status -eq 'Ready' -and $recoveredView.attempts -ge 2) "status=$($recoveredView.status) attempts=$($recoveredView.attempts)"
+
+# Phase 30 changed the run's data on purpose (synthetic roles, master data and reports); the restart idempotency and
+# persistence checks below compare against this state.
+$snapshot1 = Get-DatabaseSnapshot
+$snapshot1 | Set-Content (Join-Path $outputDirectory '04b-db-snapshot-after-reports.txt')
+
 # ---------------------------------------------------------------- 4. Second application startup (idempotency)
 $secondStart = (Get-Date).ToUniversalTime().ToString('o')
 Invoke-Compose restart webapi 2>&1 | Out-Null
@@ -554,6 +661,8 @@ Write-Check 'restart.elasticsearch-person-persisted' ((Get-Status 'GET' '/api/v1
 $queuesAfter = Invoke-Compose exec -T rabbitmq rabbitmqctl -q list_queues name durable 2>&1 | Out-String
 Write-Check 'restart.rabbitmq-durable-queues-persisted' ($queuesAfter -match 'dead_letter') ''
 Write-Check 'restart.product-v2-get' ((Get-Status 'GET' "/api/v2/product/$productId").Status -eq 200) ''
+$persistedReport = Save-ReportContent $xlsxJob $reportHeaders 'report-after-restart.xlsx'
+Write-Check 'restart.report-output-persisted-in-azurite' ($persistedReport.Status -eq 200 -and (Test-Signature $persistedReport.Path ([byte[]](0x50, 0x4B, 0x03, 0x04)))) "status=$($persistedReport.Status)"
 
 # ---------------------------------------------------------------- 6. Graceful shutdown without deleting volumes
 Invoke-Compose stop 2>&1 | Set-Content (Join-Path $outputDirectory '10-final-stop.log')

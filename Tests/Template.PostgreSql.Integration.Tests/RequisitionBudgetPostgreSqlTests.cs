@@ -330,7 +330,7 @@ public sealed class RequisitionBudgetPostgreSqlTests(PostgreSqlFixture fixture, 
         })));
 
         results.Count(result => result.IsSuccess).ShouldBe(1);
-        results.Where(result => !result.IsSuccess).ShouldAllBe(result => result.Error!.Code == ProblemCodes.BudgetPeriodOverlap);
+        results.Where(result => !result.IsSuccess).Select(result => result.Error!.Code).ShouldAllBe(code => code == ProblemCodes.BudgetPeriodOverlap);
     }
 
     [Fact]

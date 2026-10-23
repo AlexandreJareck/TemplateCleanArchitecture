@@ -85,7 +85,11 @@ public sealed class ProcurementIntegrationEventContractTests
             new RfqClosed(Occurred, Guid.NewGuid(), Occurred, 2, ComparisonStatus.Complete),
             new RfqCancelled(Occurred, Guid.NewGuid(), requisitionId, "Cancelled"),
             new QuoteRecorded(Occurred, Guid.NewGuid(), Guid.NewGuid(), 1, Guid.NewGuid()),
-            new AwardSubmitted(Occurred, Guid.NewGuid(), Guid.NewGuid(), requisitionId, Guid.NewGuid(), new Money(9m, "BRL"), new Money(9m, "BRL"), "SourcingPolicy:1")
+            new AwardSubmitted(Occurred, Guid.NewGuid(), Guid.NewGuid(), requisitionId, Guid.NewGuid(), new Money(9m, "BRL"), new Money(9m, "BRL"), "SourcingPolicy:1"),
+            new Template.Domain.Reporting.ReportRequested(Occurred, Guid.NewGuid(), Template.Domain.Reporting.ReportType.RequisitionPdf, Guid.NewGuid()),
+            new Template.Domain.Reporting.ReportReady(Occurred, Guid.NewGuid(), Template.Domain.Reporting.ReportType.SupplierQuotesXlsx, Guid.NewGuid(), Guid.NewGuid()),
+            new Template.Domain.Reporting.ReportFailed(Occurred, Guid.NewGuid(), Template.Domain.Reporting.ReportType.QuoteComparisonPdf, Guid.NewGuid(),
+                Template.Domain.Reporting.ReportFailureCodes.Timeout)
         ];
 
         var envelopes = events.Select(value =>

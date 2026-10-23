@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Template.Infrastructure.Caching;
+using Template.Infrastructure.Files;
 using Template.Infrastructure.Identity;
 using Template.Infrastructure.Persistence;
 using MessagingRegistration = Template.Infrastructure.Messaging.ServiceRegistration;
@@ -25,10 +26,12 @@ public static class HealthCheckExtensions
     public const string IdentityDatabaseCheckName = "identity-database";
     public const string CacheCheckName = "cache";
     public const string MessageBrokerCheckName = "message-broker";
+    public const string FileStorageCheckName = "file-storage";
 
     public static readonly TimeSpan DatabaseTimeout = TimeSpan.FromSeconds(5);
     public static readonly TimeSpan CacheTimeout = TimeSpan.FromSeconds(2);
     public static readonly TimeSpan MessageBrokerTimeout = TimeSpan.FromSeconds(3);
+    public static readonly TimeSpan FileStorageTimeout = TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// Registers the Elasticsearch check. It reads its own options from configuration at registration time
@@ -74,7 +77,8 @@ public static class HealthCheckExtensions
     public static IServiceCollection AddDependencyHealthChecks(
         this IServiceCollection services,
         IConfiguration configuration,
-        bool includeMessageBroker = true)
+        bool includeMessageBroker = true,
+        bool includeFileStorage = true)
     {
         services.AddSingleton<HealthStatusTracker>();
         var healthChecks = services.AddHealthChecks()
@@ -112,6 +116,17 @@ public static class HealthCheckExtensions
                 HealthStatus.Degraded,
                 [HealthTags.Ready, HealthTags.Optional],
                 MessageBrokerTimeout));
+        }
+
+        // Phase 30: blob storage is optional (report outputs and downloads only), registered only when enabled.
+        if (includeFileStorage && configuration.GetSection(FileStorageSettings.SectionName).GetValue<bool>(nameof(FileStorageSettings.Enabled)))
+        {
+            healthChecks.Add(new HealthCheckRegistration(
+                FileStorageCheckName,
+                provider => ActivatorUtilities.CreateInstance<FileStorageHealthCheck>(provider),
+                HealthStatus.Degraded,
+                [HealthTags.Ready, HealthTags.Optional],
+                FileStorageTimeout));
         }
 
         return services;

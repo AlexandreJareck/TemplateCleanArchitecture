@@ -88,4 +88,14 @@ public static class LogEvents
     public static readonly EventId SourcingRateResolved = new(11100, nameof(SourcingRateResolved));
     public static readonly EventId SourcingRateUnavailable = new(11101, nameof(SourcingRateUnavailable));
     public static readonly EventId NotificationsQueued = new(11102, nameof(NotificationsQueued));
+
+    // Phase 30 files and reports (FIL-*, RPT-*): job IDs, report types, safe failure codes, sizes and durations only;
+    // never parameters' business content, file names, storage keys or exception text.
+    public static readonly EventId ReportJobClaimed = new(11200, nameof(ReportJobClaimed));
+    public static readonly EventId ReportJobCompleted = new(11201, nameof(ReportJobCompleted));
+    public static readonly EventId ReportJobFailed = new(11202, nameof(ReportJobFailed));
+    public static readonly EventId ReportJobLeaseLost = new(11203, nameof(ReportJobLeaseLost));
+    public static readonly EventId ReportJobReleased = new(11204, nameof(ReportJobReleased));
+    public static readonly EventId ReportMaintenanceCompleted = new(11205, nameof(ReportMaintenanceCompleted));
+    public static readonly EventId FileStorageFailed = new(11206, nameof(FileStorageFailed));
 }

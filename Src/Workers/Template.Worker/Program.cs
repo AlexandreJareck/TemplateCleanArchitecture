@@ -2,8 +2,10 @@ using System.Net.Sockets;
 using Microsoft.Extensions.Options;
 using Template.Application;
 using Template.Application.Interfaces;
+using Template.Infrastructure.Files;
 using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
+using Template.Infrastructure.Reporting;
 using Template.Worker;
 
 if (args is ["--health-probe", var probeUrl])
@@ -22,6 +24,7 @@ var useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatab
 builder.Services.AddApplicationLayer();
 builder.Services.AddSingleton<IAuthenticatedUserService, WorkerAuthenticatedUser>();
 builder.Services.AddScoped<IRequestContext, WorkerRequestContext>();
+builder.Services.AddSingleton<Template.Application.Interfaces.Access.IPermissionReader, WorkerPermissions>();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddProcurementMessagingInfrastructure(builder.Configuration, useBroker: true);
 builder.Services.AddSingleton(TimeProvider.System);
@@ -30,6 +33,16 @@ builder.Services.AddOptions<OutboxDispatchSettings>()
     .Bind(builder.Configuration.GetSection(OutboxDispatchSettings.SectionName))
     .ValidateOnStart();
 builder.Services.AddHostedService<OutboxDispatcherService>();
+// Phase 30: report execution (PDF/XLSX rendering, private blob storage) and the retention pass.
+builder.Services.AddFilesInfrastructure(builder.Configuration, useInMemoryStorage: useInMemoryDatabase);
+builder.Services.AddReportingInfrastructure(builder.Configuration);
+builder.Services.AddSingleton<IValidateOptions<ReportWorkerSettings>, ReportWorkerSettingsValidator>();
+builder.Services.AddOptions<ReportWorkerSettings>()
+    .Bind(builder.Configuration.GetSection(ReportWorkerSettings.SectionName))
+    .ValidateOnStart();
+builder.Services.AddHostedService<ReportWorkerService>();
+// An in-flight report attempt hands its job back on shutdown; allow it to finish that bounded step.
+builder.Services.Configure<HostOptions>(host => host.ShutdownTimeout = TimeSpan.FromSeconds(45));
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
@@ -48,12 +61,23 @@ app.MapGet("/health/ready", async (IServiceScopeFactory scopeFactory, IConfigura
     {
         using var client = new TcpClient();
         await client.ConnectAsync(endpoint.Host, endpoint.Port, cancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(3), cancellationToken);
-        return Results.Ok(new { status = "Healthy" });
     }
     catch (Exception exception) when (exception is SocketException or TimeoutException or OperationCanceledException)
     {
         return Results.Ok(new { status = "Degraded", dependency = "message-broker" });
     }
+
+    // Blob storage only affects report outputs; an unreachable store degrades readiness, never fails it.
+    if (configuration.GetSection(FileStorageSettings.SectionName).GetValue<bool>(nameof(FileStorageSettings.Enabled)))
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(5));
+        var probe = scope.ServiceProvider.GetRequiredService<IFileStorageProbe>();
+        if (!await probe.IsAvailableAsync(timeout.Token))
+            return Results.Ok(new { status = "Degraded", dependency = "file-storage" });
+    }
+
+    return Results.Ok(new { status = "Healthy" });
 });
 
 await app.RunAsync();

@@ -18,7 +18,14 @@ param(
     # (design-time tooling).
     [string[]]$AllowedLicenses = @('MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'PostgreSQL'),
     [string[]]$AllowedLicenseUrls = @('https://raw.githubusercontent.com/xunit/xunit/master/license.txt'),
-    [string[]]$AcceptedPackages = @('MediatR', 'Microsoft.VisualStudio.Azure.Containers.Tools.Targets')
+    [string[]]$AcceptedPackages = @('MediatR', 'Microsoft.VisualStudio.Azure.Containers.Tools.Targets'),
+    # Phase 30: packages whose nuspec declares the license as a file. The file is read from the package and accepted only
+    # when its SHA-256 matches the reviewed text, which must be an allowed license (no new license is admitted here).
+    # Apache.Arrow 22.1.0 (transitive of Azure.Storage.Blobs 12.30.1): LICENSE.txt is the Apache-2.0 text plus the
+    # Apache-2.0 FlatBuffers notice, reviewed on 2026-10-23.
+    [hashtable]$VerifiedLicenseFiles = @{
+        'Apache.Arrow/22.1.0' = @{ License = 'Apache-2.0'; Sha256 = 'f49cc7be44c8d4b6efffed6ac00026f2ff2146310f040350b50be30ed3f9c570' }
+    }
 )
 
 $ErrorActionPreference = 'Stop'
@@ -79,6 +86,16 @@ $rows = foreach ($package in $packages.Values | Sort-Object Id, Version) {
             else { -not ($terms | Where-Object { $AllowedLicenses -notcontains $_ }) }
         }
         'url' { $AllowedLicenseUrls -contains $url }
+        'file' {
+            $verified = $VerifiedLicenseFiles["$($package.Id)/$($package.Version)"]
+            $licenseFile = if ($verified -and $license) { Join-Path $folder $license } else { $null }
+            if ($licenseFile -and (Test-Path $licenseFile) -and $AllowedLicenses -contains $verified.License -and
+                (Get-FileHash -Algorithm SHA256 -LiteralPath $licenseFile).Hash.ToLowerInvariant() -eq $verified.Sha256) {
+                $license = "$($verified.License) (verified file $license)"
+                $true
+            }
+            else { $false }
+        }
         default { $false }
     }
     $accepted = $AcceptedPackages -contains $package.Id

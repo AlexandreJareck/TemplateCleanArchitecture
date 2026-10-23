@@ -37,6 +37,14 @@ public static class ServiceRegistration
         services.AddScoped<Features.Requisitions.RequisitionAccess>();
         services.AddScoped<Features.Sourcing.SourcingAccess>();
         services.AddScoped<Features.Sourcing.SourcingExchangeRates>();
+        services.AddScoped<Features.Reporting.ReportAccess>();
+        // Phase 30: report builders and the Worker use cases; the renderer and storage adapters come from Infrastructure.
+        services.AddScoped<Services.Reporting.IReportBuilder, Services.Reporting.RequisitionPdfBuilder>();
+        services.AddScoped<Services.Reporting.IReportBuilder, Services.Reporting.QuoteComparisonPdfBuilder>();
+        services.AddScoped<Services.Reporting.IReportBuilder, Services.Reporting.BudgetConsumptionXlsxBuilder>();
+        services.AddScoped<Services.Reporting.IReportBuilder, Services.Reporting.SupplierQuotesXlsxBuilder>();
+        services.AddScoped<Services.Reporting.ReportJobProcessor>();
+        services.AddScoped<Services.Reporting.ReportMaintenance>();
         services.AddScoped<ISessionRevocationService, SessionRevocationService>();
         services.AddSingleton<IValidateOptions<SessionSettings>, SessionSettingsValidator>();
         // The composition root binds SessionSettings from configuration and validates it on start.

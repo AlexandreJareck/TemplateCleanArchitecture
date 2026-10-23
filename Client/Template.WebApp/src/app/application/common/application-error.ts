@@ -1,7 +1,7 @@
 export type ApplicationError =
   | ErrorDetail<'cancelled'>
   | ErrorDetail<'not-authenticated' | 'forbidden' | 'not-found' | 'validation'>
-  | ErrorDetail<'conflict' | 'version-mismatch' | 'business-rule'>
+  | ErrorDetail<'conflict' | 'version-mismatch' | 'business-rule' | 'gone'>
   | ErrorDetail<'rate-limited' | 'unavailable' | 'unexpected'>;
 
 interface ErrorDetail<TKind extends string> {

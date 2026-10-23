@@ -43,6 +43,18 @@ type PendingAction = 'withdraw' | 'cancel' | undefined;
     </header>
     <app-problem-feedback [error]="error()" (reload)="load()" />
     @if (requisition(); as current) {
+      @if (session.can('reports.request')) {
+        <div class="toolbar">
+          <a
+            hlmBtn
+            variant="outline"
+            size="sm"
+            routerLink="/reports"
+            [queryParams]="{ type: 'RequisitionPdf', requisitionId: current.id }"
+            >{{ 'reports.requisitionPdf' | transloco }}</a
+          >
+        </div>
+      }
       <section class="panel" aria-labelledby="summary-title">
         <h2 id="summary-title">{{ 'requisition.header' | transloco }}</h2>
         <dl class="summary-grid">

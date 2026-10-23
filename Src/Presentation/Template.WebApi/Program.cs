@@ -8,6 +8,7 @@ using Template.Application.Interfaces;
 using Template.Application.Logging;
 using Template.Application.Settings;
 using Template.Infrastructure.Caching;
+using Template.Infrastructure.Files;
 using Template.Infrastructure.Identity;
 using Template.Infrastructure.Integrations;
 using Template.Infrastructure.Messaging;
@@ -38,6 +39,7 @@ builder.Services.AddCachingInfrastructure(builder.Configuration, useInMemoryCach
 builder.Services.AddMessagingInfrastructure(builder.Configuration, useBroker: !isTestEnvironment);
 builder.Services.AddSearchInfrastructure(builder.Configuration, useSearchEngine: !isTestEnvironment);
 builder.Services.AddIntegrationsInfrastructure(builder.Configuration, useExternalProviders: !isTestEnvironment);
+builder.Services.AddFilesInfrastructure(builder.Configuration, useInMemoryStorage: isTestEnvironment);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 builder.Services.AddScoped<IRequestContext, HttpRequestContext>();
@@ -66,7 +68,7 @@ builder.Services.AddConfiguredCors(builder.Configuration);
 builder.Host.ConfigureLog(isTestEnvironment);
 builder.Services.AddCustomLocalization(builder.Configuration);
 builder.Services.AddHealthChecksService(builder.Configuration, includeElasticsearch: !isTestEnvironment);
-builder.Services.AddDependencyHealthChecks(builder.Configuration, includeMessageBroker: !isTestEnvironment);
+builder.Services.AddDependencyHealthChecks(builder.Configuration, includeMessageBroker: !isTestEnvironment, includeFileStorage: !isTestEnvironment);
 
 builder.Services.AddRouting(options =>
 {

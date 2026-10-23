@@ -32,7 +32,9 @@ public sealed class AuditRecord
         "amount", "previousAmount", "currency", "releaseReason", "lineNumber", "attachmentId", "eventType",
         // Phase 29: sourcing (IDs, states, amounts, currencies and rate provenance only; never quote notes or terms).
         "rfqId", "supplierId", "quoteId", "quoteRevisionId", "awardId", "comparisonId", "waiverType", "deadline", "previousDeadline",
-        "roundNumber", "method", "rate", "rateSource", "quoteDate", "comparisonStatus", "validQuoteCount", "rank", "invitationCount"
+        "roundNumber", "method", "rate", "rateSource", "quoteDate", "comparisonStatus", "validQuoteCount", "rank", "invitationCount",
+        // Phase 30 (RPT-*, FIL-*): identifiers, types, safe codes and sizes only; never file names, digests or parameters.
+        "reportJobId", "reportType", "outputFileId", "failureCode", "attempt", "length", "ownerType"
     };
 
     private AuditRecord()

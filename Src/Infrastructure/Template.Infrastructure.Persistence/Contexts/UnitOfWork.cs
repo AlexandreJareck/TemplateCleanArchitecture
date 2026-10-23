@@ -41,7 +41,7 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
     };
 
     /// <summary>
-    /// Business-key unique indexes (ORG-001, CAT-001, SUP-001). A violation means a concurrent duplicate that raced past
+    /// Business-key unique indexes (ORG-001, CAT-001, SUP-001; RPT-001 one active report job per request fingerprint). A violation means a concurrent duplicate that raced past
     /// the use-case pre-check; it surfaces as <see cref="UniqueConstraintViolationException"/> so the use case answers
     /// with its duplicate code. Any other violation (primary keys, append-only audit IDs) keeps the original exception.
     /// </summary>
@@ -56,7 +56,8 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         IFiscalPeriodRepository.CodeUniqueKey,
         IFiscalPeriodRepository.NoOverlapKey,
         IBudgetAllocationRepository.UniqueKey,
-        IRequestForQuotationRepository.ActiveRfqUniqueKey
+        IRequestForQuotationRepository.ActiveRfqUniqueKey,
+        Template.Application.Interfaces.Reporting.IReportJobRepository.ActiveUniqueKey
     };
 
     private IDbContextTransaction? transaction;

@@ -13,6 +13,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="PdfPig">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -23,9 +26,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Caching\Template.Infrastructure.Caching.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Files\Template.Infrastructure.Files.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Integrations\Template.Infrastructure.Integrations.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Search\Template.Infrastructure.Search.csproj" />
   </ItemGroup>
 

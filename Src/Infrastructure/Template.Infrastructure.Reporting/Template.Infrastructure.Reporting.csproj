@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" />
+    <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Versioned server template assets (RPT-008) and the Apache-2.0 Roboto 2.138 fonts embedded into every PDF. -->
+    <EmbeddedResource Include="Assets\report-document.v1.css" LogicalName="Template.Reporting.report-document.v1.css" />
+    <EmbeddedResource Include="Assets\Fonts\Roboto-Regular.ttf" LogicalName="Template.Reporting.Fonts.Roboto-Regular.ttf" />
+    <EmbeddedResource Include="Assets\Fonts\Roboto-Bold.ttf" LogicalName="Template.Reporting.Fonts.Roboto-Bold.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Template.Integration.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Template.Application\Template.Application.csproj" />
+  </ItemGroup>
+
+</Project>

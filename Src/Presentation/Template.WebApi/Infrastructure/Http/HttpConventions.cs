@@ -53,3 +53,24 @@ public static class AcceptedOperations
         return new AcceptedResult(location, AcceptedOperationResponse.From(operation));
     }
 }
+
+/// <summary>
+/// Streamed download (docs/product/api-guidelines.md §9, FIL-003): <c>Content-Disposition: attachment</c> with the
+/// sanitized name, the exact media type, <c>X-Content-Type-Options: nosniff</c> and <c>Cache-Control: private, no-store</c>.
+/// The headers are written when the result executes, after result filters, so no filter can relax them.
+/// </summary>
+public sealed class AttachmentStreamResult(Stream content, string mediaType, string fileName, long length) : IActionResult
+{
+    public async Task ExecuteResultAsync(ActionContext context)
+    {
+        var response = context.HttpContext.Response;
+        var disposition = new ContentDispositionHeaderValue("attachment");
+        disposition.SetHttpFileName(fileName);
+        response.Headers.ContentDisposition = disposition.ToString();
+        response.Headers.CacheControl = "private, no-store";
+        response.Headers.XContentTypeOptions = "nosniff";
+        if (length > 0)
+            response.ContentLength = length;
+        await new FileStreamResult(content, mediaType) { EnableRangeProcessing = false }.ExecuteResultAsync(context);
+    }
+}

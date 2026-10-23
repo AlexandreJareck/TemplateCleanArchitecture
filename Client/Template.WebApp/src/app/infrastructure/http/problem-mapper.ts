@@ -21,6 +21,7 @@ export function mapProblem(error: unknown, signal?: AbortSignal): ApplicationErr
   if (error.status === 400)
     return { kind: 'validation', ...common, fieldErrors: fieldErrors(body['errors']) };
   if (error.status === 409) return { kind: 'conflict', ...common };
+  if (error.status === 410) return { kind: 'gone', ...common };
   if (error.status === 412 || error.status === 428) return { kind: 'version-mismatch', ...common };
   if (error.status === 422)
     return { kind: 'business-rule', ...common, fieldErrors: fieldErrors(body['errors']) };

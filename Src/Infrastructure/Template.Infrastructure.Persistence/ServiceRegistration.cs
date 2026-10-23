@@ -7,8 +7,10 @@ using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Auditing;
 using Template.Application.Interfaces.Budgeting;
 using Template.Application.Interfaces.Catalog;
+using Template.Application.Interfaces.Files;
 using Template.Application.Interfaces.Idempotency;
 using Template.Application.Interfaces.Organization;
+using Template.Application.Interfaces.Reporting;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Interfaces.Requisitions;
 using Template.Application.Interfaces.Messaging;
@@ -69,6 +71,11 @@ public static class ServiceRegistration
         services.AddScoped<IProcurementEventEffectStore>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
         services.AddScoped<INotificationDeliveryStore>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
         services.AddScoped<IRequestForQuotationRepository, RequestForQuotationRepository>();
+        services.AddScoped<ReportJobRepository>();
+        services.AddScoped<IReportJobRepository>(provider => provider.GetRequiredService<ReportJobRepository>());
+        services.AddScoped<IReportJobQueue>(provider => provider.GetRequiredService<ReportJobRepository>());
+        services.AddScoped<IStoredFileRepository, StoredFileRepository>();
+        services.AddScoped<IReportSourceReader, ReportSourceReader>();
         services.AddScoped<IRfqNumberAllocator, RfqNumberAllocator>();
         services.AddScoped<ISupplierSnapshotReader, SupplierSnapshotReader>();
 

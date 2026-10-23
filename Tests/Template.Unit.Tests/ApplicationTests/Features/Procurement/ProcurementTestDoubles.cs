@@ -151,6 +151,12 @@ internal sealed class ProcurementTestDoubles
             set.UnionWith(permissions);
         }
 
+        public void Revoke(Guid userId, string permission)
+        {
+            if (grants.TryGetValue(userId, out var set))
+                set.Remove(permission);
+        }
+
         public Task<IReadOnlySet<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlySet<string>>(grants.TryGetValue(userId, out var set) ? set : new HashSet<string>());
     }

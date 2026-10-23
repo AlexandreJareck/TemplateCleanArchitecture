@@ -601,6 +601,86 @@ namespace Template.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Template.Domain.Files.StoredFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AvailableAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Classification")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletionReason")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("Length")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("OriginalName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OwnerType")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("Sha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerType", "OwnerId");
+
+                    b.HasIndex("Status", "CreatedAtUtc");
+
+                    b.HasIndex("Status", "ExpiresAtUtc");
+
+                    b.ToTable("FilesStoredFiles", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_FilesStoredFiles_Available", "\"Status\" <> 'Available' OR (\"Length\" > 0 AND \"Sha256\" IS NOT NULL AND char_length(\"Sha256\") = 64)");
+
+                            t.HasCheckConstraint("CK_FilesStoredFiles_Length", "\"Length\" IS NULL OR \"Length\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Template.Domain.Organization.CostCenter", b =>
                 {
                     b.Property<Guid>("Id")
@@ -768,6 +848,133 @@ namespace Template.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("Template.Domain.Reporting.ReportJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AsOfUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ClaimExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClaimOwner")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTime>("NextAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("OutputFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OutputFileName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<long?>("OutputLength")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ParametersHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ParametersJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("PolicyVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProgressPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProgressStage")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("ReportType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequestedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TemplateVersion")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OutputFileId");
+
+                    b.HasIndex("RequestedBy", "RequestedAtUtc");
+
+                    b.HasIndex("Status", "ClaimExpiresAtUtc");
+
+                    b.HasIndex("Status", "ExpiresAtUtc");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc");
+
+                    b.HasIndex("RequestedBy", "ReportType", "ParametersHash")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ReportingReportJobs_Active")
+                        .HasFilter("\"Status\" IN ('Pending', 'Running')");
+
+                    b.ToTable("ReportingReportJobs", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ReportingReportJobs_Attempts", "\"AttemptCount\" >= 0 AND \"AttemptCount\" <= 10");
+
+                            t.HasCheckConstraint("CK_ReportingReportJobs_Progress", "\"ProgressPercent\" >= 0 AND \"ProgressPercent\" <= 100");
+
+                            t.HasCheckConstraint("CK_ReportingReportJobs_ReadyOutput", "\"Status\" <> 'Ready' OR \"OutputFileId\" IS NOT NULL");
+                        });
                 });
 
             modelBuilder.Entity("Template.Domain.Requisitions.PurchaseRequisition", b =>
@@ -2616,6 +2823,14 @@ namespace Template.Infrastructure.Persistence.Migrations
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Reporting.ReportJob", b =>
+                {
+                    b.HasOne("Template.Domain.Files.StoredFile", null)
+                        .WithMany()
+                        .HasForeignKey("OutputFileId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Template.Domain.Requisitions.PurchaseRequisition", b =>

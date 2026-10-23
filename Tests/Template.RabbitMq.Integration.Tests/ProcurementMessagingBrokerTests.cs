@@ -159,6 +159,32 @@ public sealed class ProcurementMessagingBrokerTests(RabbitMqFixture fixture) : I
         (await fixture.InspectQueueAsync(ProcurementMessagingTopology.ProjectionDeadLetterQueue)).MessageCount.ShouldBe(0u);
     }
 
+    [Fact]
+    public async Task T_RPT_005_p_ReportReady_NotifiesTheRequester_WhileRequestedReachesOnlyTheProjection()
+    {
+        var handler = new Handler();
+        await using var harness = CreateHarness(handler);
+        await harness.StartAsync();
+        var occurred = new DateTime(2027, 3, 1, 13, 0, 0, DateTimeKind.Utc);
+        var jobId = Guid.NewGuid();
+        var requester = Guid.NewGuid();
+        var requested = ProcurementIntegrationEventContract.FromDomainEvent(
+            new Template.Domain.Reporting.ReportRequested(occurred, jobId, Template.Domain.Reporting.ReportType.RequisitionPdf, requester), "rabbit-phase30");
+        var ready = ProcurementIntegrationEventContract.FromDomainEvent(
+            new Template.Domain.Reporting.ReportReady(occurred.AddSeconds(5), jobId, Template.Domain.Reporting.ReportType.RequisitionPdf, requester, Guid.NewGuid()),
+            "rabbit-phase30");
+
+        await harness.Publisher.PublishAsync(requested, CancellationToken.None);
+        await harness.Publisher.PublishAsync(ready, CancellationToken.None);
+        await harness.Publisher.PublishAsync(ready, CancellationToken.None); // duplicate after a confirmed publish
+
+        await Eventually.TrueAsync(() => Task.FromResult(handler.Calls >= 5), "projection twice + once, notification twice");
+        handler.CallsFor(ProcurementMessagingTopology.NotificationConsumer).ShouldBe(2); // only report.ready, delivered twice
+        handler.EffectsFor(ProcurementMessagingTopology.NotificationConsumer).ShouldBe(1);
+        handler.EffectsFor(ProcurementMessagingTopology.ProjectionConsumer).ShouldBe(2); // requested and ready
+        (await fixture.InspectQueueAsync(ProcurementMessagingTopology.NotificationQueue)).MessageCount.ShouldBe(0u);
+    }
+
     private static IntegrationEventEnvelope RfqPublishedEnvelope() => ProcurementIntegrationEventContract.FromDomainEvent(
         new RfqPublished(new DateTime(2027, 3, 1, 13, 0, 0, DateTimeKind.Utc), Guid.NewGuid(), "RFQ-2027-000001", Guid.NewGuid(),
             new DateTime(2027, 3, 4, 13, 0, 0, DateTimeKind.Utc), [Guid.NewGuid(), Guid.NewGuid()], SourcingMethod.Competitive), "rabbit-phase29");
