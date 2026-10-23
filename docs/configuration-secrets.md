@@ -13,6 +13,10 @@ This page names configuration keys and environment variables only. Never copy a 
 | `ConnectionStrings:IdentityConnection` | `ConnectionStrings__IdentityConnection` | `UseInMemoryDatabase` is false | migrations fail at startup |
 | `ConnectionStrings:RedisConnection` | `ConnectionStrings__RedisConnection` | `CacheSettings:Enabled` is true outside Test | the product cache misses (fail-soft, unchanged) |
 | `RabbitMqSettings:Password` | `RabbitMqSettings__Password` | `RabbitMqSettings:Enabled` is true | `RabbitMqSettings requires ... credentials ...` |
+| `ConnectionStrings:BlobStorage` | `ConnectionStrings__BlobStorage` | `FileStorageSettings:Enabled` is true outside Test (Phase 30; `true` in the Worker's `appsettings.json` and in Compose) | `ConnectionStrings:BlobStorage is required when FileStorageSettings:Enabled is true.` |
+| — (Compose only) | `AZURITE_ACCOUNT_KEY` | Compose | Azurite rejects the account; report outputs fail with `report.storage-unavailable` and downloads answer 503 |
+
+Phase 30 adds `ConnectionStrings:BlobStorage` (an Azure Blob-compatible connection string with an account key) and, for Compose, the Azurite account name `AZURITE_ACCOUNT_NAME` (not secret) and key `AZURITE_ACCOUNT_KEY` (Base64, for example 32 hexadecimal characters). Compose builds the connection string from them; the published Azurite development account is never used. Disabled storage (`FileStorageSettings:Enabled` false) needs no key: report attempts then retry with `report.storage-unavailable` and downloads answer 503.
 
 Phase 24 adds no new secret key. The CSRF HMAC key of the browser session is derived with HKDF-SHA256 from `JwtSettings:Key` (decision D24-3), so rotating the signing key also invalidates every CSRF binding and every access token, and every refresh then fails CSRF validation: users sign in again. Refresh tokens are never configuration; only their SHA-256 hashes are stored in the application database.
 
@@ -76,7 +80,11 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 dotnet user-secrets set "ConnectionStrings:IdentityConnection" "Host=localhost;Port=5432;Username=<user>;Password=<password>;Database=TemplateCleanArchIdentity;SearchPath=public" --project Src\Presentation\Template.WebApi
 dotnet user-secrets set "ConnectionStrings:RedisConnection" "localhost:6379,password=<password>" --project Src\Presentation\Template.WebApi
 dotnet user-secrets set "RabbitMqSettings:Password" "<password>" --project Src\Presentation\Template.WebApi
+dotnet user-secrets set "FileStorageSettings:Enabled" "true" --project Src\Presentation\Template.WebApi
+dotnet user-secrets set "ConnectionStrings:BlobStorage" "DefaultEndpointsProtocol=http;AccountName=<account>;AccountKey=<base64-key>;BlobEndpoint=http://127.0.0.1:10000/<account>;" --project Src\Presentation\Template.WebApi
 ```
+
+The Worker reads the same keys (`ConnectionStrings:BlobStorage`, `ConnectionStrings:DefaultConnection`, `RabbitMqSettings:Password`) from its environment or its own user secrets.
 
 `dotnet user-secrets list --project Src\Presentation\Template.WebApi` prints values, so avoid it on shared screens or recorded sessions.
 

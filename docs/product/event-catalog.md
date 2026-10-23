@@ -73,8 +73,8 @@ Idempotency key for every consumer = (consumer name, `eventId`) in the Inbox. Th
 | `procurement.purchase-order.reopened` | Purchasing / Recompute | purchaseOrderId | Requisitions | purchaseOrderId + completion sequence | 32 |
 | `procurement.receipt.posted` | Receiving / Post | receiptId, purchaseOrderId, lineCount, hasDiscrepancy | Purchasing recompute (same transaction; event for projections), Notifications | receiptId | 32 |
 | `procurement.receipt.corrected` | Receiving / Correct | receiptId, correctionId | Projections | correctionId | 32 |
-| `procurement.report.requested` | Reporting / Request | reportJobId, reportType | Worker report handler | reportJobId | 30 |
-| `procurement.report.ready` / `procurement.report.failed` | Worker report handler | reportJobId, failureCode? | Notifications (in-app) | reportJobId | 30 |
+| `procurement.report.requested` | Reporting / Request | reportJobId, reportType, requestedBy | Projections (the Worker claims jobs from the job table, D30-1) | reportJobId | 30 |
+| `procurement.report.ready` / `procurement.report.failed` | Worker report handler | reportJobId, reportType, requestedBy, failureCode? | Notifications (in-app, requester only, D30-11), projections | reportJobId | 30 |
 
 Notification consumers produce `NotificationRequested` commands to a local adapter (fake until Phase 33, Mailpit in Phase 33); templates are versioned and localized; delivery records are idempotent per (event, recipient, template). Phase 29 implements this for sourcing: the Worker consumer `procurement-notification-v1` on queue `procurement.notifications.v1` (bound to `procurement.rfq.published`, `procurement.rfq.deadline-extended` and `procurement.rfq.reminder-requested`) records one `MessagingNotificationDeliveries` row per invited supplier and template (`sourcing.rfq-invitation.v1`, `sourcing.rfq-deadline-extended.v1`, `sourcing.rfq-reminder.v1`) in the Inbox transaction (D29-8).
 
