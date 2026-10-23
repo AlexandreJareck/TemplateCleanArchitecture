@@ -6,6 +6,7 @@ using Template.Application.Interfaces;
 using Template.Application.Interfaces.Budgeting;
 using Template.Application.Interfaces.Catalog;
 using Template.Application.Interfaces.Organization;
+using Template.Application.Interfaces.Sourcing;
 using Template.Application.Interfaces.Suppliers;
 
 namespace Template.Infrastructure.Persistence.Contexts;
@@ -27,7 +28,16 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         "IX_PurchaseRequisitionStateChanges_RequisitionId_Sequence",
         "IX_PurchaseRequisitionLines_RequisitionId_LineNumber",
         "IX_PurchaseRequisitionSubmissions_RequisitionId_Revision",
-        IBudgetAllocationRepository.ActiveReservationUniqueKey
+        IBudgetAllocationRepository.ActiveReservationUniqueKey,
+        // Phase 29: sourcing history, invitation, revision, comparison and award guards of the RFQ aggregate.
+        "IX_SourcingRfqHistory_RfqId_Sequence",
+        "IX_SourcingRfqInvitations_RfqId_Sequence",
+        "IX_SourcingRfqInvitations_RfqId_SupplierId_Active",
+        "IX_SourcingQuotes_RfqId_SupplierId",
+        "IX_SourcingQuoteRevisions_QuoteId_RevisionNumber",
+        "IX_SourcingComparisons_RfqId_Sequence",
+        "IX_SourcingAwards_RfqId_Pending",
+        "IX_SourcingRfqs_RequisitionId_RoundNumber"
     };
 
     /// <summary>
@@ -45,7 +55,8 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         ISupplierRepository.TaxIdUniqueKey,
         IFiscalPeriodRepository.CodeUniqueKey,
         IFiscalPeriodRepository.NoOverlapKey,
-        IBudgetAllocationRepository.UniqueKey
+        IBudgetAllocationRepository.UniqueKey,
+        IRequestForQuotationRepository.ActiveRfqUniqueKey
     };
 
     private IDbContextTransaction? transaction;

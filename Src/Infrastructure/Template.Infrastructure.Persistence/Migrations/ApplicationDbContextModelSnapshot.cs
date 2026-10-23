@@ -290,6 +290,9 @@ namespace Template.Infrastructure.Persistence.Migrations
                         .HasColumnType("character(3)")
                         .IsFixedLength();
 
+                    b.Property<Guid?>("LastAwardId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ReleaseReason")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -342,6 +345,9 @@ namespace Template.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("AtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AwardId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
                         .IsRequired()
@@ -775,6 +781,23 @@ namespace Template.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ActiveReservationId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ActiveRfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("AwardAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("AwardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AwardedSupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AwardedSupplierName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("CostCenterCode")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1178,6 +1201,850 @@ namespace Template.Infrastructure.Persistence.Migrations
                     b.ToTable("PurchaseRequisitionSubmissionLines", (string)null);
                 });
 
+            modelBuilder.Entity("Template.Domain.Sourcing.ComparisonEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ComparisonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CoveredLines")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<int>("DeliveryDays")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ExchangeRateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("InvalidReasons")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsValid")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("NormalizedTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("QuoteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("QuoteRevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Rank")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("Rate")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<decimal>("RawTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RevisionNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("SupplierActiveAtClose")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SupplierLegalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TotalLines")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("ValidUntil")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComparisonId", "QuoteRevisionId")
+                        .IsUnique();
+
+                    b.ToTable("SourcingComparisonEntries", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.QuoteAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AddedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AddedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<long>("Length")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RevisionId");
+
+                    b.ToTable("SourcingQuoteAttachments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SourcingQuoteAttachments_Length", "\"Length\" > 0 AND \"Length\" <= 10485760");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.QuoteLineOffer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("LineTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("QuantityOffered")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RfqLineNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RevisionId", "RfqLineNumber")
+                        .IsUnique();
+
+                    b.ToTable("SourcingQuoteLines", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SourcingQuoteLines_Positive", "\"QuantityOffered\" > 0 AND \"UnitPrice\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.QuoteRevision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<int>("DeliveryDays")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("EnteredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EnteredBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Freight")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("PaymentTerms")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("QuoteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RevisionNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TaxesIncluded")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly>("ValidUntil")
+                        .HasColumnType("date");
+
+                    b.Property<string>("WithdrawalReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("WithdrawnAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("WithdrawnBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuoteId", "RevisionNumber")
+                        .IsUnique();
+
+                    b.ToTable("SourcingQuoteRevisions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SourcingQuoteRevisions_Amounts", "\"Subtotal\" > 0 AND \"Freight\" >= 0 AND \"Discount\" >= 0 AND \"TaxesIncluded\" >= 0 AND \"Total\" >= 0");
+
+                            t.HasCheckConstraint("CK_SourcingQuoteRevisions_DeliveryDays", "\"DeliveryDays\" >= 0 AND \"DeliveryDays\" <= 3650");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RequestForQuotation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AboveThreshold")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BaseCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CancellationReasonCode")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CloseReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("ClosedEarly")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("CostCenterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeadlineUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("EstimateInBaseCurrency")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateOnly>("NeededBy")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("PolicyVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequisitionCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<decimal>("RequisitionEstimatedTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("RequisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequisitionNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("RequisitionRevision")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RoundNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("Number")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SourcingRfqs_Number");
+
+                    b.HasIndex("RequisitionId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SourcingRfqs_RequisitionId_Active")
+                        .HasFilter("\"Status\" <> 'Cancelled'");
+
+                    b.HasIndex("RequisitionId", "RoundNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "DeadlineUtc");
+
+                    b.ToTable("SourcingRfqs", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SourcingRfqs_RequisitionEstimatedTotal", "\"RequisitionEstimatedTotal\" >= 0");
+
+                            t.HasCheckConstraint("CK_SourcingRfqs_RoundNumber", "\"RoundNumber\" >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqAward", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AwardedTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("BaseCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("ComparisonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("EndedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Justification")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal>("NormalizedTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("QuoteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("QuoteRevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RequisitionCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<decimal>("RequisitionCurrencyTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("SubmittedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SubmittedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SupplierLegalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComparisonId");
+
+                    b.HasIndex("QuoteRevisionId");
+
+                    b.HasIndex("RfqId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SourcingAwards_RfqId_Pending")
+                        .HasFilter("\"Status\" = 'PendingApproval'");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("SourcingAwards", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SourcingAwards_Amounts", "\"AwardedTotal\" > 0 AND \"NormalizedTotal\" > 0 AND \"RequisitionCurrencyTotal\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqComparison", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BaseCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<DateOnly>("CloseLocalDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("ComputedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RecommendedQuoteRevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RequiredValidQuotes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("ValidQuoteCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Warnings")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("SourcingComparisons", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqExchangeRate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("EnteredBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FromCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateOnly>("QuoteDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Rate")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("RetrievedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ToCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<Guid?>("WaiverId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "Purpose", "FromCurrency");
+
+                    b.ToTable("SourcingExchangeRates", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SourcingExchangeRates_Rate", "\"Rate\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqHistoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("EventType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("From")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("To")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("SourcingRfqHistory", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("InvitedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InvitedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RemovedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RemovedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SupplierCountry")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character(2)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SupplierLegalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SupplierStatusAtInvitation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("SupplierTaxId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("RfqId", "Sequence")
+                        .IsUnique();
+
+                    b.HasIndex("RfqId", "SupplierId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SourcingRfqInvitations_RfqId_SupplierId_Active")
+                        .HasFilter("\"RemovedAtUtc\" IS NULL");
+
+                    b.ToTable("SourcingRfqInvitations", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CatalogItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CategoryCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("EstimatedLineTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("EstimatedUnitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UnitCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("UnitOfMeasureId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "LineNumber")
+                        .IsUnique();
+
+                    b.ToTable("SourcingRfqLines", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SourcingRfqLines_Quantity", "\"Quantity\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqWaiver", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Permission")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RuleId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("ScopeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "DecidedAtUtc");
+
+                    b.ToTable("SourcingWaivers", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.SupplierQuote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InvitationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvitationId");
+
+                    b.HasIndex("RfqId", "SupplierId")
+                        .IsUnique();
+
+                    b.ToTable("SourcingQuotes", (string)null);
+                });
+
             modelBuilder.Entity("Template.Domain.Suppliers.Supplier", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1391,6 +2258,19 @@ namespace Template.Infrastructure.Persistence.Migrations
                     b.ToTable("PurchaseRequisitionNumberCounters", (string)null);
                 });
 
+            modelBuilder.Entity("Template.Infrastructure.Persistence.Contexts.Configurations.RfqNumberCounter", b =>
+                {
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("LastValue")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Year");
+
+                    b.ToTable("SourcingRfqNumberCounters", (string)null);
+                });
+
             modelBuilder.Entity("Template.Infrastructure.Persistence.Idempotency.IdempotencyRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1475,6 +2355,68 @@ namespace Template.Infrastructure.Persistence.Migrations
                     b.HasIndex("ReceivedAtUtc");
 
                     b.ToTable("MessagingInbox", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Infrastructure.Persistence.Messaging.NotificationDelivery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AggregateType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ConsumerName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RecipientType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Template")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AggregateId", "CreatedAtUtc");
+
+                    b.HasIndex("EventId", "RecipientId", "Template")
+                        .IsUnique();
+
+                    b.ToTable("MessagingNotificationDeliveries", (string)null);
                 });
 
             modelBuilder.Entity("Template.Infrastructure.Persistence.Messaging.OutboxMessage", b =>
@@ -1752,6 +2694,147 @@ namespace Template.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Template.Domain.Sourcing.ComparisonEntry", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RfqComparison", null)
+                        .WithMany("Entries")
+                        .HasForeignKey("ComparisonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.QuoteAttachment", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.QuoteRevision", null)
+                        .WithMany("Attachments")
+                        .HasForeignKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.QuoteLineOffer", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.QuoteRevision", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.QuoteRevision", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.SupplierQuote", null)
+                        .WithMany("Revisions")
+                        .HasForeignKey("QuoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RequestForQuotation", b =>
+                {
+                    b.HasOne("Template.Domain.Requisitions.PurchaseRequisition", null)
+                        .WithMany()
+                        .HasForeignKey("RequisitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqAward", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RfqComparison", null)
+                        .WithMany()
+                        .HasForeignKey("ComparisonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Template.Domain.Sourcing.QuoteRevision", null)
+                        .WithMany()
+                        .HasForeignKey("QuoteRevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("Awards")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqComparison", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("Comparisons")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqExchangeRate", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("ExchangeRates")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqHistoryEntry", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("History")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqInvitation", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("Invitations")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Template.Domain.Suppliers.Supplier", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqLine", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqWaiver", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("Waivers")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.SupplierQuote", b =>
+                {
+                    b.HasOne("Template.Domain.Sourcing.RfqInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("InvitationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Template.Domain.Sourcing.RequestForQuotation", null)
+                        .WithMany("Quotes")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Template.Domain.Suppliers.Supplier", b =>
                 {
                     b.OwnsOne("Template.Domain.Suppliers.SupplierEnrichmentSnapshot", "Enrichment", b1 =>
@@ -1887,6 +2970,42 @@ namespace Template.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Template.Domain.Requisitions.RequisitionSubmission", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.QuoteRevision", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RequestForQuotation", b =>
+                {
+                    b.Navigation("Awards");
+
+                    b.Navigation("Comparisons");
+
+                    b.Navigation("ExchangeRates");
+
+                    b.Navigation("History");
+
+                    b.Navigation("Invitations");
+
+                    b.Navigation("Lines");
+
+                    b.Navigation("Quotes");
+
+                    b.Navigation("Waivers");
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.RfqComparison", b =>
+                {
+                    b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("Template.Domain.Sourcing.SupplierQuote", b =>
+                {
+                    b.Navigation("Revisions");
                 });
 
             modelBuilder.Entity("Template.Domain.Suppliers.Supplier", b =>

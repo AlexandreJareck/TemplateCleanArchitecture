@@ -10,7 +10,8 @@ namespace Template.Infrastructure.Persistence.Messaging;
 public sealed class PostgreSqlMessagingStore(ApplicationDbContext dbContext) :
     IIntegrationEventOutbox,
     IOutboxStore,
-    IProcurementEventEffectStore
+    IProcurementEventEffectStore,
+    INotificationDeliveryStore
 {
     public void Add(IntegrationEventEnvelope envelope)
     {
@@ -144,6 +145,62 @@ public sealed class PostgreSqlMessagingStore(ApplicationDbContext dbContext) :
         await transaction.CommitAsync(cancellationToken);
         return InboxApplyResult.Applied;
     }
+
+    public async Task<InboxApplyResult> DeliverOnceAsync(
+        string consumerName, IntegrationEventEnvelope envelope, IReadOnlyList<NotificationRequest> requests, DateTime processedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        ProcurementIntegrationEventContract.Validate(envelope);
+        if (!dbContext.Database.IsRelational())
+        {
+            if (await dbContext.Set<InboxMessage>().FindAsync([consumerName, envelope.EventId], cancellationToken) is not null)
+                return InboxApplyResult.Duplicate;
+            var inbox = new InboxMessage(consumerName, envelope.EventId, envelope.EventType, processedAtUtc);
+            dbContext.Add(inbox);
+            foreach (var request in requests)
+                dbContext.Add(Delivery(consumerName, envelope, request, processedAtUtc));
+            inbox.Complete(processedAtUtc);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return InboxApplyResult.Applied;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var inserted = await dbContext.Database.ExecuteSqlInterpolatedAsync($$"""
+            INSERT INTO "MessagingInbox" ("ConsumerName", "EventId", "EventType", "ReceivedAtUtc", "CompletedAtUtc")
+            VALUES ({{consumerName}}, {{envelope.EventId}}, {{envelope.EventType}}, {{processedAtUtc}}, NULL)
+            ON CONFLICT ("ConsumerName", "EventId") DO NOTHING
+            """, cancellationToken);
+        if (inserted == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return InboxApplyResult.Duplicate;
+        }
+
+        foreach (var request in requests)
+        {
+            var delivery = Delivery(consumerName, envelope, request, processedAtUtc);
+            await dbContext.Database.ExecuteSqlInterpolatedAsync($$"""
+                INSERT INTO "MessagingNotificationDeliveries"
+                    ("Id", "ConsumerName", "EventId", "EventType", "RecipientType", "RecipientId", "Template", "AggregateType", "AggregateId",
+                     "Channel", "Status", "CreatedAtUtc")
+                VALUES ({{delivery.Id}}, {{delivery.ConsumerName}}, {{delivery.EventId}}, {{delivery.EventType}}, {{delivery.RecipientType}},
+                    {{delivery.RecipientId}}, {{delivery.Template}}, {{delivery.AggregateType}}, {{delivery.AggregateId}}, {{delivery.Channel}},
+                    {{delivery.Status}}, {{delivery.CreatedAtUtc}})
+                ON CONFLICT ("EventId", "RecipientId", "Template") DO NOTHING
+                """, cancellationToken);
+        }
+
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($$"""
+            UPDATE "MessagingInbox" SET "CompletedAtUtc" = {{processedAtUtc}}
+            WHERE "ConsumerName" = {{consumerName}} AND "EventId" = {{envelope.EventId}}
+            """, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return InboxApplyResult.Applied;
+    }
+
+    private static NotificationDelivery Delivery(string consumerName, IntegrationEventEnvelope envelope, NotificationRequest request, DateTime atUtc) =>
+        new(Guid.NewGuid(), consumerName, envelope.EventId, envelope.EventType, request.RecipientType, request.RecipientId, request.Template,
+            request.AggregateType, request.AggregateId, atUtc);
 
     private async Task<OutboxMessage> ClaimedAsync(Guid eventId, string owner, CancellationToken cancellationToken) =>
         await dbContext.Set<OutboxMessage>().SingleOrDefaultAsync(
