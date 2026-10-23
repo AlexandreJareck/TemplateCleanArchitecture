@@ -68,7 +68,9 @@ public sealed record RequisitionView(
     IReadOnlyList<RequisitionAttachmentView> Attachments,
     IReadOnlyList<RequisitionSubmissionView> Submissions,
     IReadOnlyList<string> AllowedActions,
-    string Version)
+    string Version,
+    Guid? ActiveRfqId = null,
+    RequisitionAwardView? Award = null)
 {
     public static RequisitionView From(PurchaseRequisition requisition, IReadOnlyList<string> allowedActions) => new(
         requisition.Id,
@@ -107,7 +109,11 @@ public sealed record RequisitionView(
                     .ToArray()))
             .ToArray(),
         allowedActions,
-        VersionPrecondition.Format(requisition.Version));
+        VersionPrecondition.Format(requisition.Version),
+        requisition.ActiveRfqId,
+        requisition.AwardId is { } awardId && requisition.AwardedSupplierId is { } supplierId
+            ? new RequisitionAwardView(awardId, supplierId, requisition.AwardedSupplierName ?? string.Empty)
+            : null);
 
     private static RequisitionLineView Line(RequisitionLine line, string currency) => new(
         line.LineNumber, line.CatalogItemId, line.Description, line.Kind.ToString(), line.CategoryId, line.CategoryCode, line.UnitOfMeasureId,
@@ -117,6 +123,12 @@ public sealed record RequisitionView(
 
     internal static MoneyView Price(decimal value, string currency) => new(value.ToString("0.00##", CultureInfo.InvariantCulture), currency);
 }
+
+/// <summary>
+/// SRC-021: the awarded supplier as requesters may see it (identity only; quote amounts and terms need
+/// <c>sourcing.quotes.read</c> on the RFQ resource).
+/// </summary>
+public sealed record RequisitionAwardView(Guid AwardId, Guid SupplierId, string SupplierName);
 
 /// <summary>List item without lines, attachments or snapshots.</summary>
 public sealed record RequisitionSummaryView(

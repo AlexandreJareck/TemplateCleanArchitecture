@@ -2,6 +2,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Template.Application.Common.Concurrency;
 using Template.Application.Common.Paging;
 using Template.Application.Features.Requisitions;
+using Template.Application.Features.Sourcing;
+using Template.Application.Interfaces.Integrations;
+using Template.Application.Interfaces.Sourcing;
+using Template.Application.Services.Integrations;
 using Template.Application.Interfaces;
 using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Budgeting;
@@ -15,6 +19,7 @@ using Template.Domain.Catalog;
 using Template.Domain.Common;
 using Template.Domain.Organization;
 using Template.Domain.Requisitions;
+using Template.Domain.Sourcing;
 using Template.Unit.Tests.ApplicationTests.Features.Access;
 using Template.Unit.Tests.ApplicationTests.Features.MasterData;
 
@@ -72,6 +77,10 @@ internal sealed class ProcurementTestDoubles
     public FakeScope Scope { get; } = new();
     public FakeReferences References { get; } = new();
     public FakeOutbox Outbox { get; } = new();
+    public FakeRfqs Rfqs { get; } = new();
+    public FakeRfqNumbers RfqNumbers { get; } = new();
+    public FakeSuppliers Suppliers { get; } = new();
+    public FakeRates Rates { get; } = new();
 
     public ProcurementWriter NewWriter() => new(
         UnitOfWork, Audit, Clock, new AccessTestDoubles.FixedRequestContext(), User, Permissions, Settings, Outbox, NullLogger<ProcurementWriter>.Instance);
@@ -85,8 +94,23 @@ internal sealed class ProcurementTestDoubles
     public RequisitionTransitionHandlers Transitions()
     {
         var writer = NewWriter();
-        return new(Requisitions, Allocations, Periods, CostCenters, References, Numbers, Accounts, new RequisitionAccess(writer, Scope), writer);
+        return new(Requisitions, Allocations, Periods, CostCenters, References, Numbers, Accounts, Rfqs, new RequisitionAccess(writer, Scope), writer);
     }
+
+    public RfqCommandHandlers RfqCommands()
+    {
+        var writer = NewWriter();
+        return new(Rfqs, RfqNumbers, Requisitions, Allocations, Suppliers,
+            new SourcingExchangeRates(new PtaxRateResolver(Rates), NullLogger<SourcingExchangeRates>.Instance), new SourcingAccess(writer), writer);
+    }
+
+    public QuoteCommandHandlers QuoteCommands()
+    {
+        var writer = NewWriter();
+        return new(Rfqs, new SourcingAccess(writer), writer);
+    }
+
+    public RfqQueryHandlers RfqQueries() => new(Rfqs, new SourcingAccess(NewWriter()));
 
     public RequisitionQueryHandlers Queries()
     {
@@ -351,6 +375,83 @@ internal sealed class ProcurementTestDoubles
             foreach (var unit in Units.Where(unit => ids.Contains(unit.Id)))
                 states[unit.Id] = unit.IsActive;
             return Task.FromResult<IReadOnlyDictionary<Guid, bool>>(states);
+        }
+    }
+
+    internal sealed class FakeRfqs : IRequestForQuotationRepository
+    {
+        public List<RequestForQuotation> Items { get; } = [];
+
+        public void Add(RequestForQuotation rfq) => Items.Add(rfq);
+
+        public Task<RequestForQuotation?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(Items.SingleOrDefault(item => item.Id == id));
+
+        public Task<RequestForQuotation?> FindActiveByRequisitionAsync(Guid requisitionId, CancellationToken cancellationToken) =>
+            Task.FromResult(Items.SingleOrDefault(item => item.RequisitionId == requisitionId && item.Status != RfqStatus.Cancelled));
+
+        public Task<long?> GetVersionAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult(Items.Where(item => item.Id == id).Select(item => (long?)item.Version).SingleOrDefault());
+
+        public Task<int> CountRoundsAsync(Guid requisitionId, CancellationToken cancellationToken) =>
+            Task.FromResult(Items.Count(item => item.RequisitionId == requisitionId));
+
+        public Task<PagedResult<RequestForQuotation>> ListAsync(RfqFilter filter, PageRequest page, CancellationToken cancellationToken)
+        {
+            var items = Items.Where(item => (filter.Statuses is null || filter.Statuses.Contains(item.Status))
+                && (filter.RequisitionId is null || item.RequisitionId == filter.RequisitionId)).ToArray();
+            return Task.FromResult(new PagedResult<RequestForQuotation>(items, page.Page, page.PageSize, items.Length));
+        }
+
+        public Task<IReadOnlyList<Guid>> ListDueForCloseAsync(DateTime nowUtc, int max, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Guid>>(Items.Where(item => item.Status == RfqStatus.Published && item.DeadlineUtc <= nowUtc)
+                .Select(item => item.Id).Take(max).ToArray());
+    }
+
+    internal sealed class FakeRfqNumbers : IRfqNumberAllocator
+    {
+        private long next;
+
+        public Task<long> NextAsync(int year, CancellationToken cancellationToken) => Task.FromResult(++next);
+    }
+
+    internal sealed class FakeSuppliers : ISupplierSnapshotReader
+    {
+        public Dictionary<Guid, SupplierSnapshot> Items { get; } = [];
+
+        public SupplierSnapshot AddActive(string legalName)
+        {
+            var supplier = new SupplierSnapshot(Guid.NewGuid(), legalName, "BR", "11222333000181", "Active", true);
+            Items[supplier.SupplierId] = supplier;
+            return supplier;
+        }
+
+        public void SetStatus(Guid supplierId, string status) =>
+            Items[supplierId] = Items[supplierId] with { Status = status, IsActive = status == "Active" };
+
+        public Task<IReadOnlyDictionary<Guid, SupplierSnapshot>> GetAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, SupplierSnapshot>>(Items.Where(pair => ids.Contains(pair.Key)).ToDictionary(pair => pair.Key, pair => pair.Value));
+    }
+
+    /// <summary>Fake BCB PTAX provider: per-currency closing selling rates, or an explicit failure outcome; counts calls.</summary>
+    internal sealed class FakeRates : IExchangeRateProvider
+    {
+        public Dictionary<string, decimal> SellRates { get; } = new(StringComparer.Ordinal);
+        public EnrichmentOutcome Failure { get; set; } = EnrichmentOutcome.Unavailable;
+        public int Calls { get; private set; }
+        public DateOnly? LastToDate { get; private set; }
+
+        public Task<EnrichmentResult<IReadOnlyList<ExchangeRateBulletin>>> GetPtaxBulletinsAsync(
+            string currency, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Calls++;
+            LastToDate = toDate;
+            if (!SellRates.TryGetValue(currency, out var rate))
+                return Task.FromResult(Failure == EnrichmentOutcome.Found
+                    ? EnrichmentResult<IReadOnlyList<ExchangeRateBulletin>>.Found(EnrichmentProviders.BcbPtax, Now, [])
+                    : EnrichmentResult<IReadOnlyList<ExchangeRateBulletin>>.Failed(Failure, EnrichmentProviders.BcbPtax, "synthetic"));
+            IReadOnlyList<ExchangeRateBulletin> bulletins = [new ExchangeRateBulletin(currency, toDate.AddDays(-1), rate - 0.0005m, rate, "Fechamento PTAX", true)];
+            return Task.FromResult(EnrichmentResult<IReadOnlyList<ExchangeRateBulletin>>.Found(EnrichmentProviders.BcbPtax, Now, bulletins));
         }
     }
 }

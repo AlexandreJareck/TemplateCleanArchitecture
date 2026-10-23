@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Template.Domain.Budgeting;
 using Template.Domain.Common;
 using Template.Domain.Requisitions;
+using Template.Domain.Sourcing;
 
 namespace Template.Application.Messaging.Procurement;
 
@@ -78,6 +79,66 @@ public static class ProcurementIntegrationEventContract
                 releasedAmount = new { amount = value.ReleasedAmount.Amount, currency = value.ReleasedAmount.Currency },
                 reasonCode = value.Reason.ToString()
             }),
+            BudgetReservationAdjusted value => Map(nameof(BudgetReservation), value.ReservationId, new
+            {
+                reservationId = value.ReservationId,
+                requisitionId = value.RequisitionId,
+                awardId = value.AwardId,
+                previousAmount = MoneyPayload(value.PreviousAmount),
+                newAmount = MoneyPayload(value.NewAmount)
+            }),
+            RfqPublished value => Map(nameof(RequestForQuotation), value.RfqId, new
+            {
+                rfqId = value.RfqId,
+                number = value.Number,
+                requisitionId = value.RequisitionId,
+                deadline = value.DeadlineUtc,
+                invitedSupplierIds = value.InvitedSupplierIds,
+                sourcingMethod = value.Method.ToString()
+            }),
+            RfqDeadlineExtended value => Map(nameof(RequestForQuotation), value.RfqId, new
+            {
+                rfqId = value.RfqId,
+                previousDeadline = value.PreviousDeadlineUtc,
+                newDeadline = value.NewDeadlineUtc,
+                invitedSupplierIds = value.InvitedSupplierIds
+            }),
+            RfqReminderRequested value => Map(nameof(RequestForQuotation), value.RfqId, new
+            {
+                rfqId = value.RfqId,
+                deadline = value.DeadlineUtc,
+                supplierIds = value.SupplierIds
+            }),
+            RfqClosed value => Map(nameof(RequestForQuotation), value.RfqId, new
+            {
+                rfqId = value.RfqId,
+                closedAt = value.ClosedAtUtc,
+                validQuoteCount = value.ValidQuoteCount,
+                comparisonStatus = value.ComparisonStatus.ToString()
+            }),
+            RfqCancelled value => Map(nameof(RequestForQuotation), value.RfqId, new
+            {
+                rfqId = value.RfqId,
+                requisitionId = value.RequisitionId,
+                reasonCode = value.ReasonCode
+            }),
+            QuoteRecorded value => Map(nameof(RequestForQuotation), value.RfqId, new
+            {
+                rfqId = value.RfqId,
+                quoteId = value.QuoteId,
+                revision = value.Revision,
+                supplierId = value.SupplierId
+            }),
+            AwardSubmitted value => Map(nameof(RequestForQuotation), value.RfqId, new
+            {
+                awardId = value.AwardId,
+                rfqId = value.RfqId,
+                requisitionId = value.RequisitionId,
+                supplierId = value.SupplierId,
+                normalizedTotal = MoneyPayload(value.NormalizedTotal),
+                requisitionCurrencyTotal = MoneyPayload(value.RequisitionCurrencyTotal),
+                policyRef = value.PolicyRef
+            }),
             _ => throw new NotSupportedException($"Domain event '{domainEvent.GetType().Name}' has no approved integration contract.")
         };
 
@@ -120,8 +181,26 @@ public static class ProcurementIntegrationEventContract
         "procurement.requisition.expired",
         "procurement.budget.reservation-created",
         "procurement.budget.reservation-committed",
-        "procurement.budget.reservation-released"
+        "procurement.budget.reservation-released",
+        "procurement.budget.reservation-adjusted",
+        "procurement.rfq.published",
+        "procurement.rfq.deadline-extended",
+        "procurement.rfq.reminder-requested",
+        "procurement.rfq.closed",
+        "procurement.rfq.cancelled",
+        "procurement.quote.recorded",
+        "procurement.award.submitted"
     };
+
+    /// <summary>
+    /// Phase 29 sourcing events carry the aggregate type and ID; their <c>aggregateVersion</c> is the constant "1"
+    /// like reservation events (consumers order by the per-aggregate Outbox sequence and use the payload state).
+    /// </summary>
+    private static (string AggregateType, Guid AggregateId, string AggregateVersion, object Payload) Map(
+        string aggregateType, Guid aggregateId, object payload) =>
+        (aggregateType, aggregateId, "1", payload);
+
+    private static object MoneyPayload(Money money) => new { amount = money.Amount, currency = money.Currency };
 
     private static (string AggregateType, Guid AggregateId, string AggregateVersion, object Payload) Map(
         RequisitionSubmitted value, object payload) =>

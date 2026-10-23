@@ -58,4 +58,27 @@ public static class ProblemCodes
     public const string FileTypeNotAllowed = "file.type-not-allowed";
     public const string FileLimitReached = "file.limit-reached";
     public const string FileImmutable = "file.immutable";
+
+    // Phase 29: sourcing (SRC-*), waivers and BUD-009.
+    public const string RfqRequisitionNotEligible = "rfq.requisition-not-eligible";
+    public const string RfqAlreadyActive = "rfq.already-active";
+    public const string RfqDeadlineInvalid = "rfq.deadline-invalid";
+    public const string RfqInsufficientInvitations = "rfq.insufficient-invitations";
+    public const string RfqDeadlinePassed = "rfq.deadline-passed";
+    public const string RfqSupplierAlreadyInvited = "rfq.supplier-already-invited";
+    public const string RfqDirectSingleSupplier = "rfq.direct-single-supplier";
+    public const string RfqNoPendingSuppliers = "rfq.no-pending-suppliers";
+    public const string RfqRateNotNeeded = "rfq.rate-not-needed";
+    public const string WaiverRequired = "waiver.required";
+    public const string WaiverPermissionRequired = "waiver.permission-required";
+    public const string QuoteLate = "quote.late";
+    public const string QuoteSupplierNotInvited = "quote.supplier-not-invited";
+    public const string QuoteImmutable = "quote.immutable";
+    public const string QuoteExists = "quote.exists";
+    public const string QuoteExpired = "quote.expired";
+    public const string AwardNotEligible = "award.not-eligible";
+    public const string AwardPendingExists = "award.pending-exists";
+    public const string AwardInsufficientQuotations = "award.insufficient-quotations";
+    public const string AwardNonLeadingRequiresWaiver = "award.non-leading-requires-waiver";
+    public const string AwardComparisonIncomplete = "award.comparison-incomplete";
 }
