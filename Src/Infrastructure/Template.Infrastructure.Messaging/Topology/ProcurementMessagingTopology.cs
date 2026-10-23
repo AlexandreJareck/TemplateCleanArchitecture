@@ -1,4 +1,5 @@
 using RabbitMQ.Client;
+using Template.Application.Messaging.Procurement;
 
 namespace Template.Infrastructure.Messaging.Topology;
 
@@ -6,10 +7,22 @@ public static class ProcurementMessagingTopology
 {
     public const string Exchange = "procurement.events";
     public const string DeadLetterExchange = "procurement.events.dead-letter";
-    public const string ProjectionConsumer = "procurement-projection-v1";
+    public const string ProjectionConsumer = ProcurementConsumers.Projection;
     public const string ProjectionQueue = "procurement.projections.v1";
     public const string ProjectionDeadLetterQueue = "procurement.projections.v1.dead-letter";
+
+    // Phase 29 (SRC-022): sourcing notifications have their own durable queue, Inbox consumer name and DLQ.
+    public const string NotificationConsumer = ProcurementConsumers.Notification;
+    public const string NotificationQueue = "procurement.notifications.v1";
+    public const string NotificationDeadLetterQueue = "procurement.notifications.v1.dead-letter";
     public const string ContractType = "procurement.integration-event.v1";
+
+    /// <summary>Consumers hosted by the Worker: queue and Inbox consumer name.</summary>
+    public static IReadOnlyList<(string Queue, string Consumer)> Consumers { get; } =
+    [
+        (ProjectionQueue, ProjectionConsumer),
+        (NotificationQueue, NotificationConsumer)
+    ];
 
     public static async Task DeclareAsync(IChannel channel, CancellationToken cancellationToken)
     {
@@ -19,5 +32,11 @@ public static class ProcurementMessagingTopology
         await channel.QueueBindAsync(ProjectionQueue, Exchange, "procurement.#", cancellationToken: cancellationToken);
         await channel.QueueDeclareAsync(ProjectionDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
         await channel.QueueBindAsync(ProjectionDeadLetterQueue, DeadLetterExchange, ProjectionQueue, cancellationToken: cancellationToken);
+
+        await channel.QueueDeclareAsync(NotificationQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
+        foreach (var eventType in ProcurementConsumers.NotificationEventTypes.Order(StringComparer.Ordinal))
+            await channel.QueueBindAsync(NotificationQueue, Exchange, eventType, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(NotificationDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(NotificationDeadLetterQueue, DeadLetterExchange, NotificationQueue, cancellationToken: cancellationToken);
     }
 }

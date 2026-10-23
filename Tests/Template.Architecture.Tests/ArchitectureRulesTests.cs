@@ -409,7 +409,7 @@ public sealed class ArchitectureRulesTests
             .Where(path => File.ReadAllText(path).Contains("[StableProblemCodes]", StringComparison.Ordinal))
             .ToArray();
 
-        controllers.Length.ShouldBe(15); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers
+        controllers.Length.ShouldBe(16); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers; Phase 29: +1 requests for quotation
         foreach (var path in controllers)
             ActionsWithoutExplicitAuthorization(File.ReadAllText(path)).ShouldBe(0, Relative(path));
     }
@@ -470,7 +470,7 @@ public sealed class ArchitectureRulesTests
         ContainsAny("string? HashRefreshToken(string? token);", SessionCryptoMarkers()).ShouldBeFalse();
     }
 
-    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions"];
+    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions", "Sourcing"];
 
     [Fact]
     public void Domain_Modules_Reference_Each_Other_Only_Through_The_Shared_Kernel()
@@ -588,6 +588,57 @@ public sealed class ArchitectureRulesTests
         ContainsAny("public RequisitionStatus Status { get; private set; }", PublicSetterMarkers()).ShouldBeFalse();
         ContainsAny("public decimal Amount { get; init; }", PublicSetterMarkers()).ShouldBeTrue();
     }
+
+    [Fact]
+    public void Phase29_Sourcing_Aggregate_Exposes_No_Public_Setters_And_Stays_Framework_Free()
+    {
+        // SRC-002/009: lines, revisions, comparisons and waivers change only through RequestForQuotation behavior methods.
+        SourceViolations("Src/Core/Template.Domain/Sourcing", PublicSetterMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain/Sourcing", OtherDomainModuleMarkers("Sourcing")).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain/Sourcing", ProviderMarkers()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Phase29_Award_Reservation_Adjustment_Lives_Only_In_The_Award_Use_Case()
+    {
+        // BUD-009 / SRC-019: the reservation follows the award in one transaction; no controller or other use case adjusts it.
+        SourceViolations("Src/Core/Template.Application", AwardAdjustmentMarkers())
+            .ShouldBe(["Src/Core/Template.Application/Features/Sourcing/RfqUseCases.cs"]);
+        SourceViolations("Src/Presentation/Template.WebApi/Controllers", AwardAdjustmentMarkers()).ShouldBeEmpty();
+        ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/RequestsForQuotationController.cs").ShouldNotContain("[HttpDelete(\"{id:guid}\")]");
+    }
+
+    [Fact]
+    public void Phase29_Browser_Never_Calculates_Authoritative_Ranking_Or_Conversion()
+    {
+        // Handoff: the browser may format and preview values but never computes rankings or exchange conversions.
+        var client = Path.Combine(Root, "Client/Template.WebApp/src/app");
+        if (!Directory.Exists(client))
+            return;
+        Directory.GetFiles(client, "*.ts", SearchOption.AllDirectories)
+            .Where(path => !path.EndsWith(".spec.ts", StringComparison.Ordinal) && !path.Contains("generated", StringComparison.Ordinal))
+            .Where(path => ContainsAny(File.ReadAllText(path), BrowserRankingMarkers()))
+            .Select(Relative)
+            .ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Phase29_Controlled_Mutations_Are_Detected()
+    {
+        ContainsAny("using Template.Domain.Suppliers;", OtherDomainModuleMarkers("Sourcing")).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Requisitions;", OtherDomainModuleMarkers("Sourcing")).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Common;", OtherDomainModuleMarkers("Sourcing")).ShouldBeFalse();
+        ContainsAny("public decimal Total { get; set; }", PublicSetterMarkers()).ShouldBeTrue();
+        ContainsAny("allocation.AdjustForAward(requisitionId, amount, awardId, actor, now, correlation);", AwardAdjustmentMarkers()).ShouldBeTrue();
+        ContainsAny("var amount = award.RequisitionCurrencyTotal;", AwardAdjustmentMarkers()).ShouldBeFalse();
+        ContainsAny("const normalized = total * rate;", BrowserRankingMarkers()).ShouldBeTrue();
+        ContainsAny("entries.sort((a, b) => a.normalizedTotal - b.normalizedTotal);", BrowserRankingMarkers()).ShouldBeTrue();
+        ContainsAny("formatMoney(entry.normalizedTotal)", BrowserRankingMarkers()).ShouldBeFalse();
+    }
+
+    private static string[] AwardAdjustmentMarkers() => [".AdjustForAward("];
+
+    private static string[] BrowserRankingMarkers() => ["* rate", "*rate", "normalizedTotal -", "rank =", "rank++"];
 
     private static string[] RawSqlMarkers() => ["ExecuteSqlRaw", "ExecuteSqlInterpolated", "FromSqlRaw", "FromSqlInterpolated", "SqlQuery<", "SqlQueryRaw<"];
 

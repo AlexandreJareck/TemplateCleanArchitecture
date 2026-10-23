@@ -31,6 +31,9 @@ public sealed class PurchaseRequisitionConfiguration : IEntityTypeConfiguration<
         builder.Property(requisition => requisition.Currency).HasMaxLength(3).IsFixedLength().IsRequired();
         builder.Property(requisition => requisition.EstimatedTotal).HasPrecision(18, 2);
         builder.Property(requisition => requisition.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+        // Phase 29 award snapshot (SRC-019): supplier identity and amount in requisition currency (CALC-007).
+        builder.Property(requisition => requisition.AwardedSupplierName).HasMaxLength(200);
+        builder.Property(requisition => requisition.AwardAmount).HasPrecision(18, 2);
         builder.Ignore(requisition => requisition.EstimatedTotalMoney);
         builder.Ignore(requisition => requisition.IsTerminal);
         builder.Ignore(requisition => requisition.WasEverSubmitted);

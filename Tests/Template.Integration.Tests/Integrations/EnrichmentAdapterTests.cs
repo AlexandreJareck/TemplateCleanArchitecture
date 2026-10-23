@@ -1,14 +1,19 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shouldly;
+using Template.Application.Features.Sourcing;
 using Template.Application.Interfaces.Integrations;
-using Template.Infrastructure.Integrations;
+using Template.Application.Services.Integrations;
+using Template.Domain.Sourcing;
 using Template.Infrastructure.Integrations.Bcb;
 using Template.Infrastructure.Integrations.BrasilApi;
 using Template.Infrastructure.Integrations.Http;
+using Template.Infrastructure.Integrations;
 using Template.Tests.Shared;
 
 namespace Template.Integration.Tests.Integrations;
@@ -241,6 +246,40 @@ public sealed class EnrichmentAdapterTests : IAsyncLifetime
             "?@moeda='USD'&@dataInicial='10-09-2026'&@dataFinalCotacao='10-16-2026'&$format=json&$select=cotacaoCompra,cotacaoVenda,dataHoraCotacao,tipoBoletim");
     }
 
+    [Fact]
+    public async Task T_CALC_004_Sourcing_UsesTheClosingSellingRate_OfTheLatestBulletinOnOrBeforeTheCloseDate()
+    {
+        server.Handler = _ => Json(200, PtaxBody);
+
+        var rate = await SourcingRates().ResolveAsync("USD", new DateOnly(2026, 10, 16), CancellationToken.None);
+
+        rate.ShouldNotBeNull();
+        (rate.Currency, rate.Rate, rate.QuoteDate, rate.Source, rate.Provider).ShouldBe(("USD", 5.4321m, new DateOnly(2026, 10, 16), ExchangeRateSource.BcbPtax, "BcbPtax"));
+        Uri.UnescapeDataString(server.Requests.Single().Query).ShouldContain("@dataInicial='10-09-2026'&@dataFinalCotacao='10-16-2026'");
+    }
+
+    [Theory]
+    [InlineData(503, "{}")]
+    [InlineData(429, "{}")]
+    [InlineData(200, """{"value":[]}""")]
+    [InlineData(200, """{"value":{}}""")]
+    public async Task T_SRC_013_a_ProviderFailureOrNoBulletin_YieldsNoRate_NeverAGuess(int status, string body)
+    {
+        server.Handler = _ => Json(status, body);
+
+        (await SourcingRates().ResolveAsync("EUR", new DateOnly(2026, 10, 16), CancellationToken.None)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task T_SRC_013_a_ProviderTimeout_YieldsNoRate()
+    {
+        server.Handler = _ => new FakeResponse(200, PtaxBody, ElasticProductHeader: false, Delay: TimeSpan.FromSeconds(5));
+
+        var watch = Stopwatch.StartNew();
+        (await SourcingRates(TimeSpan.FromMilliseconds(200)).ResolveAsync("USD", new DateOnly(2026, 10, 16), CancellationToken.None)).ShouldBeNull();
+        watch.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(4));
+    }
+
     [Theory]
     [InlineData("""{"value":{}}""")]
     [InlineData("""{"value":[{"cotacaoCompra":"5.43","cotacaoVenda":5.43,"dataHoraCotacao":"2026-10-16 13:09:28.981","tipoBoletim":"Fechamento"}]}""")]
@@ -329,13 +368,17 @@ public sealed class EnrichmentAdapterTests : IAsyncLifetime
     private IPostalCodeLookup PostalCodes() =>
         new BrasilApiClient(BrasilApiHttpClient(), Factory(), time, loggers.CreateLogger<BrasilApiClient>());
 
-    private IExchangeRateProvider Ptax() =>
-        new BcbPtaxClient(new HttpClient { BaseAddress = new Uri($"{server.Url}odata/") }, Factory(), time, loggers.CreateLogger<BcbPtaxClient>());
+    private IExchangeRateProvider Ptax(TimeSpan? timeout = null) =>
+        new BcbPtaxClient(new HttpClient { BaseAddress = new Uri($"{server.Url}odata/") }, Factory(ptaxTimeout: timeout), time, loggers.CreateLogger<BcbPtaxClient>());
+
+    private SourcingExchangeRates SourcingRates(TimeSpan? timeout = null) =>
+        new(new PtaxRateResolver(Ptax(timeout)), NullLogger<SourcingExchangeRates>.Instance);
 
     private HttpClient BrasilApiHttpClient() => new() { BaseAddress = new Uri($"{server.Url}api/") };
 
     private ProviderHttpExecutorFactory Factory(
-        TimeSpan? timeout = null, int maxRetries = 2, int threshold = 5, TimeSpan? breakDuration = null, TimeSpan? retryDelay = null)
+        TimeSpan? timeout = null, int maxRetries = 2, int threshold = 5, TimeSpan? breakDuration = null, TimeSpan? retryDelay = null,
+        TimeSpan? ptaxTimeout = null)
     {
         var brasilApi = new BrasilApiSettings
         {
@@ -347,7 +390,7 @@ public sealed class EnrichmentAdapterTests : IAsyncLifetime
             CircuitBreakerFailureThreshold = threshold,
             CircuitBreakerBreakDuration = breakDuration ?? TimeSpan.FromSeconds(30)
         };
-        var ptax = new BcbPtaxSettings { Enabled = true, BaseUrl = $"{server.Url}odata/", MaxRetries = 0 };
+        var ptax = new BcbPtaxSettings { Enabled = true, BaseUrl = $"{server.Url}odata/", MaxRetries = 0, Timeout = ptaxTimeout ?? TimeSpan.FromSeconds(2) };
         return new ProviderHttpExecutorFactory(Options.Create(brasilApi), Options.Create(ptax), time, loggers);
     }
 

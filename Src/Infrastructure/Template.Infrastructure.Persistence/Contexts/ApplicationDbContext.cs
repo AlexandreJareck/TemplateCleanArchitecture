@@ -14,6 +14,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<OutboxMessage> MessagingOutbox { get; set; }
     public DbSet<InboxMessage> MessagingInbox { get; set; }
     public DbSet<ProcurementProjectionState> MessagingProcurementProjections { get; set; }
+    public DbSet<NotificationDelivery> MessagingNotificationDeliveries { get; set; }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
     {
         ChangeTracker.ApplyAuditing(authenticatedUser);

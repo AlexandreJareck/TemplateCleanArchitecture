@@ -14,7 +14,7 @@ public sealed class StringEnumSchemaFilter : ISchemaFilter
     private static readonly string[] Namespaces =
     [
         "Template.Domain.Catalog", "Template.Domain.Suppliers", "Template.Domain.Organization", "Template.Domain.Budgeting",
-        "Template.Domain.Requisitions"
+        "Template.Domain.Requisitions", "Template.Domain.Sourcing"
     ];
 
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)

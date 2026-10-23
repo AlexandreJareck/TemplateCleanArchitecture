@@ -8,11 +8,13 @@ using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Budgeting;
 using Template.Application.Interfaces.Organization;
 using Template.Application.Interfaces.Requisitions;
+using Template.Application.Interfaces.Sourcing;
 using Template.Application.Services.MasterData;
 using Template.Application.Services.Procurement;
 using Template.Domain.Budgeting;
 using Template.Domain.Common;
 using Template.Domain.Requisitions;
+using Template.Domain.Sourcing;
 
 namespace Template.Application.Features.Requisitions;
 
@@ -48,6 +50,7 @@ public sealed class RequisitionTransitionHandlers(
     IRequisitionReferenceReader references,
     IRequisitionNumberAllocator numbers,
     IAccountDirectory accounts,
+    IRequestForQuotationRepository rfqs,
     RequisitionAccess access,
     ProcurementWriter writer) :
     IRequestHandler<SubmitRequisitionCommand, Result<RequisitionView>>,
@@ -215,12 +218,14 @@ public sealed class RequisitionTransitionHandlers(
             writer.Audit(RequisitionAudit.Expired, RequisitionAudit.Resource, requisition.Id, from, "Expired", ruleIds: ["REQ-009", "BUD-007"],
                 details: new Dictionary<string, string> { ["revision"] = Text(requisition.Revision) });
             AuditRelease(requisition, released, BudgetReleaseReason.Expired);
+            var rfq = await CancelActiveRfqAsync(requisition, "RequisitionExpired", "REQ-009", cancellationToken);
 
-            var events = writer.Stage(Events(requisition, allocation));
+            var events = writer.Stage(Events(requisition, allocation, rfq));
             var commit = await writer.CommitAsync(token => requisitions.GetVersionAsync(requisition.Id, token), null, cancellationToken);
             if (commit is null)
             {
                 writer.Record(events);
+                ClearEvents(requisition, allocation, rfq);
                 return true;
             }
 
@@ -273,7 +278,25 @@ public sealed class RequisitionTransitionHandlers(
         writer.Audit(auditAction, RequisitionAudit.Resource, requisition.Id, fromState, toState, reason, ruleIds,
             new Dictionary<string, string> { ["number"] = requisition.Number, ["revision"] = Text(requisition.Revision) });
         AuditRelease(requisition, released, releaseReason);
-        return await CommitAsync(requisition, allocation, cancellationToken);
+        // REQ-007 (a draft RFQ is cancelled on withdrawal) and REQ-008 (any open RFQ and pending award are cancelled).
+        var rfq = await CancelActiveRfqAsync(
+            requisition, releaseReason == BudgetReleaseReason.Withdrawn ? "RequisitionWithdrawn" : "RequisitionCancelled",
+            releaseReason == BudgetReleaseReason.Withdrawn ? "REQ-007" : "REQ-008", cancellationToken);
+        return await CommitAsync(requisition, allocation, cancellationToken, rfq);
+    }
+
+    /// <summary>Cancels the requisition's non-terminal RFQ in the same commit (idempotent cascade).</summary>
+    private async Task<RequestForQuotation?> CancelActiveRfqAsync(PurchaseRequisition requisition, string reasonCode, string ruleId, CancellationToken cancellationToken)
+    {
+        var rfq = await rfqs.FindActiveByRequisitionAsync(requisition.Id, cancellationToken);
+        if (rfq is null)
+            return null;
+        var from = rfq.Status.ToString();
+        if (!rfq.CancelForRequisition(reasonCode, writer.ActorId, writer.UtcNow, writer.CorrelationId))
+            return null;
+        writer.Audit("rfq.cancelled", "request-for-quotation", rfq.Id, from, "Cancelled", reasonCode, [ruleId, "SRC-020"],
+            new Dictionary<string, string> { ["requisitionId"] = requisition.Id.ToString(), ["code"] = reasonCode });
+        return rfq;
     }
 
     private void AuditRelease(PurchaseRequisition requisition, (BudgetReservation? Reservation, bool Changed)? released, BudgetReleaseReason reason)
@@ -300,19 +323,29 @@ public sealed class RequisitionTransitionHandlers(
         return VersionPrecondition.Check(expectedVersion, requisition.Version) is { } precondition ? (null, precondition) : (requisition, null);
     }
 
-    private async Task<Result<RequisitionView>> CommitAsync(PurchaseRequisition requisition, BudgetAllocation? allocation, CancellationToken cancellationToken)
+    private async Task<Result<RequisitionView>> CommitAsync(
+        PurchaseRequisition requisition, BudgetAllocation? allocation, CancellationToken cancellationToken, RequestForQuotation? rfq = null)
     {
-        var events = writer.Stage(Events(requisition, allocation));
+        var events = writer.Stage(Events(requisition, allocation, rfq));
         var commit = await writer.CommitAsync(token => requisitions.GetVersionAsync(requisition.Id, token), null, cancellationToken);
         if (commit is not null)
             return commit;
 
         writer.Record(events);
+        ClearEvents(requisition, allocation, rfq);
         return await access.ViewAsync(requisition, cancellationToken);
     }
 
-    private static IEnumerable<DomainEvent> Events(PurchaseRequisition requisition, BudgetAllocation? allocation) =>
-        requisition.DomainEvents.Concat(allocation?.DomainEvents ?? []).ToArray();
+    /// <summary>Committed events were staged once; clearing them prevents a second Outbox row if the instance is reused.</summary>
+    private static void ClearEvents(PurchaseRequisition requisition, BudgetAllocation? allocation, RequestForQuotation? rfq)
+    {
+        requisition.ClearDomainEvents();
+        allocation?.ClearDomainEvents();
+        rfq?.ClearDomainEvents();
+    }
+
+    private static IEnumerable<DomainEvent> Events(PurchaseRequisition requisition, BudgetAllocation? allocation, RequestForQuotation? rfq = null) =>
+        requisition.DomainEvents.Concat(allocation?.DomainEvents ?? []).Concat(rfq?.DomainEvents ?? []).ToArray();
 
     /// <summary>REQ-004: the failed guards travel as the <c>fields</c> extension (string array).</summary>
     private static ApplicationError NotSubmittable(DomainError error)

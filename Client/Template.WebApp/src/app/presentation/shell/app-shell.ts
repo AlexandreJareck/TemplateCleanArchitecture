@@ -75,6 +75,9 @@ import { filter } from 'rxjs';
             'nav.teamRequisitions' | transloco
           }}</a>
         }
+        @if (session.can('sourcing.rfqs.manage') || session.can('sourcing.quotes.read')) {
+          <a routerLink="/sourcing" routerLinkActive="active">{{ 'nav.sourcing' | transloco }}</a>
+        }
         <a *appPermission="'budget.read'" routerLink="/budget/periods" routerLinkActive="active">{{
           'nav.budgetPeriods' | transloco
         }}</a>

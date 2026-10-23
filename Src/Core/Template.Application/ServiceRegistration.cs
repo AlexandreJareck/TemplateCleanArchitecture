@@ -35,6 +35,8 @@ public static class ServiceRegistration
         services.AddScoped<Services.Procurement.ProcurementWriter>();
         services.AddScoped<IProcurementIntegrationEventHandler, Services.Procurement.ProcurementIntegrationEventHandler>();
         services.AddScoped<Features.Requisitions.RequisitionAccess>();
+        services.AddScoped<Features.Sourcing.SourcingAccess>();
+        services.AddScoped<Features.Sourcing.SourcingExchangeRates>();
         services.AddScoped<ISessionRevocationService, SessionRevocationService>();
         services.AddSingleton<IValidateOptions<SessionSettings>, SessionSettingsValidator>();
         // The composition root binds SessionSettings from configuration and validates it on start.

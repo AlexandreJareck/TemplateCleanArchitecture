@@ -7,6 +7,7 @@
 import type { CostCenterRefView } from './costCenterRefView';
 import type { MoneyView } from './moneyView';
 import type { RequisitionAttachmentView } from './requisitionAttachmentView';
+import type { RequisitionAwardView } from './requisitionAwardView';
 import type { RequisitionLineView } from './requisitionLineView';
 import type { RequisitionSubmissionView } from './requisitionSubmissionView';
 
@@ -46,4 +47,7 @@ export interface RequisitionView {
   allowedActions?: string[] | null;
   /** @nullable */
   version?: string | null;
+  /** @nullable */
+  activeRfqId?: string | null;
+  award?: RequisitionAwardView;
 }

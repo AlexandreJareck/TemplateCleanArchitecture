@@ -7,6 +7,7 @@ using Template.Application.Services.Procurement;
 using Template.Domain.Budgeting;
 using Template.Domain.Common;
 using Template.Domain.Requisitions;
+using Template.Domain.Sourcing;
 
 namespace Template.Unit.Tests.ApplicationTests.Messaging;
 
@@ -41,7 +42,7 @@ public sealed class ProcurementIntegrationEventContractTests
         var envelope = ProcurementIntegrationEventContract.FromDomainEvent(
             new RequisitionExpired(Occurred, Guid.NewGuid(), 2), "trace-28");
         var effects = new Effects();
-        var handler = new ProcurementIntegrationEventHandler(effects, new Clock());
+        var handler = new ProcurementIntegrationEventHandler(effects, new Notifications(), new Clock());
 
         (await handler.HandleAsync("projection-v1", envelope, CancellationToken.None)).ShouldBe(InboxApplyResult.Applied);
         effects.Calls.ShouldBe(1);
@@ -76,7 +77,15 @@ public sealed class ProcurementIntegrationEventContractTests
             new RequisitionExpired(Occurred, requisitionId, 2),
             new BudgetReservationCreated(Occurred, reservationId, requisitionId, Guid.NewGuid(), new Money(10m, "BRL")),
             new BudgetReservationCommitted(Occurred, reservationId, requisitionId, new Money(10m, "BRL")),
-            new BudgetReservationReleased(Occurred, reservationId, requisitionId, new Money(10m, "BRL"), BudgetReleaseReason.Cancelled)
+            new BudgetReservationReleased(Occurred, reservationId, requisitionId, new Money(10m, "BRL"), BudgetReleaseReason.Cancelled),
+            new BudgetReservationAdjusted(Occurred, reservationId, requisitionId, new Money(10m, "BRL"), new Money(9m, "BRL"), Guid.NewGuid()),
+            new RfqPublished(Occurred, Guid.NewGuid(), "RFQ-2027-000001", requisitionId, Occurred.AddDays(3), [Guid.NewGuid()], SourcingMethod.Competitive),
+            new RfqDeadlineExtended(Occurred, Guid.NewGuid(), Occurred.AddDays(3), Occurred.AddDays(5), [Guid.NewGuid()]),
+            new RfqReminderRequested(Occurred, Guid.NewGuid(), Occurred.AddDays(3), [Guid.NewGuid()]),
+            new RfqClosed(Occurred, Guid.NewGuid(), Occurred, 2, ComparisonStatus.Complete),
+            new RfqCancelled(Occurred, Guid.NewGuid(), requisitionId, "Cancelled"),
+            new QuoteRecorded(Occurred, Guid.NewGuid(), Guid.NewGuid(), 1, Guid.NewGuid()),
+            new AwardSubmitted(Occurred, Guid.NewGuid(), Guid.NewGuid(), requisitionId, Guid.NewGuid(), new Money(9m, "BRL"), new Money(9m, "BRL"), "SourcingPolicy:1")
         ];
 
         var envelopes = events.Select(value =>
@@ -113,6 +122,18 @@ public sealed class ProcurementIntegrationEventContractTests
         {
             Calls++;
             LastEventId = envelope.EventId;
+            return Task.FromResult(InboxApplyResult.Applied);
+        }
+    }
+
+    private sealed class Notifications : INotificationDeliveryStore
+    {
+        public List<NotificationRequest> Requests { get; } = [];
+        public Task<InboxApplyResult> DeliverOnceAsync(
+            string consumerName, IntegrationEventEnvelope envelope, IReadOnlyList<NotificationRequest> requests, DateTime processedAtUtc,
+            CancellationToken cancellationToken)
+        {
+            Requests.AddRange(requests);
             return Task.FromResult(InboxApplyResult.Applied);
         }
     }

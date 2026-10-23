@@ -83,4 +83,9 @@ public static class LogEvents
     public static readonly EventId InboxEffectApplied = new(11006, nameof(InboxEffectApplied));
     public static readonly EventId InboxDuplicateSkipped = new(11007, nameof(InboxDuplicateSkipped));
     public static readonly EventId ProcurementMessageDeadLettered = new(11008, nameof(ProcurementMessageDeadLettered));
+
+    // Phase 29 sourcing (SRC-*): currencies, outcomes, template names and counts only; never quote content.
+    public static readonly EventId SourcingRateResolved = new(11100, nameof(SourcingRateResolved));
+    public static readonly EventId SourcingRateUnavailable = new(11101, nameof(SourcingRateUnavailable));
+    public static readonly EventId NotificationsQueued = new(11102, nameof(NotificationsQueued));
 }

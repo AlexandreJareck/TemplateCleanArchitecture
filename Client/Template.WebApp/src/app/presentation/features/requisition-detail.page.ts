@@ -76,6 +76,21 @@ type PendingAction = 'withdraw' | 'cancel' | undefined;
             {{ reason.reason ?? ('requisition.systemReason' | transloco) }}
           </p>
         }
+        @if (current.awardedSupplierName) {
+          <p class="notice" data-testid="awarded-supplier">
+            {{ 'sourcing.awardedSupplier' | transloco }}: {{ current.awardedSupplierName }}
+          </p>
+        }
+        @if (
+          current.activeRfqId &&
+          (session.can('sourcing.rfqs.manage') || session.can('sourcing.quotes.read'))
+        ) {
+          <p class="notice">
+            <a [routerLink]="['/sourcing', current.activeRfqId]">{{
+              'sourcing.openRfq' | transloco
+            }}</a>
+          </p>
+        }
         @if (current.sourceRequisitionId) {
           <p class="notice">
             <a [routerLink]="['/requisitions', current.sourceRequisitionId]">{{
@@ -218,7 +233,7 @@ export class RequisitionDetailPage {
   private readonly port = inject(REQUISITION_PORT);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
-  private readonly session = inject(SessionFacade);
+  protected readonly session = inject(SessionFacade);
   private readonly route = inject(ActivatedRoute);
   readonly requisition = signal<Requisition | undefined>(undefined);
   readonly timeline = signal<readonly TimelineEntry[]>([]);

@@ -345,7 +345,7 @@ foreach ($version in 'v1', 'v2') {
     $response = Get-Status 'GET' "/swagger/$version/swagger.json"
     $captured = Join-Path $outputDirectory "openapi-$version.json"
     [System.IO.File]::WriteAllText($captured, $response.Content)
-    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-27\openapi-$version.json"))
+    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-29\openapi-$version.json"))
     $bytesEqual = ($baseline -replace "`r`n", "`n") -ceq ($response.Content -replace "`r`n", "`n")
     $structuralEqual = (($baseline | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress) -ceq (($response.Content | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress)
     Write-Check "openapi.$version.byte-equal-normalized" $bytesEqual ''

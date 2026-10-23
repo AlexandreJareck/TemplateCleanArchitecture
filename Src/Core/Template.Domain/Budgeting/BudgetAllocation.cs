@@ -226,6 +226,42 @@ public sealed class BudgetAllocation : VersionedAggregateRoot
         return (reservation, true);
     }
 
+    /// <summary>
+    /// BUD-009 (Phase 29): on award submission the requisition's <c>Reserved</c> reservation is adjusted to the award
+    /// amount in requisition currency (CALC-007). An increase must fit the available budget (BUD-005, the caller holds
+    /// the allocation row lock, BUD-006); a decrease returns the difference. Idempotent per award (BUD-007).
+    /// </summary>
+    public (BudgetReservation? Reservation, bool Changed, DomainError? Error) AdjustForAward(
+        Guid requisitionId, Money amount, Guid awardId, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureId(awardId, nameof(awardId));
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        ArgumentException.ThrowIfNullOrWhiteSpace(correlationId);
+        var reservation = reservations.FirstOrDefault(candidate => candidate.RequisitionId == requisitionId && candidate.IsActive);
+        if (reservation is not { Status: BudgetReservationStatus.Reserved })
+            return (null, false, DomainError.InvalidTransition(
+                (reservation?.Status ?? BudgetReservationStatus.Released).ToString(), "Only a Reserved reservation is adjusted to an award.", "BUD-009"));
+        if (reservation.LastAwardId == awardId)
+            return (reservation, false, null);
+        if (!string.Equals(amount.Currency, Currency, StringComparison.Ordinal))
+            throw new ArgumentException("The award amount must be in the allocation currency (D23-17).", nameof(amount));
+        if (!IsValidAmount(amount.Amount, Currency))
+            return (null, false, BudgetErrors.InvalidAmount("amount"));
+
+        var previous = reservation.Amount;
+        var increase = amount.Amount - previous;
+        if (increase > AvailableAmount)
+            return (null, false, BudgetErrors.Insufficient(Available, new Money(increase, Currency)) with { RuleId = "BUD-009" });
+
+        ReservedAmount += increase;
+        reservation.AdjustTo(amount.Amount, awardId, nowUtc);
+        reservation.Record(BudgetReservationOperation.Adjusted, BudgetReservationStatus.Reserved, BudgetReservationStatus.Reserved, null, actorId, nowUtc,
+            correlationId, awardId);
+        events.Raise(new BudgetReservationAdjusted(nowUtc, reservation.Id, requisitionId, new Money(previous, Currency), amount, awardId));
+        Touch(nowUtc);
+        return (reservation, true, null);
+    }
+
     private static bool IsValidAmount(decimal amount, string currency) =>
         amount > 0 && amount <= CalculationRules.MaxAmount && CalculationRules.HasMinorUnitPrecision(amount, currency);
 
@@ -255,4 +291,11 @@ public sealed record BudgetReservationReleased(DateTime OccurredAtUtc, Guid Rese
     : DomainEvent(OccurredAtUtc)
 {
     public override string EventType => "procurement.budget.reservation-released";
+}
+
+/// <summary><c>procurement.budget.reservation-adjusted</c> (Phase 29, BUD-009).</summary>
+public sealed record BudgetReservationAdjusted(DateTime OccurredAtUtc, Guid ReservationId, Guid RequisitionId, Money PreviousAmount, Money NewAmount, Guid AwardId)
+    : DomainEvent(OccurredAtUtc)
+{
+    public override string EventType => "procurement.budget.reservation-adjusted";
 }

@@ -87,10 +87,11 @@ public sealed class ProcurementWriter(
         string? toState = null,
         string? reason = null,
         IEnumerable<string>? ruleIds = null,
-        IReadOnlyDictionary<string, string>? details = null) =>
+        IReadOnlyDictionary<string, string>? details = null,
+        Guid? waiverId = null) =>
         auditTrail.Append(AuditRecord.Create(
             Guid.NewGuid(), clock.UtcNow, ActorId, action, resourceType, resourceId.ToString(), requestContext.CorrelationId,
-            fromState, toState, ruleIds, reason: reason, details: details));
+            fromState, toState, ruleIds, waiverId, reason: reason, details: details));
 
     /// <summary>Starts the transaction that holds row locks until <see cref="CommitAsync"/> or <see cref="RollbackAsync"/>.</summary>
     public async Task BeginAsync(CancellationToken cancellationToken)

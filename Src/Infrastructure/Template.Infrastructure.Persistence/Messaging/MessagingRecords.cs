@@ -124,3 +124,46 @@ public sealed class ProcurementProjectionState
         UpdatedAtUtc = processedAtUtc;
     }
 }
+
+/// <summary>
+/// Local notification delivery (Phase 29 fake/local adapter, SRC-022): one row per (event, recipient, template),
+/// recorded in the same transaction as the Inbox entry. Phase 33 replaces the local sink with Mailpit.
+/// </summary>
+public sealed class NotificationDelivery
+{
+    public const string LocalChannel = "Local";
+    public const string RecordedStatus = "Recorded";
+
+    private NotificationDelivery() { }
+
+    public NotificationDelivery(
+        Guid id, string consumerName, Guid eventId, string eventType, string recipientType, Guid recipientId, string template,
+        string aggregateType, Guid aggregateId, DateTime createdAtUtc)
+    {
+        Id = id;
+        ConsumerName = consumerName;
+        EventId = eventId;
+        EventType = eventType;
+        RecipientType = recipientType;
+        RecipientId = recipientId;
+        Template = template;
+        AggregateType = aggregateType;
+        AggregateId = aggregateId;
+        Channel = LocalChannel;
+        Status = RecordedStatus;
+        CreatedAtUtc = createdAtUtc;
+    }
+
+    public Guid Id { get; private set; }
+    public string ConsumerName { get; private set; } = string.Empty;
+    public Guid EventId { get; private set; }
+    public string EventType { get; private set; } = string.Empty;
+    public string RecipientType { get; private set; } = string.Empty;
+    public Guid RecipientId { get; private set; }
+    public string Template { get; private set; } = string.Empty;
+    public string AggregateType { get; private set; } = string.Empty;
+    public Guid AggregateId { get; private set; }
+    public string Channel { get; private set; } = string.Empty;
+    public string Status { get; private set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; private set; }
+}

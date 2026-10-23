@@ -12,6 +12,7 @@ using Template.Application.Interfaces.Organization;
 using Template.Application.Interfaces.Repositories;
 using Template.Application.Interfaces.Requisitions;
 using Template.Application.Interfaces.Messaging;
+using Template.Application.Interfaces.Sourcing;
 using Template.Application.Interfaces.Suppliers;
 using Template.Infrastructure.Persistence.Contexts;
 using Template.Infrastructure.Persistence.Idempotency;
@@ -66,6 +67,10 @@ public static class ServiceRegistration
         services.AddScoped<IIntegrationEventOutbox>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
         services.AddScoped<IOutboxStore>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
         services.AddScoped<IProcurementEventEffectStore>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
+        services.AddScoped<INotificationDeliveryStore>(provider => provider.GetRequiredService<PostgreSqlMessagingStore>());
+        services.AddScoped<IRequestForQuotationRepository, RequestForQuotationRepository>();
+        services.AddScoped<IRfqNumberAllocator, RfqNumberAllocator>();
+        services.AddScoped<ISupplierSnapshotReader, SupplierSnapshotReader>();
 
         return services;
     }

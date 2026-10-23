@@ -12,6 +12,7 @@ export * from './fiscal-periods/fiscal-periods.service';
 export * from './organization-settings/organization-settings.service';
 export * from './product/product.service';
 export * from './purchase-requisitions/purchase-requisitions.service';
+export * from './requests-for-quotation/requests-for-quotation.service';
 export * from './suppliers/suppliers.service';
 export * from './units-of-measure/units-of-measure.service';
 export * from './users/users.service';

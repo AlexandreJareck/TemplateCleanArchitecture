@@ -51,3 +51,18 @@ public interface IProcurementEventEffectStore
     Task<InboxApplyResult> ApplyOnceAsync(
         string consumerName, IntegrationEventEnvelope envelope, DateTime processedAtUtc, CancellationToken cancellationToken);
 }
+
+/// <summary>One notification to queue for a recipient (event catalog §3 <c>NotificationRequested</c>); IDs and template only.</summary>
+public sealed record NotificationRequest(string RecipientType, Guid RecipientId, string Template, string AggregateType, Guid AggregateId);
+
+/// <summary>
+/// Local notification adapter (Phase 29; Mailpit arrives in Phase 33): atomically acquires the Inbox entry and records
+/// one delivery per (event, recipient, template), so a redelivered event never queues a second notification
+/// (INT-003, SRC-022). Notification failure never changes business state.
+/// </summary>
+public interface INotificationDeliveryStore
+{
+    Task<InboxApplyResult> DeliverOnceAsync(
+        string consumerName, IntegrationEventEnvelope envelope, IReadOnlyList<NotificationRequest> requests, DateTime processedAtUtc,
+        CancellationToken cancellationToken);
+}

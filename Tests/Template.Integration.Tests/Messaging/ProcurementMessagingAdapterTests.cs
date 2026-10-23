@@ -136,8 +136,35 @@ public sealed class ProcurementMessagingAdapterTests
 
         var calls = ((ChannelProxy)(object)channel).Calls;
         calls.Count(name => name == nameof(IChannel.ExchangeDeclareAsync)).ShouldBe(2);
-        calls.Count(name => name == nameof(IChannel.QueueDeclareAsync)).ShouldBe(2);
-        calls.Count(name => name == nameof(IChannel.QueueBindAsync)).ShouldBe(2);
+        // Phase 29 adds the notification queue (bound to the three SRC-022 event types) and its dead-letter queue.
+        calls.Count(name => name == nameof(IChannel.QueueDeclareAsync)).ShouldBe(4);
+        calls.Count(name => name == nameof(IChannel.QueueBindAsync)).ShouldBe(2 + 3 + 1);
+        ProcurementMessagingTopology.Consumers.ShouldBe([
+            (ProcurementMessagingTopology.ProjectionQueue, ProcurementConsumers.Projection),
+            (ProcurementMessagingTopology.NotificationQueue, ProcurementConsumers.Notification)]);
+    }
+
+    [Fact]
+    public async Task Processor_PassesTheDeliveringConsumerName_AndDeadLettersToItsOwnQueue()
+    {
+        var handler = new Handler { Failure = new InvalidOperationException("synthetic") };
+        await using var provider = ProcessorProvider(handler);
+        var channel = new Channel();
+        var settings = Settings();
+        settings.MaxDeliveryAttempts = 1;
+        var envelope = Envelope();
+        var delivery = Delivery(envelope) with
+        {
+            Queue = ProcurementMessagingTopology.NotificationQueue,
+            Consumer = ProcurementMessagingTopology.NotificationConsumer
+        };
+
+        await Processor(provider).ProcessAsync(delivery, channel, settings, CancellationToken.None);
+
+        handler.LastConsumer.ShouldBe(ProcurementConsumers.Notification);
+        var deadLettered = channel.Published.Single();
+        (deadLettered.Exchange, deadLettered.RoutingKey).ShouldBe((ProcurementMessagingTopology.DeadLetterExchange, ProcurementMessagingTopology.NotificationQueue));
+        deadLettered.Properties.Headers!["x-original-queue"].ShouldBe(ProcurementMessagingTopology.NotificationQueue);
     }
 
     [Fact]
@@ -245,7 +272,8 @@ public sealed class ProcurementMessagingAdapterTests
         await Processor(provider).ProcessAsync(Delivery(), channel, Settings(), CancellationToken.None);
 
         var published = channel.Published.Single();
-        published.Exchange.ShouldBe(ProcurementMessagingTopology.Exchange);
+        // D29-9: the retry targets only the failing queue through the default exchange (no fan-out to other consumers).
+        (published.Exchange, published.RoutingKey).ShouldBe((string.Empty, ProcurementMessagingTopology.ProjectionQueue));
         published.Properties.Persistent.ShouldBeTrue();
         published.Properties.Headers![ProcurementDeliveryProcessor.AttemptHeader].ShouldBe(1);
         channel.Acknowledged.ShouldBe([42ul]);
@@ -427,11 +455,13 @@ public sealed class ProcurementMessagingAdapterTests
         public Exception? Failure { get; init; }
         public Func<CancellationToken, Task<InboxApplyResult>>? Behavior { get; init; }
         public int Calls { get; private set; }
+        public string? LastConsumer { get; private set; }
 
         public Task<InboxApplyResult> HandleAsync(
             string consumerName, IntegrationEventEnvelope envelope, CancellationToken cancellationToken)
         {
             Calls++;
+            LastConsumer = consumerName;
             if (Behavior is not null)
                 return Behavior(cancellationToken);
             if (Failure is not null)

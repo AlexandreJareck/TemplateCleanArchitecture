@@ -29,7 +29,10 @@ public sealed class AuditRecord
         // Phase 27 procurement: opaque IDs, numbers, revisions, amounts and reason codes only, never purposes, line
         // descriptions or attachment names.
         "number", "requisitionId", "allocationId", "reservationId", "fiscalPeriodId", "costCenterId", "revision",
-        "amount", "previousAmount", "currency", "releaseReason", "lineNumber", "attachmentId", "eventType"
+        "amount", "previousAmount", "currency", "releaseReason", "lineNumber", "attachmentId", "eventType",
+        // Phase 29: sourcing (IDs, states, amounts, currencies and rate provenance only; never quote notes or terms).
+        "rfqId", "supplierId", "quoteId", "quoteRevisionId", "awardId", "comparisonId", "waiverType", "deadline", "previousDeadline",
+        "roundNumber", "method", "rate", "rateSource", "quoteDate", "comparisonStatus", "validQuoteCount", "rank", "invitationCount"
     };
 
     private AuditRecord()

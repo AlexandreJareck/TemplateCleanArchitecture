@@ -152,6 +152,9 @@ export interface Requisition extends RequisitionSummary {
   readonly attachments: readonly RequisitionAttachment[];
   readonly submissions: readonly RequisitionSubmission[];
   readonly allowedActions: readonly RequisitionAction[];
+  /** Phase 29: current sourcing round and the awarded supplier as requesters may see it (SRC-021). */
+  readonly activeRfqId?: string;
+  readonly awardedSupplierName?: string;
 }
 
 export interface TimelineEntry {

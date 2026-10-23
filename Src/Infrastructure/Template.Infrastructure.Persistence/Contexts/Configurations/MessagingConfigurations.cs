@@ -52,3 +52,23 @@ public sealed class ProcurementProjectionStateConfiguration : IEntityTypeConfigu
         builder.HasIndex(state => state.UpdatedAtUtc);
     }
 }
+
+public sealed class NotificationDeliveryConfiguration : IEntityTypeConfiguration<NotificationDelivery>
+{
+    public void Configure(EntityTypeBuilder<NotificationDelivery> builder)
+    {
+        builder.ToTable("MessagingNotificationDeliveries");
+        builder.HasKey(delivery => delivery.Id);
+        builder.Property(delivery => delivery.Id).ValueGeneratedNever();
+        builder.Property(delivery => delivery.ConsumerName).HasMaxLength(128).IsRequired();
+        builder.Property(delivery => delivery.EventType).HasMaxLength(160).IsRequired();
+        builder.Property(delivery => delivery.RecipientType).HasMaxLength(40).IsRequired();
+        builder.Property(delivery => delivery.Template).HasMaxLength(100).IsRequired();
+        builder.Property(delivery => delivery.AggregateType).HasMaxLength(100).IsRequired();
+        builder.Property(delivery => delivery.Channel).HasMaxLength(20).IsRequired();
+        builder.Property(delivery => delivery.Status).HasMaxLength(20).IsRequired();
+        // Event catalog §3: delivery records are idempotent per (event, recipient, template).
+        builder.HasIndex(delivery => new { delivery.EventId, delivery.RecipientId, delivery.Template }).IsUnique();
+        builder.HasIndex(delivery => new { delivery.AggregateId, delivery.CreatedAtUtc });
+    }
+}
