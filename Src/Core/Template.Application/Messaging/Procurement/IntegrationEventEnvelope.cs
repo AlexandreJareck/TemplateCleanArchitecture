@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Template.Domain.Budgeting;
 using Template.Domain.Common;
+using Template.Domain.Reporting;
 using Template.Domain.Requisitions;
 using Template.Domain.Sourcing;
 
@@ -139,6 +140,25 @@ public static class ProcurementIntegrationEventContract
                 requisitionCurrencyTotal = MoneyPayload(value.RequisitionCurrencyTotal),
                 policyRef = value.PolicyRef
             }),
+            ReportRequested value => Map(nameof(ReportJob), value.ReportJobId, new
+            {
+                reportJobId = value.ReportJobId,
+                reportType = value.ReportType.ToString(),
+                requestedBy = value.RequestedBy
+            }),
+            ReportReady value => Map(nameof(ReportJob), value.ReportJobId, new
+            {
+                reportJobId = value.ReportJobId,
+                reportType = value.ReportType.ToString(),
+                requestedBy = value.RequestedBy
+            }),
+            ReportFailed value => Map(nameof(ReportJob), value.ReportJobId, new
+            {
+                reportJobId = value.ReportJobId,
+                reportType = value.ReportType.ToString(),
+                requestedBy = value.RequestedBy,
+                failureCode = value.FailureCode
+            }),
             _ => throw new NotSupportedException($"Domain event '{domainEvent.GetType().Name}' has no approved integration contract.")
         };
 
@@ -189,11 +209,14 @@ public static class ProcurementIntegrationEventContract
         "procurement.rfq.closed",
         "procurement.rfq.cancelled",
         "procurement.quote.recorded",
-        "procurement.award.submitted"
+        "procurement.award.submitted",
+        "procurement.report.requested",
+        "procurement.report.ready",
+        "procurement.report.failed"
     };
 
     /// <summary>
-    /// Phase 29 sourcing events carry the aggregate type and ID; their <c>aggregateVersion</c> is the constant "1"
+    /// Phase 29 sourcing and Phase 30 report events carry the aggregate type and ID; their <c>aggregateVersion</c> is the constant "1"
     /// like reservation events (consumers order by the per-aggregate Outbox sequence and use the payload state).
     /// </summary>
     private static (string AggregateType, Guid AggregateId, string AggregateVersion, object Payload) Map(

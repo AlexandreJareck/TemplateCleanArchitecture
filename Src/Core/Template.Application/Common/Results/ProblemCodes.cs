@@ -81,4 +81,11 @@ public static class ProblemCodes
     public const string AwardInsufficientQuotations = "award.insufficient-quotations";
     public const string AwardNonLeadingRequiresWaiver = "award.non-leading-requires-waiver";
     public const string AwardComparisonIncomplete = "award.comparison-incomplete";
+
+    // Phase 30: files and reports (FIL-*, RPT-*).
+    public const string ReportTypeUnknown = "report.type-unknown";
+    public const string ReportSourceNotAvailable = "report.source-not-available";
+    public const string ReportNotReady = "report.not-ready";
+    public const string ReportExpired = "report.expired";
+    public const string FileUnavailable = "file.unavailable";
 }

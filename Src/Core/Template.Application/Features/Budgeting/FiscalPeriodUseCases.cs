@@ -83,17 +83,19 @@ public sealed class FiscalPeriodCommandHandlers(
 
         // A concurrent creation that lost a deadlock on the exclusion constraint is re-evaluated against the winner.
         // PostgreSQL can release the deadlock victim a few milliseconds before the winning transaction commits, so
-        // use a small bounded observation window rather than leaking an unrelated 412 for a business-key race.
+        // use a bounded observation window rather than leaking an unrelated 412 for a business-key race. With three or
+        // more writers the winner can wait for a second PostgreSQL deadlock_timeout (1 s by default) before committing,
+        // so the window covers about 3 s (Phase 30; 0.1 s was too short on a loaded gate run). Only this rare path waits.
         if (commit.Category == ErrorCategory.PreconditionFailed)
         {
-            for (var attempt = 0; attempt < 5; attempt++)
+            for (var attempt = 0; attempt < 30; attempt++)
             {
                 if (await periods.CodeExistsAsync(period.Code, cancellationToken))
                     return BudgetMoney.PeriodCodeDuplicate;
                 if (await periods.OverlapsAsync(period.StartDate, period.EndDate, null, cancellationToken))
                     return BudgetMoney.PeriodOverlap;
-                if (attempt < 4)
-                    await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
+                if (attempt < 29)
+                    await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
             }
         }
         return commit;
