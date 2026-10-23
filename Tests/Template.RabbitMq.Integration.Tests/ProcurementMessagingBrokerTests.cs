@@ -9,6 +9,7 @@ using Shouldly;
 using Template.Application.Interfaces.Messaging;
 using Template.Application.Messaging.Procurement;
 using Template.Domain.Requisitions;
+using Template.Domain.Sourcing;
 using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Messaging.Consuming;
 using Template.Infrastructure.Messaging.Topology;
@@ -124,6 +125,44 @@ public sealed class ProcurementMessagingBrokerTests(RabbitMqFixture fixture) : I
         (await fixture.InspectQueueAsync(ProcurementMessagingTopology.ProjectionQueue)).MessageCount.ShouldBe(0u);
     }
 
+    [Fact]
+    public async Task T_SRC_022_RfqPublished_ReachesTheNotificationConsumer_AndTheProjection_EachOnce()
+    {
+        var handler = new Handler();
+        await using var harness = CreateHarness(handler);
+        await harness.StartAsync();
+        var envelope = RfqPublishedEnvelope();
+
+        await harness.Publisher.PublishAsync(envelope, CancellationToken.None);
+        await harness.Publisher.PublishAsync(envelope, CancellationToken.None); // duplicate publish (crash after confirm)
+
+        await Eventually.TrueAsync(() => Task.FromResult(handler.Calls >= 4), "both consumers handled both deliveries");
+        handler.EffectsFor(ProcurementMessagingTopology.NotificationConsumer).ShouldBe(1);
+        handler.EffectsFor(ProcurementMessagingTopology.ProjectionConsumer).ShouldBe(1);
+        (await fixture.InspectQueueAsync(ProcurementMessagingTopology.NotificationQueue)).MessageCount.ShouldBe(0u);
+    }
+
+    [Fact]
+    public async Task T_SRC_022_NotificationFailures_RetryOnlyTheNotificationQueue_ThenDeadLetterThere()
+    {
+        var handler = new Handler { FailingConsumer = ProcurementMessagingTopology.NotificationConsumer, FailuresRemaining = int.MaxValue };
+        await using var harness = CreateHarness(handler);
+        await harness.StartAsync();
+
+        await harness.Publisher.PublishAsync(RfqPublishedEnvelope(), CancellationToken.None);
+
+        await Eventually.TrueAsync(async () =>
+            (await fixture.InspectQueueAsync(ProcurementMessagingTopology.NotificationDeadLetterQueue)).MessageCount == 1,
+            "the notification poison event reaches its own DLQ");
+        handler.EffectsFor(ProcurementMessagingTopology.ProjectionConsumer).ShouldBe(1); // the retries never fanned out again
+        handler.CallsFor(ProcurementMessagingTopology.ProjectionConsumer).ShouldBe(1);
+        (await fixture.InspectQueueAsync(ProcurementMessagingTopology.ProjectionDeadLetterQueue)).MessageCount.ShouldBe(0u);
+    }
+
+    private static IntegrationEventEnvelope RfqPublishedEnvelope() => ProcurementIntegrationEventContract.FromDomainEvent(
+        new RfqPublished(new DateTime(2027, 3, 1, 13, 0, 0, DateTimeKind.Utc), Guid.NewGuid(), "RFQ-2027-000001", Guid.NewGuid(),
+            new DateTime(2027, 3, 4, 13, 0, 0, DateTimeKind.Utc), [Guid.NewGuid(), Guid.NewGuid()], SourcingMethod.Competitive), "rabbit-phase29");
+
     private ProcurementHarness CreateHarness(Handler handler)
     {
         var values = new Dictionary<string, string?>
@@ -153,7 +192,8 @@ public sealed class ProcurementMessagingBrokerTests(RabbitMqFixture fixture) : I
 
     private sealed class Handler : IProcurementIntegrationEventHandler
     {
-        private readonly ConcurrentDictionary<Guid, byte> processed = new();
+        private readonly ConcurrentDictionary<(string Consumer, Guid EventId), byte> processed = new();
+        private readonly ConcurrentDictionary<string, int> callsByConsumer = new();
         private int calls;
         private int effects;
         private int failuresRemaining;
@@ -162,14 +202,22 @@ public sealed class ProcurementMessagingBrokerTests(RabbitMqFixture fixture) : I
         public int Effects => Volatile.Read(ref effects);
         public Func<CancellationToken, Task>? Behavior { get; init; }
 
+        /// <summary>When set, only this consumer fails (Phase 29 per-queue retry proof).</summary>
+        public string? FailingConsumer { get; init; }
+
+        public int EffectsFor(string consumer) => processed.Keys.Count(key => key.Consumer == consumer);
+
+        public int CallsFor(string consumer) => callsByConsumer.GetValueOrDefault(consumer);
+
         public async Task<InboxApplyResult> HandleAsync(string consumerName, IntegrationEventEnvelope envelope, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref calls);
-            if (Interlocked.Decrement(ref failuresRemaining) >= 0)
+            callsByConsumer.AddOrUpdate(consumerName, 1, (_, value) => value + 1);
+            if ((FailingConsumer is null || FailingConsumer == consumerName) && Interlocked.Decrement(ref failuresRemaining) >= 0)
                 throw new InvalidOperationException("synthetic-handler-failure");
             if (Behavior is not null)
                 await Behavior(cancellationToken);
-            if (!processed.TryAdd(envelope.EventId, 0))
+            if (!processed.TryAdd((consumerName, envelope.EventId), 0))
                 return InboxApplyResult.Duplicate;
             Interlocked.Increment(ref effects);
             return InboxApplyResult.Applied;

@@ -11,12 +11,18 @@ using Template.Infrastructure.Messaging.Topology;
 
 namespace Template.Infrastructure.Messaging.Consuming;
 
+/// <summary>
+/// One broker delivery and the queue/Inbox consumer it arrived for (Phase 29 adds the notification consumer; the
+/// defaults keep the Phase 28 projection consumer).
+/// </summary>
 public sealed record ProcurementDelivery(
     ReadOnlyMemory<byte> Body,
     IReadOnlyBasicProperties Properties,
     string Exchange,
     string RoutingKey,
-    ulong DeliveryTag);
+    ulong DeliveryTag,
+    string Queue = ProcurementMessagingTopology.ProjectionQueue,
+    string Consumer = ProcurementMessagingTopology.ProjectionConsumer);
 
 public interface IProcurementDeliveryChannel
 {
@@ -68,7 +74,7 @@ public sealed class ProcurementDeliveryProcessor(
             {
                 await using var scope = scopes.CreateAsyncScope();
                 var handler = scope.ServiceProvider.GetRequiredService<IProcurementIntegrationEventHandler>();
-                var result = await handler.HandleAsync(ProcurementMessagingTopology.ProjectionConsumer, envelope, stoppingToken);
+                var result = await handler.HandleAsync(delivery.Consumer, envelope, stoppingToken);
                 logger.LogInformation(result == InboxApplyResult.Applied ? LogEvents.InboxEffectApplied : LogEvents.InboxDuplicateSkipped,
                     "Procurement event {EventId} handled with {Outcome}", envelope.EventId, result);
                 await channel.AckAsync(delivery.DeliveryTag, stoppingToken);
@@ -86,7 +92,9 @@ public sealed class ProcurementDeliveryProcessor(
                 await Task.Delay(TimeSpan.FromTicks(settings.RetryDelay.Ticks * attempt), stoppingToken);
                 var properties = CopyProperties(delivery.Properties);
                 properties.Headers![AttemptHeader] = attempt;
-                await channel.PublishAsync(ProcurementMessagingTopology.Exchange, delivery.RoutingKey, properties, body, stoppingToken);
+                // D29-9: a retry goes back only to the queue that failed (default exchange, routing key = queue), so
+                // it never fans out to the other procurement consumers again.
+                await channel.PublishAsync(string.Empty, delivery.Queue, properties, body, stoppingToken);
                 await channel.AckAsync(delivery.DeliveryTag, stoppingToken);
                 logger.LogWarning(LogEvents.MessageRetryScheduled,
                     "Procurement event {MessageId} failed with {ExceptionType}; retry {Attempt} scheduled",
@@ -112,11 +120,11 @@ public sealed class ProcurementDeliveryProcessor(
         properties.Headers![DeadLetterReasonHeader] = reason;
         properties.Headers["x-original-exchange"] = delivery.Exchange;
         properties.Headers["x-original-routing-key"] = delivery.RoutingKey;
-        properties.Headers["x-original-queue"] = ProcurementMessagingTopology.ProjectionQueue;
+        properties.Headers["x-original-queue"] = delivery.Queue;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(settings.PublishTimeout);
         await channel.PublishAsync(ProcurementMessagingTopology.DeadLetterExchange,
-            ProcurementMessagingTopology.ProjectionQueue, properties, body, timeout.Token);
+            delivery.Queue, properties, body, timeout.Token);
         await channel.AckAsync(delivery.DeliveryTag, cancellationToken);
         logger.LogWarning(LogEvents.ProcurementMessageDeadLettered,
             "Procurement message {MessageId} dead-lettered with {Reason}", delivery.Properties.MessageId, reason);

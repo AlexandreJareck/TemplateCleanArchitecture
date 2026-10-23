@@ -54,7 +54,7 @@ public sealed class RabbitMqProcurementConsumerService(
     {
         IConnection? connection = null;
         IChannel? channel = null;
-        var consumerTag = string.Empty;
+        var consumerTags = new List<string>();
         var lost = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         try
         {
@@ -69,18 +69,25 @@ public sealed class RabbitMqProcurementConsumerService(
                 lost.TrySetResult();
                 return Task.CompletedTask;
             };
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += (_, delivery) => OnReceivedAsync(channel, delivery, settings, stoppingToken);
-            consumerTag = await channel.BasicConsumeAsync(ProcurementMessagingTopology.ProjectionQueue, false, consumer, stoppingToken);
-            logger.LogInformation(LogEvents.MessagingConsumersStarted, "Procurement consumer started on {QueueCount} queue", 1);
+            foreach (var (queue, consumerName) in ProcurementMessagingTopology.Consumers)
+            {
+                var consumer = new AsyncEventingBasicConsumer(channel);
+                consumer.ReceivedAsync += (_, delivery) => OnReceivedAsync(channel, delivery, queue, consumerName, settings, stoppingToken);
+                consumerTags.Add(await channel.BasicConsumeAsync(queue, false, consumer, stoppingToken));
+            }
+
+            logger.LogInformation(LogEvents.MessagingConsumersStarted, "Procurement consumer started on {QueueCount} queue", consumerTags.Count);
             await lost.Task.WaitAsync(stoppingToken);
         }
         finally
         {
             if (channel is { IsOpen: true })
             {
-                try { await channel.BasicCancelAsync(consumerTag).WaitAsync(RabbitMqConnections.CloseTimeout); }
-                catch (Exception) { }
+                foreach (var consumerTag in consumerTags)
+                {
+                    try { await channel.BasicCancelAsync(consumerTag).WaitAsync(RabbitMqConnections.CloseTimeout); }
+                    catch (Exception) { }
+                }
             }
             var deadline = DateTime.UtcNow + RabbitMqConnections.CloseTimeout;
             while (Volatile.Read(ref inFlight) > 0 && DateTime.UtcNow < deadline)
@@ -89,13 +96,14 @@ public sealed class RabbitMqProcurementConsumerService(
         }
     }
 
-    private async Task OnReceivedAsync(IChannel channel, BasicDeliverEventArgs delivery, RabbitMqSettings settings, CancellationToken stoppingToken)
+    private async Task OnReceivedAsync(
+        IChannel channel, BasicDeliverEventArgs delivery, string queue, string consumerName, RabbitMqSettings settings, CancellationToken stoppingToken)
     {
         Interlocked.Increment(ref inFlight);
         try
         {
             await processor.ProcessAsync(
-                new ProcurementDelivery(delivery.Body, delivery.BasicProperties, delivery.Exchange, delivery.RoutingKey, delivery.DeliveryTag),
+                new ProcurementDelivery(delivery.Body, delivery.BasicProperties, delivery.Exchange, delivery.RoutingKey, delivery.DeliveryTag, queue, consumerName),
                 new RabbitProcurementDeliveryChannel(channel), settings, stoppingToken);
         }
         finally { Interlocked.Decrement(ref inFlight); }
