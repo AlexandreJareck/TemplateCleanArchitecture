@@ -27,7 +27,10 @@ public enum BudgetReservationOperation
 {
     Reserved,
     Committed,
-    Released
+    Released,
+
+    /// <summary>BUD-009 (Phase 29): amount changed to the award amount in requisition currency.</summary>
+    Adjusted
 }
 
 /// <summary>
@@ -73,6 +76,9 @@ public sealed class BudgetReservation
     public DateTime UpdatedAtUtc { get; private set; }
     public DateTime? ReleasedAtUtc { get; private set; }
 
+    /// <summary>Award whose amount the reservation was last adjusted to (BUD-009 idempotency key part).</summary>
+    public Guid? LastAwardId { get; private set; }
+
     public IReadOnlyCollection<BudgetReservationChange> Changes => changes;
 
     /// <summary>BUD-008: <c>Reserved</c> or <c>Committed</c>.</summary>
@@ -80,9 +86,17 @@ public sealed class BudgetReservation
 
     internal void Record(
         BudgetReservationOperation operation, BudgetReservationStatus? from, BudgetReservationStatus to, BudgetReleaseReason? reason,
-        Guid? actorId, DateTime nowUtc, string correlationId) =>
+        Guid? actorId, DateTime nowUtc, string correlationId, Guid? awardId = null) =>
         changes.Add(new BudgetReservationChange(
-            Guid.NewGuid(), Id, changes.Count + 1, operation, from, to, Amount, Currency, reason, actorId, nowUtc, correlationId));
+            Guid.NewGuid(), Id, changes.Count + 1, operation, from, to, Amount, Currency, reason, actorId, nowUtc, correlationId, awardId));
+
+    /// <summary>BUD-009: the new amount is recorded as a new history entry; earlier entries keep their amounts.</summary>
+    internal void AdjustTo(decimal amount, Guid awardId, DateTime nowUtc)
+    {
+        Amount = amount;
+        LastAwardId = awardId;
+        UpdatedAtUtc = nowUtc;
+    }
 
     internal void MarkCommitted(DateTime nowUtc)
     {
@@ -113,8 +127,9 @@ public sealed class BudgetReservationChange
     internal BudgetReservationChange(
         Guid id, Guid reservationId, int sequence, BudgetReservationOperation operation, BudgetReservationStatus? from,
         BudgetReservationStatus to, decimal amount, string currency, BudgetReleaseReason? reason, Guid? actorId, DateTime atUtc,
-        string correlationId)
+        string correlationId, Guid? awardId = null)
     {
+        AwardId = awardId;
         Id = id;
         ReservationId = reservationId;
         Sequence = sequence;
@@ -141,6 +156,9 @@ public sealed class BudgetReservationChange
     public Guid? ActorId { get; private set; }
     public DateTime AtUtc { get; private set; }
     public string CorrelationId { get; private set; }
+
+    /// <summary>Award of an <c>Adjusted</c> entry (BUD-009).</summary>
+    public Guid? AwardId { get; private set; }
 }
 
 /// <summary>Append-only amount history of an allocation (BUD-003).</summary>

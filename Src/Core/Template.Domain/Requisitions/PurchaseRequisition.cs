@@ -83,6 +83,18 @@ public sealed class PurchaseRequisition : VersionedAggregateRoot
     public DateTime UpdatedAtUtc { get; private set; }
     public DateTime? SubmittedAtUtc { get; private set; }
 
+    /// <summary>Published RFQ of the current sourcing round (Phase 29), kept for history after it ends.</summary>
+    public Guid? ActiveRfqId { get; private set; }
+
+    /// <summary>Award submitted for approval (SRC-019); <c>AwardSnapshot</c> of domain-model.md §3.</summary>
+    public Guid? AwardId { get; private set; }
+
+    public Guid? AwardedSupplierId { get; private set; }
+    public string? AwardedSupplierName { get; private set; }
+
+    /// <summary>Award amount in the requisition currency (CALC-007).</summary>
+    public decimal? AwardAmount { get; private set; }
+
     public IReadOnlyCollection<RequisitionLine> Lines => lines;
     public IReadOnlyCollection<RequisitionAttachment> Attachments => attachments;
     public IReadOnlyCollection<RequisitionStateChange> StateChanges => stateChanges;
@@ -403,6 +415,56 @@ public sealed class PurchaseRequisition : VersionedAggregateRoot
         return (allocationId, true, null);
     }
 
+    /// <summary>
+    /// <c>Submitted → InSourcing</c> when the requisition's RFQ is published (SRC-001, workflows §1). The RFQ raises the
+    /// integration event; the state change records its type.
+    /// </summary>
+    public DomainError? StartSourcing(Guid rfqId, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureId(rfqId, nameof(rfqId));
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        if (Status != RequisitionStatus.Submitted)
+            return DomainError.InvalidTransition(Status.ToString(), "Only a Submitted requisition enters sourcing.", "SRC-001");
+
+        ActiveRfqId = rfqId;
+        Transition(RequisitionStatus.InSourcing, actorId, nowUtc, null, null, correlationId, "procurement.rfq.published");
+        return null;
+    }
+
+    /// <summary>SRC-020: <c>InSourcing → Submitted</c> when the RFQ is cancelled; the reservation stays <c>Reserved</c>.</summary>
+    public DomainError? ReturnFromSourcing(string? reason, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        if (Status != RequisitionStatus.InSourcing)
+            return DomainError.InvalidTransition(Status.ToString(), "Only an InSourcing requisition returns to Submitted.", "SRC-020");
+
+        Transition(RequisitionStatus.Submitted, actorId, nowUtc, reason, "RfqCancelled", correlationId, "procurement.rfq.cancelled");
+        return null;
+    }
+
+    /// <summary>
+    /// SRC-019: <c>InSourcing → PendingApproval</c> with the award snapshot (supplier and amount in the requisition
+    /// currency, CALC-007). The use case adjusts the reservation (BUD-009) in the same commit.
+    /// </summary>
+    public DomainError? SubmitAward(Guid awardId, Guid supplierId, string supplierName, Money amount, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureId(awardId, nameof(awardId));
+        MasterDataRules.EnsureId(supplierId, nameof(supplierId));
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        ArgumentException.ThrowIfNullOrWhiteSpace(supplierName);
+        if (Status != RequisitionStatus.InSourcing)
+            return DomainError.InvalidTransition(Status.ToString(), "Only an InSourcing requisition receives an award.", "SRC-019");
+        if (!string.Equals(amount.Currency, Currency, StringComparison.Ordinal))
+            throw new ArgumentException("The award amount must be in the requisition currency (CALC-007).", nameof(amount));
+
+        AwardId = awardId;
+        AwardedSupplierId = supplierId;
+        AwardedSupplierName = supplierName;
+        AwardAmount = amount.Amount;
+        Transition(RequisitionStatus.PendingApproval, actorId, nowUtc, null, null, correlationId, "procurement.award.submitted");
+        return null;
+    }
+
     private static (string? Currency, string? Purpose, DomainError? Error) ValidateHeader(
         CostCenterSnapshot costCenter, string? currency, bool isSupportedCurrency, string? purpose, bool requireActiveCostCenter)
     {
@@ -473,10 +535,17 @@ public sealed class PurchaseRequisition : VersionedAggregateRoot
     private void Transition(
         RequisitionStatus to, Guid? actorId, DateTime nowUtc, string? reason, string? reasonCode, string correlationId, DomainEvent domainEvent)
     {
+        Transition(to, actorId, nowUtc, reason, reasonCode, correlationId, domainEvent.EventType);
+        events.Raise(domainEvent);
+    }
+
+    /// <summary>A transition whose integration event is raised by another aggregate (the RFQ) in the same commit.</summary>
+    private void Transition(
+        RequisitionStatus to, Guid? actorId, DateTime nowUtc, string? reason, string? reasonCode, string correlationId, string eventType)
+    {
         var from = Status;
         Status = to;
-        AppendStateChange(from, to, actorId, nowUtc, reason, reasonCode, correlationId, domainEvent.EventType);
-        events.Raise(domainEvent);
+        AppendStateChange(from, to, actorId, nowUtc, reason, reasonCode, correlationId, eventType);
         Touch(nowUtc);
     }
 

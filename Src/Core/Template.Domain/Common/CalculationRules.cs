@@ -30,6 +30,39 @@ public static class CalculationRules
     /// <summary>Whether a monetary amount has at most the currency minor units (an allocation or reservation amount).</summary>
     public static bool HasMinorUnitPrecision(decimal amount, string currency) =>
         DecimalPrecision.Places(amount) <= MinorUnits(currency);
+
+    /// <summary>CALC-001: an exchange rate is positive with at most 6 decimals.</summary>
+    public static bool IsValidExchangeRate(decimal rate) =>
+        rate > 0 && rate <= MaxAmount && DecimalPrecision.Places(rate) <= MaxExchangeRateDecimals;
+
+    /// <summary>
+    /// CALC-004 (Phase 29): normalized = round(amount × rate) in <paramref name="baseCurrency"/>, where the rate is base
+    /// units per foreign unit from a persisted snapshot. The same currency uses rate 1 and needs no snapshot.
+    /// </summary>
+    public static Money Normalize(Money amount, decimal rate, string baseCurrency)
+    {
+        if (string.Equals(amount.Currency, baseCurrency, StringComparison.Ordinal))
+            return amount;
+        if (!IsValidExchangeRate(rate))
+            throw new ArgumentOutOfRangeException(nameof(rate), "Exchange rates are positive with at most 6 decimals.");
+        return new Money(RoundMoney(amount.Amount * rate, baseCurrency), baseCurrency);
+    }
+
+    /// <summary>
+    /// CALC-007 (Phase 29): award amount in the requisition currency. Equal to the awarded total when the currencies
+    /// match; otherwise round(round(awarded × rate quote→base) ÷ rate requisition→base), base→base being 1.
+    /// </summary>
+    public static Money ToRequisitionCurrency(Money awarded, decimal quoteToBaseRate, string requisitionCurrency, decimal requisitionToBaseRate, string baseCurrency)
+    {
+        if (string.Equals(awarded.Currency, requisitionCurrency, StringComparison.Ordinal))
+            return awarded;
+        var inBase = Normalize(awarded, quoteToBaseRate, baseCurrency);
+        if (string.Equals(requisitionCurrency, baseCurrency, StringComparison.Ordinal))
+            return inBase;
+        if (!IsValidExchangeRate(requisitionToBaseRate))
+            throw new ArgumentOutOfRangeException(nameof(requisitionToBaseRate), "Exchange rates are positive with at most 6 decimals.");
+        return new Money(RoundMoney(inBase.Amount / requisitionToBaseRate, requisitionCurrency), requisitionCurrency);
+    }
 }
 
 /// <summary>
