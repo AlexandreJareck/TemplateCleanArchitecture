@@ -46,11 +46,12 @@ Idempotency key for every consumer = (consumer name, `eventId`) in the Inbox. Th
 | `procurement.requisition.cancelled` | Requisitions / Cancel | requisitionId, reasonCode, cancelledBy | Sourcing (cancel open RFQ), Approvals (cancel instance), Notifications | requisitionId | 28 |
 | `procurement.requisition.expired` | Requisitions / Expire | requisitionId | Sourcing, Notifications | requisitionId | 33 (event in 28) |
 | `procurement.budget.reservation-created` | Budgeting (inside Submit) | reservationId, requisitionId, allocationId, amount | Projections, reports | reservationId | 28 |
-| `procurement.budget.reservation-adjusted` | Budgeting (inside Award) | reservationId, previousAmount, newAmount | Projections | reservationId + awardId | 29 |
+| `procurement.budget.reservation-adjusted` | Budgeting (inside Award) | reservationId, requisitionId, awardId, previousAmount, newAmount | Projections | reservationId + awardId | 29 |
 | `procurement.budget.reservation-committed` | Budgeting (inside final approval) | reservationId, amount | Projections, reports | reservationId | 31 |
 | `procurement.budget.reservation-released` | Budgeting | reservationId, releasedAmount, reasonCode | Projections, notifications | reservationId + reasonCode (+ poId for partial) | 28 |
 | `procurement.rfq.published` | Sourcing / Publish | rfqId, number, requisitionId, deadline, invitedSupplierIds, sourcingMethod | Notifications (invitation emails) | rfqId | 29 |
-| `procurement.rfq.deadline-extended` | Sourcing / Extend | rfqId, previousDeadline, newDeadline | Notifications, scheduler | rfqId + newDeadline | 29 |
+| `procurement.rfq.deadline-extended` | Sourcing / Extend | rfqId, previousDeadline, newDeadline, invitedSupplierIds | Notifications, scheduler | rfqId + newDeadline | 29 |
+| `procurement.rfq.reminder-requested` | Sourcing / Remind (D29-6) | rfqId, deadline, supplierIds (suppliers without a current quote) | Notifications (reminder) | eventId (one reminder per request) | 29 |
 | `procurement.rfq.closed` | Sourcing / Close | rfqId, closedAt, validQuoteCount, comparisonStatus | Notifications (buyer), report projections | rfqId | 29 |
 | `procurement.rfq.cancelled` | Sourcing / Cancel | rfqId, reasonCode | Approvals (cancel pending), Notifications | rfqId | 29 |
 | `procurement.quote.recorded` | Sourcing / Enter or revise quote | rfqId, quoteId, revision, supplierId | Projections | quoteId + revision | 29 |
@@ -75,7 +76,7 @@ Idempotency key for every consumer = (consumer name, `eventId`) in the Inbox. Th
 | `procurement.report.requested` | Reporting / Request | reportJobId, reportType | Worker report handler | reportJobId | 30 |
 | `procurement.report.ready` / `procurement.report.failed` | Worker report handler | reportJobId, failureCode? | Notifications (in-app) | reportJobId | 30 |
 
-Notification consumers produce `NotificationRequested` commands to a local adapter (fake until Phase 33, Mailpit in Phase 33); templates are versioned and localized; delivery records are idempotent per (event, recipient, template).
+Notification consumers produce `NotificationRequested` commands to a local adapter (fake until Phase 33, Mailpit in Phase 33); templates are versioned and localized; delivery records are idempotent per (event, recipient, template). Phase 29 implements this for sourcing: the Worker consumer `procurement-notification-v1` on queue `procurement.notifications.v1` (bound to `procurement.rfq.published`, `procurement.rfq.deadline-extended` and `procurement.rfq.reminder-requested`) records one `MessagingNotificationDeliveries` row per invited supplier and template (`sourcing.rfq-invitation.v1`, `sourcing.rfq-deadline-extended.v1`, `sourcing.rfq-reminder.v1`) in the Inbox transaction (D29-8).
 
 ## 4. Commands that cross process boundaries
 

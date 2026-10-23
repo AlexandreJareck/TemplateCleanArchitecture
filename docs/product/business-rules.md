@@ -33,7 +33,7 @@ Policies are stored as versioned records. A version is immutable once referenced
 
 ## Waiver catalog
 
-A waiver is a `WaiverDecision` record ([domain-model.md](domain-model.md#2-shared-kernel-domain)): rule ID, waiver type, actor, permission used, reason (10–1,000 characters), UTC timestamp, scope, audit action `waiver.recorded`. There is no boolean bypass and no administrator override (B23-9).
+A waiver is a `WaiverDecision` record ([domain-model.md](domain-model.md#2-shared-kernel-domain)): rule ID, waiver type, actor, permission used, reason (10–500 characters since Phase 29, D29-3), UTC timestamp, scope, audit action `waiver.recorded`. There is no boolean bypass and no administrator override (B23-9).
 
 | Waiver type | Waives | Permission | Default holder |
 |---|---|---|---|
@@ -54,7 +54,7 @@ Owner: shared kernel (Domain `CalculationRules`). Phase 27 introduces CALC-001..
 | CALC-002 | Line total = round(quantity × unit price). Requisition estimated total = Σ line totals. Quote and PO total = Σ line totals + freight − discount; `TaxesIncluded` is an explicit quoted amount already contained in prices and is informational (no tax engine). Totals are always recomputed by the server; client-sent totals are ignored. | — | `-a` (U) 3 × 33.3333 = 100.00; `-b` (U) freight/discount; `-c` (F) client total ignored |
 | CALC-003 | Allocation available = amount − Σ amounts of reservations in `Reserved` or `Committed`. Never negative (BUD-005). | — | `-a` (U) mixed reservation states |
 | CALC-004 | Normalization to base currency: normalized = round(amount × rate), rate = base units per foreign unit from an `ExchangeRateSnapshot`; same currency uses rate 1 without a snapshot. Rate source `BcbPtax` uses the PTAX selling rate for the RFQ close local date or the latest earlier published date (SP-5); `Manual` requires the `ManualExchangeRate` waiver. A missing rate makes the comparison `Incomplete`; it is never guessed. | `sourcing.rate-unavailable` (comparison flag, not an HTTP error) | `-a` (U) USD 1,000.00 × 5.4321 = 5,432.10 BRL; `-b` (H) unavailable rate → Incomplete; `-c` (P) snapshot persisted and reused |
-| CALC-005 | Ranking of valid quotes: ascending normalized total; ties broken by fewer delivery days, then earlier `ReceivedAtUtc`, then supplier legal name (ordinal). Ranking is advisory; selection is a human decision. | — | `-a` (U) each tie-breaker level; `-b` (U) deterministic across input order |
+| CALC-005 | Ranking of valid quotes: ascending normalized total; ties broken by fewer delivery days, then earlier `ReceivedAtUtc`, then supplier legal name (ordinal), then supplier ID (D29-5). Ranking is advisory; selection is a human decision. | — | `-a` (U) each tie-breaker level; `-b` (U) deterministic across input order |
 | CALC-006 | PO lines, prices, freight, discount and total are copied from the awarded quote revision; PO total equals the award total exactly. | — | `-a` (U) |
 | CALC-007 | Award amount in requisition currency: equal to awarded total when currencies match; otherwise round(round(awarded × rate quote→base) ÷ rate requisition→base) using the comparison snapshots (base→base = 1). | — | `-a` (U) BRL requisition, USD award; `-b` (U) EUR requisition, USD award |
 | CALC-008 | Short-close release = round(Σ (ordered − accepted) × unit price) in PO currency, converted to requisition currency with the award rates (CALC-007), capped at the committed amount. | — | `-a` (U) |
