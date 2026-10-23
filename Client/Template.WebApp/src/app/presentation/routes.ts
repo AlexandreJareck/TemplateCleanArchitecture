@@ -162,6 +162,22 @@ export const routes: Routes = [
         title: 'Requisição',
       },
       {
+        path: 'sourcing',
+        canActivate: [permissionGuard],
+        data: { anyPermission: ['sourcing.rfqs.manage', 'sourcing.quotes.read'] },
+        loadComponent: () =>
+          import('./features/sourcing.page').then((module) => module.SourcingPage),
+        title: 'Cotações',
+      },
+      {
+        path: 'sourcing/:id',
+        canActivate: [permissionGuard],
+        data: { anyPermission: ['sourcing.rfqs.manage', 'sourcing.quotes.read'] },
+        loadComponent: () =>
+          import('./features/rfq-detail.page').then((module) => module.RfqDetailPage),
+        title: 'Solicitação de cotação',
+      },
+      {
         path: 'dev/primitives',
         loadComponent: () =>
           import('./shell/primitive-gallery').then((module) => module.PrimitiveGallery),

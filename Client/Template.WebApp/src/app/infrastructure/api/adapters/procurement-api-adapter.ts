@@ -424,6 +424,8 @@ export function mapRequisition(value: RequisitionView): Requisition {
     allowedActions: (value.allowedActions ?? []).filter((action): action is RequisitionAction =>
       ACTIONS.includes(action as RequisitionAction),
     ),
+    activeRfqId: value.activeRfqId ?? undefined,
+    awardedSupplierName: value.award?.supplierName ?? undefined,
   };
 }
 
