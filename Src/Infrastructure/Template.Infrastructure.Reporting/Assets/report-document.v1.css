@@ -1,0 +1,30 @@
+/* report-document.v1 — versioned server stylesheet of every PDF report (RPT-008). Change only with a new version. */
+@page { size: A4; margin: 16mm 12mm 18mm 12mm; }
+* { box-sizing: border-box; }
+html { font-family: "Report Sans", sans-serif; font-size: 9.5pt; color: #1f2933; }
+body { margin: 0; }
+.report-header { border-bottom: 2px solid #1f4e79; padding-bottom: 6pt; margin-bottom: 8pt; }
+h1 { font-size: 17pt; font-weight: 700; margin: 0; color: #1f4e79; }
+.subtitle { font-size: 11pt; margin: 2pt 0 0; font-weight: 700; }
+h2 { font-size: 11.5pt; font-weight: 700; margin: 12pt 0 4pt; color: #1f4e79; break-after: avoid; }
+section { break-inside: auto; }
+dl { display: grid; grid-template-columns: 34% 66%; margin: 0; border-top: 1px solid #d5dbe1; }
+dt, dd { margin: 0; padding: 2.5pt 4pt; border-bottom: 1px solid #d5dbe1; overflow-wrap: anywhere; }
+dt { font-weight: 700; background: #f2f5f8; }
+.context { font-size: 8.5pt; margin-bottom: 4pt; }
+.context dl { grid-template-columns: 26% 74%; }
+table { width: 100%; border-collapse: collapse; margin-top: 2pt; font-size: 8.5pt; }
+thead { display: table-header-group; }
+tfoot { display: table-row-group; }
+tr { break-inside: avoid; }
+th { background: #1f4e79; color: #ffffff; font-weight: 700; text-align: left; padding: 3pt 4pt; }
+td { padding: 2.5pt 4pt; border-bottom: 1px solid #d5dbe1; vertical-align: top; overflow-wrap: anywhere; }
+tbody tr:nth-child(even) td { background: #f7f9fb; }
+tfoot td { font-weight: 700; border-top: 1.5px solid #1f4e79; background: #eef2f6; }
+.end { text-align: right; font-variant-numeric: tabular-nums; }
+.center { text-align: center; }
+td.end, td.center { white-space: nowrap; }
+table.wide { font-size: 7.5pt; }
+table.wide th, table.wide td { padding: 2pt 3pt; }
+.empty { font-style: italic; color: #52606d; margin: 2pt 0; }
+.notes { margin: 4pt 0 0; padding-left: 12pt; font-size: 8pt; color: #3e4c59; }
