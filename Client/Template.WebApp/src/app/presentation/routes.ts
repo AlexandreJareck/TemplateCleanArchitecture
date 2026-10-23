@@ -162,6 +162,13 @@ export const routes: Routes = [
         title: 'Requisição',
       },
       {
+        path: 'reports',
+        canActivate: [permissionGuard],
+        data: { permission: 'reports.request' },
+        loadComponent: () => import('./features/reports.page').then((module) => module.ReportsPage),
+        title: 'Relatórios',
+      },
+      {
         path: 'sourcing',
         canActivate: [permissionGuard],
         data: { anyPermission: ['sourcing.rfqs.manage', 'sourcing.quotes.read'] },

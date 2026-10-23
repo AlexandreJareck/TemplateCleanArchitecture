@@ -17,6 +17,7 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { ActionConfirmation, type ActionConfirmationRequest } from '../shared/action-confirmation';
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
+import { SessionFacade } from '../state/session.facade';
 import { MASTER_DATA_PORT, SOURCING_PORT } from '../state/ports';
 
 type Pending = 'cancel' | 'close-early' | 'withdraw-quote' | 'award' | undefined;
@@ -72,6 +73,20 @@ const SOURCES: readonly QuoteSource[] = ['Email', 'Phone', 'Document', 'Other'];
       <p class="notice" role="status">{{ notice()! | transloco }}</p>
     }
     @if (rfq(); as current) {
+      @if (
+        current.comparison && session.can('reports.request') && session.can('sourcing.quotes.read')
+      ) {
+        <div class="toolbar">
+          <a
+            hlmBtn
+            variant="outline"
+            size="sm"
+            routerLink="/reports"
+            [queryParams]="{ type: 'QuoteComparisonPdf', rfqId: current.id }"
+            >{{ 'reports.comparisonPdf' | transloco }}</a
+          >
+        </div>
+      }
       <section class="panel" aria-labelledby="rfq-summary">
         <h2 id="rfq-summary">{{ 'sourcing.summary' | transloco }}</h2>
         <dl class="summary-grid">
@@ -774,6 +789,7 @@ export class RfqDetailPage {
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   readonly sources = SOURCES;
+  protected readonly session = inject(SessionFacade);
   readonly rfq = signal<Rfq | undefined>(undefined);
   readonly history = signal<readonly RfqHistoryEntry[]>([]);
   readonly suppliers = signal<readonly SupplierSummary[]>([]);

@@ -67,7 +67,8 @@
     "teamRequisitions": "Team requisitions",
     "budgetPeriods": "Fiscal periods",
     "budgetAllocations": "Budget allocations",
-    "sourcing": "Sourcing"
+    "sourcing": "Sourcing",
+    "reports": "Reports"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -164,7 +165,11 @@
     "Superseded": "Superseded",
     "Withdrawn": "Withdrawn",
     "Complete": "Complete",
-    "Incomplete": "Incomplete"
+    "Incomplete": "Incomplete",
+    "Pending": "Queued",
+    "Running": "Running",
+    "Ready": "Ready",
+    "Failed": "Failed"
   },
   "problems": {
     "cancelled": "Operation cancelled",
@@ -177,7 +182,8 @@
     "business-rule": "A business rule was not met",
     "rate-limited": "Too many attempts; please wait",
     "unavailable": "Service unavailable",
-    "unexpected": "Unexpected error"
+    "unexpected": "Unexpected error",
+    "gone": "The resource is no longer available"
   },
   "requisition": {
     "new": "New requisition",
@@ -397,5 +403,53 @@
     },
     "queueTable": "Requisitions waiting for sourcing table",
     "rfqsTable": "Requests for quotation table"
+  },
+  "reports": {
+    "request": "Request a report",
+    "type": "Report type",
+    "submit": "Generate report",
+    "noTypes": "You are not allowed to request reports.",
+    "asOfHelp": "The report reflects the data as of the request instant and is generated in the background; follow it below.",
+    "jobs": "My reports",
+    "jobsTable": "Requested reports table",
+    "noJobs": "No report requested yet.",
+    "requestedAt": "Requested at",
+    "progress": "Progress",
+    "details": "Details",
+    "download": "Download",
+    "retry": "Generate again",
+    "expired": "The file expired; generate it again.",
+    "expiresAt": "available until",
+    "asOf": "As of",
+    "stillRunning": "Still running; check again later.",
+    "downloaded": "Download of {{name}} started.",
+    "announce": "{{type}}: {{status}}",
+    "requisitionId": "Requisition (ID)",
+    "rfqId": "Request for quotation (ID)",
+    "fiscalPeriod": "Fiscal period",
+    "currency": "Currency (optional)",
+    "costCenterId": "Cost center (ID, optional)",
+    "from": "Received from",
+    "to": "Received until",
+    "supplierId": "Supplier (ID, optional)",
+    "requisitionPdf": "Generate requisition PDF",
+    "comparisonPdf": "Generate quote comparison (PDF)",
+    "types": {
+      "RequisitionPdf": "Purchase requisition",
+      "QuoteComparisonPdf": "Quote comparison",
+      "BudgetConsumptionXlsx": "Budget consumption",
+      "SupplierQuotesXlsx": "Supplier quotes"
+    },
+    "failures": {
+      "source-not-found": "The source data no longer exists.",
+      "source-changed": "The draft changed after the request; generate it again.",
+      "too-large": "The report exceeds the size limit; narrow the filters.",
+      "renderer-unavailable": "The document renderer was unavailable.",
+      "storage-unavailable": "File storage was unavailable.",
+      "timeout": "Generation exceeded the time limit.",
+      "attempts-exhausted": "Generation failed after 3 attempts.",
+      "output-invalid": "The generated file failed verification.",
+      "unexpected": "Unexpected generation failure."
+    }
   }
 }
