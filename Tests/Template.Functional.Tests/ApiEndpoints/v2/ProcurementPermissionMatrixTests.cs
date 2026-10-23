@@ -29,7 +29,24 @@ public sealed class ProcurementPermissionMatrixTests(ProcurementWebApplicationFa
         ("POST", $"/api/v2/purchase-requisitions/{Guid.Empty}/attachments", [Permissions.RequisitionsCreate]),
         ("POST", $"/api/v2/purchase-requisitions/{Guid.Empty}/submit", [Permissions.RequisitionsSubmit]),
         ("POST", $"/api/v2/purchase-requisitions/{Guid.Empty}/withdraw", [Permissions.RequisitionsSubmit]),
-        ("POST", $"/api/v2/purchase-requisitions/{Guid.Empty}/copy", [Permissions.RequisitionsCreate])
+        ("POST", $"/api/v2/purchase-requisitions/{Guid.Empty}/copy", [Permissions.RequisitionsCreate]),
+        // Phase 29 sourcing (SRC-021 reads are use-case authorized: rfqs.manage or quotes.read).
+        ("GET", "/api/v2/requests-for-quotation", [Permissions.SourcingRfqsManage, Permissions.SourcingQuotesRead]),
+        ("GET", $"/api/v2/requests-for-quotation/{Guid.Empty}", [Permissions.SourcingRfqsManage, Permissions.SourcingQuotesRead]),
+        ("GET", $"/api/v2/requests-for-quotation/{Guid.Empty}/history", [Permissions.SourcingRfqsManage, Permissions.SourcingQuotesRead]),
+        ("POST", "/api/v2/requests-for-quotation", [Permissions.SourcingRfqsManage]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/invitations", [Permissions.SourcingRfqsManage]),
+        ("DELETE", $"/api/v2/requests-for-quotation/{Guid.Empty}/invitations/{Guid.Empty}", [Permissions.SourcingRfqsManage]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/publish", [Permissions.SourcingRfqsManage]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/extend-deadline", [Permissions.SourcingRfqsManage]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/reminders", [Permissions.SourcingRfqsManage]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/close", [Permissions.SourcingRfqsManage]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/cancel", [Permissions.SourcingRfqsManage]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/quotes", [Permissions.SourcingQuotesEnter]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/quotes/{Guid.Empty}/revisions", [Permissions.SourcingQuotesEnter]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/quotes/{Guid.Empty}/withdraw", [Permissions.SourcingQuotesEnter]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/exchange-rates", [Permissions.SourcingRatesManual]),
+        ("POST", $"/api/v2/requests-for-quotation/{Guid.Empty}/award", [Permissions.SourcingAwardsSubmit])
     ];
 
     public static TheoryData<string> Roles => new(SeededRoles.All);
@@ -80,5 +97,10 @@ public sealed class ProcurementPermissionMatrixTests(ProcurementWebApplicationFa
         SeededRoles.PermissionsByRole[SeededRoles.BudgetController].ShouldNotContain(Permissions.SourcingRfqsManage);
         SeededRoles.PermissionsByRole[SeededRoles.Administrator].ShouldNotContain(Permissions.RequisitionsCreate);
         SeededRoles.PermissionsByRole[SeededRoles.Administrator].ShouldNotContain(Permissions.BudgetRead);
+        // SOD-5: high-value and post-competition sourcing waivers are held only by ProcurementManager.
+        foreach (var waiver in new[] { Permissions.SourcingWaiversDirectPurchase, Permissions.SourcingWaiversInsufficientQuotations,
+                     Permissions.SourcingWaiversNonLeading, Permissions.SourcingRatesManual })
+            SeededRoles.All.Where(role => SeededRoles.PermissionsByRole[role].Contains(waiver)).ShouldBe([SeededRoles.ProcurementManager]);
+        SeededRoles.PermissionsByRole[SeededRoles.Administrator].ShouldNotContain(Permissions.SourcingQuotesRead);
     }
 }
