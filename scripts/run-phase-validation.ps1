@@ -62,6 +62,9 @@ Invoke-Step '06-test-postgresql' { & $DotNetPath test Tests\Template.PostgreSql.
 Invoke-Step '06b-test-rabbitmq' { & $DotNetPath test Tests\Template.RabbitMq.Integration.Tests\Template.RabbitMq.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '06c-test-elasticsearch' { & $DotNetPath test Tests\Template.Elasticsearch.Integration.Tests\Template.Elasticsearch.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '06f-test-redis' { & $DotNetPath test Tests\Template.Redis.Integration.Tests\Template.Redis.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
+# Phase 30: blob storage adapter against a disposable Azurite 3.37.0 pinned by digest (requires Docker).
+Invoke-Step '06q-test-worker' { & $DotNetPath test Tests\Template.Worker.Tests\Template.Worker.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
+Invoke-Step '06p-test-azurite' { & $DotNetPath test Tests\Template.Azurite.Integration.Tests\Template.Azurite.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 if ($ElasticRehearsalWebApi8xPath -and $ElasticRehearsalWebApi9xPath) {
     Invoke-Step '06d-elastic-upgrade-rehearsal' { & (Join-Path $PSScriptRoot 'elastic-upgrade-rehearsal.ps1') -WebApi8xPath $ElasticRehearsalWebApi8xPath -WebApi9xPath $ElasticRehearsalWebApi9xPath -DotNetPath $DotNetPath }
 }

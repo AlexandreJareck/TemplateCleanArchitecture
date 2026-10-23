@@ -10,14 +10,26 @@ COPY ["global.json", "Directory.Packages.props", "./"]
 COPY ["Src/Workers/Template.Worker/Template.Worker.csproj", "Src/Workers/Template.Worker/"]
 COPY ["Src/Core/Template.Application/Template.Application.csproj", "Src/Core/Template.Application/"]
 COPY ["Src/Core/Template.Domain/Template.Domain.csproj", "Src/Core/Template.Domain/"]
+COPY ["Src/Infrastructure/Template.Infrastructure.Files/Template.Infrastructure.Files.csproj", "Src/Infrastructure/Template.Infrastructure.Files/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Messaging/Template.Infrastructure.Messaging.csproj", "Src/Infrastructure/Template.Infrastructure.Messaging/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Persistence/Template.Infrastructure.Persistence.csproj", "Src/Infrastructure/Template.Infrastructure.Persistence/"]
+COPY ["Src/Infrastructure/Template.Infrastructure.Reporting/Template.Infrastructure.Reporting.csproj", "Src/Infrastructure/Template.Infrastructure.Reporting/"]
 RUN dotnet restore "Src/Workers/Template.Worker/Template.Worker.csproj"
 COPY . .
 WORKDIR "/src/Src/Workers/Template.Worker"
-RUN dotnet publish "Template.Worker.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# PlaywrightPlatform=linux copies only the Linux Node driver of Microsoft.Playwright into the output.
+RUN dotnet publish "Template.Worker.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:PlaywrightPlatform=linux
 
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+# Phase 30 (D23-5): the headless Chromium shell pinned by Microsoft.Playwright 1.64.1 (browser revision 1248) and its OS
+# dependencies, installed by the package's own driver at build time into a read-only shared path; the process runs non-root,
+# so the driver (published with owner-only execute permission) and the browser are made readable and executable by everyone.
+USER root
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN /app/.playwright/node/linux-x64/node /app/.playwright/package/cli.js install --with-deps --only-shell chromium \
+    && rm -rf /var/lib/apt/lists/* \
+    && chmod -R a+rX /ms-playwright /app/.playwright
+USER $APP_UID
 ENTRYPOINT ["dotnet", "Template.Worker.dll"]
