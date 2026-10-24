@@ -21,7 +21,10 @@ public enum DomainErrorKind
     TooLarge,
 
     /// <summary>Declared media type is not allowed (415, FIL-002). Appended in Phase 27.</summary>
-    UnsupportedMediaType
+    UnsupportedMediaType,
+
+    /// <summary>A separation-of-duties or assignment rule denies the actor (403, APR-004/005/007/008). Appended in Phase 31.</summary>
+    Forbidden
 }
 
 /// <summary>

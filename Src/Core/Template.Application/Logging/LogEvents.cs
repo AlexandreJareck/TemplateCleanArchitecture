@@ -98,4 +98,17 @@ public static class LogEvents
     public static readonly EventId ReportJobReleased = new(11204, nameof(ReportJobReleased));
     public static readonly EventId ReportMaintenanceCompleted = new(11205, nameof(ReportMaintenanceCompleted));
     public static readonly EventId FileStorageFailed = new(11206, nameof(FileStorageFailed));
+
+    // Phase 31: approval workflow (IDs, levels and outcomes only; never names, amounts or reasons).
+    public static readonly EventId ApprovalStarted = new(11300, nameof(ApprovalStarted));
+    public static readonly EventId ApprovalStepAssigned = new(11301, nameof(ApprovalStepAssigned));
+    public static readonly EventId ApprovalDecisionRecorded = new(11302, nameof(ApprovalDecisionRecorded));
+    public static readonly EventId ApprovalDecisionDenied = new(11303, nameof(ApprovalDecisionDenied));
+    public static readonly EventId ApprovalTimerProcessed = new(11304, nameof(ApprovalTimerProcessed));
+    public static readonly EventId ApprovalFinalized = new(11305, nameof(ApprovalFinalized));
+    public static readonly EventId ApprovalEnded = new(11306, nameof(ApprovalEnded));
+    public static readonly EventId ApprovalSignalFailed = new(11307, nameof(ApprovalSignalFailed));
+    public static readonly EventId ApprovalWorkflowStartRequested = new(11308, nameof(ApprovalWorkflowStartRequested));
+    public static readonly EventId ApprovalReconciliationCompleted = new(11309, nameof(ApprovalReconciliationCompleted));
+    public static readonly EventId ApprovalReconciliationRepairFailed = new(11310, nameof(ApprovalReconciliationRepairFailed));
 }

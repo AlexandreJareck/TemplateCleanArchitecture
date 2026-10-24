@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import type { ApprovalPort } from '@application/approvals/approvals';
 import type { MasterDataPort } from '@application/master-data/master-data';
 import type { BudgetPort, RequisitionPort } from '@application/procurement/procurement';
 import type { ReportPort } from '@application/reports/reports';
@@ -11,3 +12,4 @@ export const REQUISITION_PORT = new InjectionToken<RequisitionPort>('REQUISITION
 export const BUDGET_PORT = new InjectionToken<BudgetPort>('BUDGET_PORT');
 export const SOURCING_PORT = new InjectionToken<SourcingPort>('SOURCING_PORT');
 export const REPORT_PORT = new InjectionToken<ReportPort>('REPORT_PORT');
+export const APPROVAL_PORT = new InjectionToken<ApprovalPort>('APPROVAL_PORT');

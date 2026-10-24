@@ -64,9 +64,12 @@ public sealed class RfqAward
     public DateTime SubmittedAtUtc { get; private set; }
     public DateTime? EndedAtUtc { get; private set; }
 
-    internal void Cancel(DateTime nowUtc)
+    internal void Cancel(DateTime nowUtc) => End(AwardStatus.Cancelled, nowUtc);
+
+    /// <summary>Phase 31: the approval outcome of a pending award (APR-009/011/012/013/015).</summary>
+    internal void End(AwardStatus status, DateTime nowUtc)
     {
-        Status = AwardStatus.Cancelled;
+        Status = status;
         EndedAtUtc = nowUtc;
     }
 }

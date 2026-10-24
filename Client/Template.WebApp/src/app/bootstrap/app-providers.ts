@@ -3,6 +3,7 @@ import { type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@ang
 import { provideRouter } from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { DepartmentsService } from '@infrastructure/api/generated/departments/departments.service';
+import { ApprovalApiAdapter } from '@infrastructure/api/adapters/approval-api-adapter';
 import { DepartmentApiReader } from '@infrastructure/api/adapters/department-api-reader';
 import { MasterDataApiAdapter } from '@infrastructure/api/adapters/master-data-api-adapter';
 import { ProcurementApiAdapter } from '@infrastructure/api/adapters/procurement-api-adapter';
@@ -12,6 +13,7 @@ import { TranslocoHttpLoader } from '@infrastructure/localization/transloco-http
 import type { RuntimeConfig } from '@infrastructure/runtime/runtime-config';
 import { routes } from '@presentation/routes';
 import {
+  APPROVAL_PORT,
   BUDGET_PORT,
   MASTER_DATA_PORT,
   REPORT_PORT,
@@ -55,6 +57,7 @@ export function createAppConfig(runtimeConfig: RuntimeConfig): ApplicationConfig
       { provide: BUDGET_PORT, useExisting: ProcurementApiAdapter },
       { provide: SOURCING_PORT, useExisting: SourcingApiAdapter },
       { provide: REPORT_PORT, useExisting: ReportApiAdapter },
+      { provide: APPROVAL_PORT, useExisting: ApprovalApiAdapter },
     ],
   };
 }

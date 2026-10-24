@@ -42,7 +42,9 @@ public sealed class ProcurementIntegrationEventContractTests
         var envelope = ProcurementIntegrationEventContract.FromDomainEvent(
             new RequisitionExpired(Occurred, Guid.NewGuid(), 2), "trace-28");
         var effects = new Effects();
-        var handler = new ProcurementIntegrationEventHandler(effects, new Notifications(), new Clock());
+        var handler = new ProcurementIntegrationEventHandler(effects, new Notifications(),
+            new Template.Application.Features.Approvals.ApprovalWorkflowStarter(new Features.Procurement.ApprovalTestDoubles.FakeWorkflow(),
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<Template.Application.Features.Approvals.ApprovalWorkflowStarter>.Instance), new Clock());
 
         (await handler.HandleAsync("projection-v1", envelope, CancellationToken.None)).ShouldBe(InboxApplyResult.Applied);
         effects.Calls.ShouldBe(1);
@@ -89,7 +91,16 @@ public sealed class ProcurementIntegrationEventContractTests
             new Template.Domain.Reporting.ReportRequested(Occurred, Guid.NewGuid(), Template.Domain.Reporting.ReportType.RequisitionPdf, Guid.NewGuid()),
             new Template.Domain.Reporting.ReportReady(Occurred, Guid.NewGuid(), Template.Domain.Reporting.ReportType.SupplierQuotesXlsx, Guid.NewGuid(), Guid.NewGuid()),
             new Template.Domain.Reporting.ReportFailed(Occurred, Guid.NewGuid(), Template.Domain.Reporting.ReportType.QuoteComparisonPdf, Guid.NewGuid(),
-                Template.Domain.Reporting.ReportFailureCodes.Timeout)
+                Template.Domain.Reporting.ReportFailureCodes.Timeout),
+            new Template.Domain.Approvals.ApprovalStarted(Occurred, Guid.NewGuid(), Guid.NewGuid(), requisitionId, [1, 2], "ApprovalPolicy:1"),
+            new Template.Domain.Approvals.ApprovalStepAssigned(Occurred, Guid.NewGuid(), 1, Guid.NewGuid(), null, Occurred.AddDays(5), 1),
+            new Template.Domain.Approvals.ApprovalReminderDue(Occurred, Guid.NewGuid(), 1, 1, null, "ProcurementManager"),
+            new Template.Domain.Approvals.ApprovalStepEscalated(Occurred, Guid.NewGuid(), 1, 1, "ProcurementManager", Occurred.AddDays(5)),
+            new Template.Domain.Approvals.ApprovalCompleted(Occurred, Guid.NewGuid(), Guid.NewGuid(), requisitionId, Guid.NewGuid()),
+            new Template.Domain.Approvals.ApprovalRejected(Occurred, Guid.NewGuid(), 2, requisitionId, Guid.NewGuid()),
+            new Template.Domain.Approvals.ApprovalExpired(Occurred, Guid.NewGuid(), requisitionId, Guid.NewGuid()),
+            new Template.Domain.Approvals.ApprovalInvalidated(Occurred, Guid.NewGuid(), "supplier-unavailable", requisitionId),
+            new Template.Domain.Approvals.ApprovalCancelled(Occurred, Guid.NewGuid(), "requisition-cancelled", requisitionId)
         ];
 
         var envelopes = events.Select(value =>

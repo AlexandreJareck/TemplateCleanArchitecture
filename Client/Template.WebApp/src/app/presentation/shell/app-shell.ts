@@ -78,6 +78,12 @@ import { filter } from 'rxjs';
         @if (session.can('sourcing.rfqs.manage') || session.can('sourcing.quotes.read')) {
           <a routerLink="/sourcing" routerLinkActive="active">{{ 'nav.sourcing' | transloco }}</a>
         }
+        <a
+          *appPermission="'approvals.decide'"
+          routerLink="/approvals/inbox"
+          routerLinkActive="active"
+          >{{ 'nav.approvals' | transloco }}</a
+        >
         <a *appPermission="'reports.request'" routerLink="/reports" routerLinkActive="active">{{
           'nav.reports' | transloco
         }}</a>

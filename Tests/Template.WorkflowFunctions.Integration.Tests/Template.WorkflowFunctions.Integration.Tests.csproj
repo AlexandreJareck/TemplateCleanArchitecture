@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Phase 31 opt-in suite (requires Docker): the real WorkflowFunctions host image (Functions 4.x isolated, Durable Task
+    Azure Storage provider) on a disposable Azurite with blob, queue and table services, and a disposable PostgreSQL 16.15;
+    the test process plays the WebApi with the real Application use cases and the HTTP workflow client. Synthetic data only.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Core\Template.Application\Template.Application.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Identity\Template.Infrastructure.Identity.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Workflow\Template.Infrastructure.Workflow.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

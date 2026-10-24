@@ -45,6 +45,13 @@ public static class ServiceRegistration
         services.AddScoped<Services.Reporting.IReportBuilder, Services.Reporting.SupplierQuotesXlsxBuilder>();
         services.AddScoped<Services.Reporting.ReportJobProcessor>();
         services.AddScoped<Services.Reporting.ReportMaintenance>();
+        // Phase 31: approval use cases; the WorkflowFunctions host runs the activities, the Worker the starter and sweep.
+        services.AddScoped<Features.Approvals.ApprovalAccess>();
+        services.AddScoped<Features.Approvals.ApprovalOutcomes>();
+        services.AddScoped<Features.Approvals.ApprovalWorkflowActivities>();
+        services.AddScoped<Features.Approvals.ApprovalReconciliation>();
+        services.AddScoped<Features.Approvals.ApprovalWorkflowStarter>();
+        services.AddScoped<Features.Approvals.ApprovalCascade>();
         services.AddScoped<ISessionRevocationService, SessionRevocationService>();
         services.AddSingleton<IValidateOptions<SessionSettings>, SessionSettingsValidator>();
         // The composition root binds SessionSettings from configuration and validates it on start.

@@ -89,7 +89,8 @@ public sealed class ArchitectureRulesTests
         SourceViolations("Src", [": IAuthenticatedUserService"])
             .ShouldBe(["Src/Presentation/Template.WebApi/Infrastructure/Services/AuthenticatedUserService.cs",
                 "Src/Infrastructure/Template.Infrastructure.Persistence/Contexts/ApplicationDbContextFactory.cs",
-                "Src/Workers/Template.Worker/WorkerRequestContext.cs"], ignoreOrder: true);
+                "Src/Workers/Template.Worker/WorkerRequestContext.cs",
+                "Src/Functions/Template.WorkflowFunctions/Hosting/WorkflowHosting.cs"], ignoreOrder: true);
         SourceViolations("Src/Infrastructure", ["IHttpContextAccessor"]).ShouldBeEmpty();
     }
 
@@ -109,6 +110,7 @@ public sealed class ArchitectureRulesTests
             .ToArray();
 
         composers.ShouldBe([
+            "Src/Functions/Template.WorkflowFunctions/Template.WorkflowFunctions.csproj",
             "Src/Presentation/Template.WebApi/Template.WebApi.csproj",
             "Src/Workers/Template.Worker/Template.Worker.csproj",
             "Tests/Template.Azurite.Integration.Tests/Template.Azurite.Integration.Tests.csproj",
@@ -116,7 +118,8 @@ public sealed class ArchitectureRulesTests
             "Tests/Template.Integration.Tests/Template.Integration.Tests.csproj",
             "Tests/Template.PostgreSql.Integration.Tests/Template.PostgreSql.Integration.Tests.csproj",
             "Tests/Template.RabbitMq.Integration.Tests/Template.RabbitMq.Integration.Tests.csproj",
-            "Tests/Template.Redis.Integration.Tests/Template.Redis.Integration.Tests.csproj"
+            "Tests/Template.Redis.Integration.Tests/Template.Redis.Integration.Tests.csproj",
+            "Tests/Template.WorkflowFunctions.Integration.Tests/Template.WorkflowFunctions.Integration.Tests.csproj"
         ]);
     }
 
@@ -179,7 +182,9 @@ public sealed class ArchitectureRulesTests
             @"..\..\Infrastructure\Template.Infrastructure.Files\Template.Infrastructure.Files.csproj",
             @"..\..\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj",
             @"..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj",
-            @"..\..\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj"
+            @"..\..\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj",
+            // Phase 31: the approval-start consumer and the reconciliation sweep call the WorkflowFunctions client.
+            @"..\..\Infrastructure\Template.Infrastructure.Workflow\Template.Infrastructure.Workflow.csproj"
         ]);
         References(worker, "PackageReference").ShouldNotContain(package => package.Contains("RabbitMQ", StringComparison.Ordinal));
         SourceViolations(WorkerProject.TrimEnd('/'), ["using RabbitMQ", "IChannel", "BasicPublish", "BasicConsume"]).ShouldBeEmpty();
@@ -413,7 +418,7 @@ public sealed class ArchitectureRulesTests
             .Where(path => File.ReadAllText(path).Contains("[StableProblemCodes]", StringComparison.Ordinal))
             .ToArray();
 
-        controllers.Length.ShouldBe(17); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers; Phase 29: +1 requests for quotation; Phase 30: +1 report jobs
+        controllers.Length.ShouldBe(19); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers; Phase 29: +1 requests for quotation; Phase 30: +1 report jobs; Phase 31: +2 approval instances and policies
         foreach (var path in controllers)
             ActionsWithoutExplicitAuthorization(File.ReadAllText(path)).ShouldBe(0, Relative(path));
     }
@@ -474,7 +479,7 @@ public sealed class ArchitectureRulesTests
         ContainsAny("string? HashRefreshToken(string? token);", SessionCryptoMarkers()).ShouldBeFalse();
     }
 
-    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions", "Sourcing", "Files", "Reporting"];
+    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions", "Sourcing", "Files", "Reporting", "Approvals"];
 
     [Fact]
     public void Domain_Modules_Reference_Each_Other_Only_Through_The_Shared_Kernel()
@@ -496,7 +501,10 @@ public sealed class ArchitectureRulesTests
         Directory.GetFiles(Path.Combine(Root, "Src"), "*.csproj", SearchOption.AllDirectories)
             .Where(path => References(XDocument.Load(path), "PackageReference").Contains("Microsoft.Extensions.Http"))
             .Select(Relative)
-            .ShouldBe([$"{IntegrationsProject}Template.Infrastructure.Integrations.csproj"]);
+            .ShouldBe([$"{IntegrationsProject}Template.Infrastructure.Integrations.csproj",
+                // Phase 31 (ADR-0003 §5): the internal WorkflowFunctions client; it calls no external provider.
+                "Src/Infrastructure/Template.Infrastructure.Workflow/Template.Infrastructure.Workflow.csproj"]);
+        SourceViolations("Src/Infrastructure/Template.Infrastructure.Workflow", ProviderMarkers()).ShouldBeEmpty();
     }
 
     [Fact]
@@ -560,9 +568,11 @@ public sealed class ArchitectureRulesTests
     public void Phase27_Budget_Reservations_Change_Only_Through_Requisition_Transitions()
     {
         // BUD-004..008 / REQ-005: reserve and release run inside the requisition transition use cases (one transaction);
-        // no controller or other use case reserves or releases funds directly.
+        // Phase 31: the approval outcome commits (BUD-010, APR-013) or releases (APR-009, APR-011) in the same commit as
+        // the instance. No controller or other use case reserves, commits or releases funds directly.
         SourceViolations("Src/Core/Template.Application", ReservationMutationMarkers())
-            .ShouldBe(["Src/Core/Template.Application/Features/Requisitions/RequisitionTransitionUseCases.cs"]);
+            .ShouldBe(["Src/Core/Template.Application/Features/Approvals/ApprovalOutcomes.cs",
+                "Src/Core/Template.Application/Features/Requisitions/RequisitionTransitionUseCases.cs"]);
         SourceViolations("Src/Presentation/Template.WebApi/Controllers", ReservationMutationMarkers()).ShouldBeEmpty();
         var budgetController = ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/BudgetAllocationsController.cs");
         budgetController.ShouldNotContain("/reserve\"", Case.Insensitive);
@@ -694,6 +704,83 @@ public sealed class ArchitectureRulesTests
         ContainsAny("using Template.Domain.Reporting;", OtherDomainModuleMarkers("Files")).ShouldBeTrue();
         ContainsAny("using Template.Domain.Requisitions;", OtherDomainModuleMarkers("Reporting")).ShouldBeTrue();
     }
+
+    [Fact]
+    public void Phase31_Functions_And_Durable_Types_Stay_In_The_WorkflowFunctions_Host()
+    {
+        // ADR-0003 §5: Domain, Application, Infrastructure, WebApi and Worker never reference Azure Functions or Durable
+        // types; they reach the orchestration only through IApprovalWorkflowClient.
+        foreach (var directory in new[] { "Src/Core", "Src/Infrastructure", "Src/Presentation", "Src/Workers" })
+            SourceViolations(directory, DurableVendorMarkers()).ShouldBeEmpty(directory);
+        SourceViolations("Src/Functions", DurableVendorMarkers()).ShouldNotBeEmpty();
+        foreach (var project in Directory.GetFiles(Path.Combine(Root, "Src"), "*.csproj", SearchOption.AllDirectories).Select(Relative)
+                     .Where(project => !project.StartsWith("Src/Functions/", StringComparison.Ordinal)))
+            References(LoadProject(project), "PackageReference").ShouldNotContain(package =>
+                package.StartsWith("Microsoft.Azure.Functions", StringComparison.Ordinal) || package.StartsWith("Microsoft.DurableTask", StringComparison.Ordinal),
+                project);
+        References(LoadProject("Src/Functions/Template.WorkflowFunctions/Template.WorkflowFunctions.csproj"), "ProjectReference")
+            .ShouldBe([@"..\..\Core\Template.Application\Template.Application.csproj",
+                @"..\..\Infrastructure\Template.Infrastructure.Identity\Template.Infrastructure.Identity.csproj",
+                @"..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj"]);
+    }
+
+    [Fact]
+    public void Phase31_Orchestrator_Is_Deterministic_And_Holds_No_Business_Rule()
+    {
+        // APR-016 -a: the orchestration references no Domain policy, no infrastructure, no ambient clock, randomness,
+        // I/O, service location or non-replay-safe logger; it only coordinates activities, timers and the signal event.
+        var orchestration = Directory.GetFiles(Path.Combine(Root, "Src/Functions/Template.WorkflowFunctions/Orchestration"), "*.cs").Select(Relative).ToArray();
+        orchestration.ShouldNotBeEmpty();
+        foreach (var path in orchestration)
+            ContainsAny(ReadSource(path), OrchestratorNondeterminismMarkers()).ShouldBeFalse(path);
+        ReadSource("Src/Functions/Template.WorkflowFunctions/Orchestration/ApprovalOrchestration.cs").ShouldContain("CreateReplaySafeLogger");
+    }
+
+    [Fact]
+    public void Phase31_Approval_Domain_Is_Encapsulated_And_The_Browser_Never_Reaches_The_Workflow_Host()
+    {
+        SourceViolations("Src/Core/Template.Domain/Approvals", PublicSetterMarkers()).ShouldBeEmpty();
+        SourceViolations("Src/Core/Template.Domain/Approvals", OtherDomainModuleMarkers("Approvals")).ShouldBeEmpty();
+        var client = Path.Combine(Root, "Client/Template.WebApp/src");
+        if (Directory.Exists(client))
+            Directory.GetFiles(client, "*.*", SearchOption.AllDirectories)
+                .Where(path => path.EndsWith(".ts", StringComparison.Ordinal) || path.EndsWith(".json", StringComparison.Ordinal))
+                .Where(path => ContainsAny(File.ReadAllText(path), WorkflowHostMarkers()))
+                .Select(Relative)
+                .ShouldBeEmpty();
+        foreach (var settings in Directory.GetFiles(Path.Combine(Root, "Client/Template.WebApp/public"), "*.json", SearchOption.AllDirectories))
+            ContainsAny(File.ReadAllText(settings), WorkflowHostMarkers()).ShouldBeFalse(Relative(settings));
+    }
+
+    [Fact]
+    public void Phase31_Controlled_Mutations_Are_Detected()
+    {
+        ContainsAny("using Microsoft.DurableTask;", DurableVendorMarkers()).ShouldBeTrue();
+        ContainsAny("[DurableClient] DurableTaskClient client", DurableVendorMarkers()).ShouldBeTrue();
+        ContainsAny("using Template.Application.Workflow;", DurableVendorMarkers()).ShouldBeFalse();
+        ContainsAny("var now = DateTime.UtcNow;", OrchestratorNondeterminismMarkers()).ShouldBeTrue();
+        ContainsAny("var id = Guid.NewGuid();", OrchestratorNondeterminismMarkers()).ShouldBeTrue();
+        ContainsAny("await Task.Delay(1000);", OrchestratorNondeterminismMarkers()).ShouldBeTrue();
+        ContainsAny("if (amount > policy.Levels[1].MinimumAmountExclusive)", OrchestratorNondeterminismMarkers()).ShouldBeTrue();
+        ContainsAny("using Template.Domain.Approvals;", OrchestratorNondeterminismMarkers()).ShouldBeTrue();
+        ContainsAny("var timer = context.CreateTimer(fireAt, token);", OrchestratorNondeterminismMarkers()).ShouldBeFalse();
+        ContainsAny("fetch('/api/approval-workflows/' + id)", WorkflowHostMarkers()).ShouldBeTrue();
+        ContainsAny("headers: { 'X-Workflow-Key': key }", WorkflowHostMarkers()).ShouldBeTrue();
+        ContainsAny("this.http.get('/api/v2/approval-instances')", WorkflowHostMarkers()).ShouldBeFalse();
+        ContainsAny("using Template.Domain.Sourcing;", OtherDomainModuleMarkers("Approvals")).ShouldBeTrue();
+    }
+
+    private static string[] DurableVendorMarkers() =>
+        ["using Microsoft.DurableTask", "using Microsoft.Azure.Functions", "DurableTaskClient", "TaskOrchestrationContext", "[OrchestrationTrigger]", "[ActivityTrigger]"];
+
+    private static string[] OrchestratorNondeterminismMarkers() =>
+    [
+        .. SystemClockMarkers(), "Guid.NewGuid", "new Random", "Random.Shared", "Thread.Sleep", "Task.Delay", "Task.Run", "HttpClient", "File.",
+        "Directory.", "Environment.", "IServiceProvider", "GetRequiredService", "ILogger<", "Template.Domain", "Template.Infrastructure",
+        "DbContext", "MinimumAmount", "Threshold", "ApprovalPolicy"
+    ];
+
+    private static string[] WorkflowHostMarkers() => ["approval-workflows", "X-Workflow-Key", "runtime/webhooks/durabletask", "ApprovalWorkflowSettings"];
 
     private static string[] ReportingVendorMarkers() => ["using ClosedXML", "using Microsoft.Playwright", "using DocumentFormat.OpenXml", "ClosedXML.Excel.", "Microsoft.Playwright."];
 

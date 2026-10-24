@@ -366,6 +366,8 @@ MigrationBackup/
 FodyWeavers.xsd
 # Local environment secrets (use .env.example as template)
 .env
+# Azure Functions local settings (Phase 31): secrets stay local; local.settings.example.json is the template
+local.settings.json
 !.env.example
 
 # Claude Code view of .agents/skills (local link created by scripts/link-agent-skills.ps1)

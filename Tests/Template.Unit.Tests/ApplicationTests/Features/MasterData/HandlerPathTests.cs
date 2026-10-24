@@ -30,7 +30,7 @@ public sealed class HandlerPathTests
     private CategoryCommandHandlers Categories => new(doubles.Categories, doubles.Writer);
     private UnitOfMeasureCommandHandlers Units => new(doubles.Units, doubles.Writer);
     private CatalogItemCommandHandlers Items => new(doubles.Items, doubles.Categories, doubles.Units, doubles.Writer);
-    private SupplierCommandHandlers Suppliers => new(doubles.Suppliers, doubles.Categories, doubles.Writer);
+    private SupplierCommandHandlers Suppliers => new(doubles.Suppliers, doubles.Categories, new Procurement.ProcurementTestDoubles().ApprovalCascade(), doubles.Writer);
     private SupplierEnrichmentHandlers Enrichment => new(doubles.Registry, doubles.PostalCodes, doubles.Suppliers, doubles.Writer, MasterDataTestDoubles.Logger<SupplierEnrichmentHandlers>());
     private OrganizationSettingsHandlers Settings => new(doubles.Settings, doubles.SettingsLock, doubles.Writer);
 

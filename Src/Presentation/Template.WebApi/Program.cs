@@ -15,6 +15,7 @@ using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Resources;
 using Template.Infrastructure.Search;
+using Template.Infrastructure.Workflow;
 using Template.WebApi.Infrastructure.Extensions;
 using Template.WebApi.Infrastructure.HealthChecks;
 using Template.WebApi.Infrastructure.Logging;
@@ -40,6 +41,8 @@ builder.Services.AddMessagingInfrastructure(builder.Configuration, useBroker: !i
 builder.Services.AddSearchInfrastructure(builder.Configuration, useSearchEngine: !isTestEnvironment);
 builder.Services.AddIntegrationsInfrastructure(builder.Configuration, useExternalProviders: !isTestEnvironment);
 builder.Services.AddFilesInfrastructure(builder.Configuration, useInMemoryStorage: isTestEnvironment);
+// Phase 31: approval workflow client (internal Functions boundary; in-memory in Test).
+builder.Services.AddWorkflowInfrastructure(builder.Configuration, useInMemoryClient: isTestEnvironment);
 builder.Services.AddResourcesInfrastructure();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 builder.Services.AddScoped<IRequestContext, HttpRequestContext>();

@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace Template.Tests.Shared;
 
 /// <summary>A request received by <see cref="FakeElasticsearchServer"/>.</summary>
-public sealed record RecordedRequest(string Method, string Path, string Query, string Body)
+public sealed record RecordedRequest(string Method, string Path, string Query, string Body, IReadOnlyDictionary<string, string>? Headers = null)
 {
     public string PathAndQuery => Path + Query;
 }
@@ -91,7 +91,8 @@ public sealed class FakeElasticsearchServer : IAsyncDisposable
             : context.Request.Body;
         using var reader = new StreamReader(bodyStream, Encoding.UTF8);
         var body = await reader.ReadToEndAsync(context.RequestAborted);
-        var request = new RecordedRequest(context.Request.Method, context.Request.Path.Value ?? "/", context.Request.QueryString.Value ?? string.Empty, body);
+        var request = new RecordedRequest(context.Request.Method, context.Request.Path.Value ?? "/", context.Request.QueryString.Value ?? string.Empty, body,
+            context.Request.Headers.ToDictionary(header => header.Key, header => header.Value.ToString(), StringComparer.OrdinalIgnoreCase));
         requests.Enqueue(request);
 
         var response = Handler(request);

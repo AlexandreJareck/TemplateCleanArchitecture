@@ -78,7 +78,8 @@ public sealed class RabbitMqFixture : IAsyncLifetime
             await channel.ExchangeDeleteAsync(exchange, ifUnused: false);
 
         foreach (var queue in new[] { ProcurementMessagingTopology.ProjectionQueue, ProcurementMessagingTopology.ProjectionDeadLetterQueue,
-                     ProcurementMessagingTopology.NotificationQueue, ProcurementMessagingTopology.NotificationDeadLetterQueue })
+                     ProcurementMessagingTopology.NotificationQueue, ProcurementMessagingTopology.NotificationDeadLetterQueue,
+                     ProcurementMessagingTopology.ApprovalQueue, ProcurementMessagingTopology.ApprovalDeadLetterQueue })
         {
             try { await channel.QueueDeleteAsync(queue, ifUnused: false, ifEmpty: false); }
             catch (RabbitMQ.Client.Exceptions.OperationInterruptedException) { }

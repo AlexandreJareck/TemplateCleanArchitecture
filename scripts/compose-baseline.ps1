@@ -345,7 +345,7 @@ foreach ($version in 'v1', 'v2') {
     $response = Get-Status 'GET' "/swagger/$version/swagger.json"
     $captured = Join-Path $outputDirectory "openapi-$version.json"
     [System.IO.File]::WriteAllText($captured, $response.Content)
-    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-30\openapi-$version.json"))
+    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-31\openapi-$version.json"))
     $bytesEqual = ($baseline -replace "`r`n", "`n") -ceq ($response.Content -replace "`r`n", "`n")
     $structuralEqual = (($baseline | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress) -ceq (($response.Content | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress)
     Write-Check "openapi.$version.byte-equal-normalized" $bytesEqual ''
@@ -622,6 +622,125 @@ Write-Check 'reports.storage-outage-api-operates' ((Get-Status 'GET' "/api/v2/pu
 Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 azurite 2>&1 | Out-Null
 $recoveredView = if ($outageJob) { Wait-ReportReady $outageJob $reportHeaders 240 } else { $null }
 Write-Check 'reports.storage-recovery-completes-job' ($recoveredView -and $recoveredView.status -eq 'Ready' -and $recoveredView.attempts -ge 2) "status=$($recoveredView.status) attempts=$($recoveredView.attempts)"
+
+# Phase 31: approval orchestration on the isolated stack. The award submitted through the API reaches the
+# WorkflowFunctions host through the Outbox, RabbitMQ and the Worker; the orchestration creates the instance and assigns
+# level 1 through the Application activities (the cost center has no manager, so the ProcurementManager group, APR-006).
+# The host outage answers 503 without change, the orchestration resumes after a restart, and the administrator cancels.
+function New-Cnpj {
+    $digits = [string](Get-Random -Minimum 10000000 -Maximum 99999999) + '0001'
+    $check = {
+        param([string]$Value, [int[]]$Weights)
+        $sum = 0; for ($i = 0; $i -lt $Weights.Length; $i++) { $sum += ([int][string]$Value[$i]) * $Weights[$i] }
+        $rest = $sum % 11; if ($rest -lt 2) { 0 } else { 11 - $rest }
+    }
+    $first = & $check $digits @(5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
+    $second = & $check ($digits + $first) @(6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
+    return "$digits$first$second"
+}
+
+function Invoke-Api([string]$Method, [string]$Path, $Body, [string]$Version = '') {
+    $headers = $reportHeaders + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() }
+    if ($Version) { $headers['If-Match'] = '"' + $Version + '"' }
+    $json = if ($null -ne $Body) { $Body | ConvertTo-Json -Compress -Depth 6 } else { '' }
+    $result = Get-Status $Method $Path $json $headers
+    $view = if ($result.Content) { $result.Content | ConvertFrom-Json } else { $null }
+    return [pscustomobject]@{ Status = $result.Status; View = $view }
+}
+
+$functionsConfig = $configJson.services.'workflow-functions'
+Write-Check 'approvals.functions-no-public-port-or-fixed-name' (-not $functionsConfig.ports -and -not $functionsConfig.container_name) ''
+Write-Check 'approvals.internal-key-from-environment' ($functionsConfig.environment.ApprovalWorkflowSettings__Key -ceq $configJson.services.webapi.environment.ApprovalWorkflowSettings__Key -and
+    $functionsConfig.environment.ApprovalWorkflowSettings__Key -ceq $configJson.services.worker.environment.ApprovalWorkflowSettings__Key -and
+    $functionsConfig.environment.ApprovalWorkflowSettings__Key.Length -ge 32) ''
+$workflowStorageImage = [string]$configJson.services.'workflow-storage'.image
+Write-Check 'approvals.task-hub-storage-separate-and-pinned' ($workflowStorageImage -like 'mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1*' -and
+    -not $configJson.services.'workflow-storage'.ports) $workflowStorageImage
+Write-Check 'service.workflow-functions-healthy' ((Get-ServiceStates) -match 'workflow-functions\|running\|healthy') ''
+Write-Check 'service.workflow-storage-healthy' ((Get-ServiceStates) -match 'workflow-storage\|running\|healthy') ''
+$functionsReady = Invoke-Compose exec -T workflow-functions curl -fsS http://127.0.0.1/api/health/ready 2>&1 | Out-String
+Write-Check 'approvals.functions-ready-database-and-task-hub' ($functionsReady -match '"status":"Healthy"') ($functionsReady.Trim())
+$unauthenticated = Invoke-Compose exec -T workflow-functions sh -c 'curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1/api/approval-workflows/approval-00000000000000000000000000000001' 2>&1 | Out-String
+Write-Check 'approvals.internal-api-requires-the-key' ($unauthenticated.Trim() -eq '401') ($unauthenticated.Trim())
+
+$approvalGrant = @'
+INSERT INTO "Identity"."UserRoles" ("UserId", "RoleId")
+SELECT u."Id", r."Id" FROM "Identity"."User" u CROSS JOIN "Identity"."Role" r
+WHERE u."NormalizedUserName" = 'ADMIN' AND r."NormalizedName" IN ('BUYER', 'PROCUREMENTMANAGER')
+ON CONFLICT DO NOTHING;
+SELECT count(*) FROM "Identity"."UserRoles" ur JOIN "Identity"."User" u ON u."Id" = ur."UserId" WHERE u."NormalizedUserName" = 'ADMIN';
+'@
+$approvalRoles = Invoke-Sql 'POSTGRES_IDENTITY_DB_NAME' $approvalGrant
+Write-Check 'approvals.synthetic-roles-granted' ([int](($approvalRoles -split "`n")[-1]) -ge 5) "roles=$approvalRoles"
+
+# The Phase 30 period was only needed for a report and stays Planned; reservations need an Open period (BUD-004).
+$plannedPeriod = Invoke-Api 'GET' "/api/v2/fiscal-periods/$periodId" $null
+$openedPeriod = Invoke-Api 'POST' "/api/v2/fiscal-periods/$periodId/open" $null $plannedPeriod.View.version
+Write-Check 'approvals.fiscal-period-open' ($openedPeriod.Status -eq 200 -and $openedPeriod.View.status -eq 'Open') "status=$($openedPeriod.Status) code=$($openedPeriod.View.code)"
+$allocation = Invoke-Api 'POST' '/api/v2/budget-allocations' @{ fiscalPeriodId = $periodId; costCenterId = $costCenterId; currency = 'BRL'; amount = '100000' }
+$category = Invoke-Api 'POST' '/api/v2/categories' @{ code = 'P31-G'; name = 'Synthetic approval category' }
+$unit = Invoke-Api 'POST' '/api/v2/units-of-measure' @{ code = 'P31-U'; name = 'Unit'; allowedDecimals = 0 }
+$requisition = Invoke-Api 'GET' "/api/v2/purchase-requisitions/$requisitionId" $null
+$line = Invoke-Api 'POST' "/api/v2/purchase-requisitions/$requisitionId/lines" @{ description = 'Synthetic approval line'; kind = 'Good'; categoryId = $category.View.id;
+    unitOfMeasureId = $unit.View.id; quantity = '1'; estimatedUnitPrice = @{ amount = '3000.00'; currency = 'BRL' } } $requisition.View.version
+$submitted = Invoke-Api 'POST' "/api/v2/purchase-requisitions/$requisitionId/submit" $null $line.View.version
+Write-Check 'approvals.requisition-submitted' ($submitted.Status -eq 200 -and $submitted.View.status -eq 'Submitted') "allocation=$($allocation.Status) line=$($line.Status) submit=$($submitted.Status) code=$($submitted.View.code)"
+
+$supplier = Invoke-Api 'POST' '/api/v2/suppliers' @{ legalName = 'Synthetic Approval Supplier Ltda'; tradeName = 'Synthetic'; country = 'BR'; taxId = (New-Cnpj) }
+$contacts = Invoke-Api 'PUT' "/api/v2/suppliers/$($supplier.View.id)/contacts" @{ contacts = @(@{ name = 'Synthetic Contact'; email = 'contact@example.invalid'; role = 'Sales' }) } $supplier.View.version
+$addresses = Invoke-Api 'PUT' "/api/v2/suppliers/$($supplier.View.id)/addresses" @{ addresses = @(@{ type = 'Headquarters'; postalCode = '01310-100'; street = 'Avenida Paulista';
+    number = '1000'; district = 'Bela Vista'; city = 'Sao Paulo'; state = 'SP'; country = 'BR' }) } $contacts.View.version
+$categories = Invoke-Api 'PUT' "/api/v2/suppliers/$($supplier.View.id)/categories" @{ categoryIds = @($category.View.id) } $addresses.View.version
+$activated = Invoke-Api 'POST' "/api/v2/suppliers/$($supplier.View.id)/activate" $null $categories.View.version
+Write-Check 'approvals.supplier-active' ($activated.Status -eq 200) "status=$($activated.Status)"
+
+$rfq = Invoke-Api 'POST' '/api/v2/requests-for-quotation' @{ requisitionId = $requisitionId }
+$invited = Invoke-Api 'POST' "/api/v2/requests-for-quotation/$($rfq.View.id)/invitations" @{ supplierId = $supplier.View.id } $rfq.View.version
+$published = Invoke-Api 'POST' "/api/v2/requests-for-quotation/$($rfq.View.id)/publish" @{ deadline = (Get-Date).ToUniversalTime().AddDays(2).ToString('o') } $invited.View.version
+$quoted = Invoke-Api 'POST' "/api/v2/requests-for-quotation/$($rfq.View.id)/quotes" @{ supplierId = $supplier.View.id; currency = 'BRL';
+    lines = @(@{ rfqLineNumber = 1; quantityOffered = '1'; unitPrice = '2900.00' }); freight = '0'; validUntil = (Get-Date).AddDays(60).ToString('yyyy-MM-dd');
+    deliveryDays = 7; paymentTerms = '30 days'; source = 'Email'; receivedAt = (Get-Date).ToUniversalTime().AddMinutes(-1).ToString('o') } $published.View.version
+$closed = Invoke-Api 'POST' "/api/v2/requests-for-quotation/$($rfq.View.id)/close" @{ reason = 'Synthetic early close for the approval baseline' } $quoted.View.version
+$awardStarted = Get-Date
+$awarded = Invoke-Api 'POST' "/api/v2/requests-for-quotation/$($rfq.View.id)/award" @{ quoteRevisionId = $closed.View.comparison.recommendedQuoteRevisionId } $closed.View.version
+$awardId = if ($awarded.Status -eq 200) { $awarded.View.awards[0].id } else { $null }
+Write-Check 'approvals.award-submitted' ($null -ne $awardId) "rfq=$($rfq.Status) $($rfq.View.code) publish=$($published.Status) $($published.View.code) quote=$($quoted.Status) $($quoted.View.code) close=$($closed.Status) award=$($awarded.Status) $($awarded.View.code)"
+
+$assigned = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT i.""Status"" || ':' || s.""Status"" || ':' || coalesce(s.""AssigneeRole"", '') FROM ""ApprovalInstances"" i JOIN ""ApprovalSteps"" s ON s.""InstanceId"" = i.""Id"" AND s.""Level"" = i.""CurrentLevel"" WHERE i.""AwardId"" = '$awardId';" 'Pending:Pending:ProcurementManager' 120
+$assignSeconds = [int]((Get-Date) - $awardStarted).TotalSeconds
+Write-Check 'approvals.outbox-worker-functions-assign-level-1' $assigned "seconds=$assignSeconds"
+$instances = Invoke-Api 'GET' "/api/v2/approval-instances?requisitionId=$requisitionId" $null
+$instanceId = if ($instances.Status -eq 200 -and $instances.View.items.Count -eq 1) { $instances.View.items[0].id } else { $null }
+Write-Check 'approvals.instance-visible-through-api' ($null -ne $instanceId) "status=$($instances.Status)"
+$workflow = Invoke-Api 'GET' "/api/v2/approval-instances/$instanceId/workflow" $null
+Write-Check 'approvals.orchestration-running' ($workflow.Status -eq 200 -and $workflow.View.runtimeStatus -eq 'Running') "status=$($workflow.Status) runtime=$($workflow.View.runtimeStatus)"
+
+Invoke-Compose stop workflow-functions 2>&1 | Out-Null
+$detail = Invoke-Api 'GET' "/api/v2/approval-instances/$instanceId" $null
+$unavailable = Invoke-Api 'POST' "/api/v2/approval-instances/$instanceId/steps/1/decision" @{ decision = 'Approved' } $detail.View.version
+$unchanged = Invoke-Api 'GET' "/api/v2/approval-instances/$instanceId" $null
+Write-Check 'approvals.functions-outage-decision-503-without-change' ($unavailable.Status -eq 503 -and $unchanged.View.version -eq $detail.View.version) "status=$($unavailable.Status)"
+Write-Check 'approvals.functions-outage-api-operates' ((Get-Status 'GET' "/api/v2/purchase-requisitions/$requisitionId" '' $reportHeaders).Status -eq 200) ''
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 workflow-functions 2>&1 | Out-Null
+$resumed = Invoke-Api 'GET' "/api/v2/approval-instances/$instanceId/workflow" $null
+Write-Check 'approvals.orchestration-survives-host-restart' ($resumed.Status -eq 200 -and $resumed.View.runtimeStatus -eq 'Running') "runtime=$($resumed.View.runtimeStatus)"
+
+$cancelled = Invoke-Api 'POST' "/api/v2/approval-instances/$instanceId/cancel" @{ reason = 'Synthetic administrative cancel in the baseline' } $unchanged.View.version
+Write-Check 'approvals.administrative-cancel' ($cancelled.Status -eq 200 -and $cancelled.View.status -eq 'Cancelled') "status=$($cancelled.Status)"
+$completed = $false
+$deadline = (Get-Date).AddSeconds(180)
+do {
+    $state = Invoke-Api 'GET' "/api/v2/approval-instances/$instanceId/workflow" $null
+    if ($state.View.runtimeStatus -eq 'Completed') { $completed = $true; break }
+    Start-Sleep -Seconds 3
+} while ((Get-Date) -lt $deadline)
+Write-Check 'approvals.orchestration-completes-after-cancel' $completed "runtime=$($state.View.runtimeStatus)"
+$afterCancel = Invoke-Api 'GET' "/api/v2/purchase-requisitions/$requisitionId" $null
+Write-Check 'approvals.requisition-back-in-sourcing' ($afterCancel.View.status -eq 'InSourcing') "status=$($afterCancel.View.status)"
+$outboxApproval = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT count(*) FROM ""MessagingOutbox"" WHERE ""AggregateId"" = '$instanceId' AND ""EventType"" IN ('procurement.approval.started', 'procurement.approval.step-assigned', 'procurement.approval.cancelled') AND ""DispatchedAtUtc"" IS NOT NULL;" '3' 60
+Write-Check 'approvals.events-dispatched' $outboxApproval ''
+$functionsLog = Invoke-Compose logs --no-color workflow-functions 2>&1 | Out-String
+Write-Check 'approvals.no-key-in-functions-log' (-not $functionsLog.Contains([string]$functionsConfig.environment.ApprovalWorkflowSettings__Key)) ''
 
 # Phase 30 changed the run's data on purpose (synthetic roles, master data and reports); the restart idempotency and
 # persistence checks below compare against this state.

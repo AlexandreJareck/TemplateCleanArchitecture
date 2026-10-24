@@ -25,6 +25,13 @@ param(
     # Apache-2.0 FlatBuffers notice, reviewed on 2026-10-23.
     [hashtable]$VerifiedLicenseFiles = @{
         'Apache.Arrow/22.1.0' = @{ License = 'Apache-2.0'; Sha256 = 'f49cc7be44c8d4b6efffed6ac00026f2ff2146310f040350b50be30ed3f9c570' }
+    },
+    # Phase 31: packages whose nuspec still declares only a legacy license URL. Accepted only for that package version and
+    # URL, and only as an allowed license (no new license is admitted here). System.Reactive.Compatibility 4.4.1
+    # (transitive of Microsoft.Azure.DurableTask.Core 3.8.0): the fwlink redirects to github.com/dotnet/reactive LICENSE,
+    # the MIT text of the .NET Foundation, like the System.Reactive 4.4.1 nuspec expression; reviewed on 2026-10-24.
+    [hashtable]$VerifiedLicenseUrls = @{
+        'System.Reactive.Compatibility/4.4.1' = @{ License = 'MIT'; Url = 'http://go.microsoft.com/fwlink/?LinkID=261272' }
     }
 )
 
@@ -85,7 +92,15 @@ $rows = foreach ($package in $packages.Values | Sort-Object Id, Version) {
             if ($license -match '\sOR\s') { [bool]($terms | Where-Object { $AllowedLicenses -contains $_ }) }
             else { -not ($terms | Where-Object { $AllowedLicenses -notcontains $_ }) }
         }
-        'url' { $AllowedLicenseUrls -contains $url }
+        'url' {
+            $verifiedUrl = $VerifiedLicenseUrls["$($package.Id)/$($package.Version)"]
+            if ($AllowedLicenseUrls -contains $url) { $true }
+            elseif ($verifiedUrl -and $verifiedUrl.Url -eq $url -and $AllowedLicenses -contains $verifiedUrl.License) {
+                $license = "$($verifiedUrl.License) (verified URL)"
+                $true
+            }
+            else { $false }
+        }
         'file' {
             $verified = $VerifiedLicenseFiles["$($package.Id)/$($package.Version)"]
             $licenseFile = if ($verified -and $license) { Join-Path $folder $license } else { $null }

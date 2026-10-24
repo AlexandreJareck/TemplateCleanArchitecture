@@ -16,7 +16,7 @@ public sealed class SupplierHandlerTests
     private const string Reason = "Delivery failures in two consecutive months";
     private readonly MasterDataTestDoubles doubles = new();
 
-    private SupplierCommandHandlers Commands => new(doubles.Suppliers, doubles.Categories, doubles.Writer);
+    private SupplierCommandHandlers Commands => new(doubles.Suppliers, doubles.Categories, new Procurement.ProcurementTestDoubles().ApprovalCascade(), doubles.Writer);
 
     private SupplierEnrichmentHandlers Enrichment => new(
         doubles.Registry, doubles.PostalCodes, doubles.Suppliers, doubles.Writer, MasterDataTestDoubles.Logger<SupplierEnrichmentHandlers>());

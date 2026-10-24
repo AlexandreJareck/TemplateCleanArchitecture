@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj" />
     <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Search\Template.Infrastructure.Search.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Template.Infrastructure.Workflow\Template.Infrastructure.Workflow.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,38 @@
+{
+  "version": "2.0",
+  "logging": {
+    "logLevel": {
+      "default": "Information",
+      "Host.Results": "Information",
+      "Function": "Information",
+      "DurableTask.AzureStorage": "Warning",
+      "DurableTask.Core": "Warning",
+      "Azure.Core": "Warning"
+    },
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": false
+      }
+    }
+  },
+  "extensions": {
+    "http": {
+      "routePrefix": "api"
+    },
+    "durableTask": {
+      "hubName": "TemplateApprovals",
+      "defaultVersion": "1.0",
+      "versionMatchStrategy": "CurrentOrOlder",
+      "versionFailureStrategy": "Reject",
+      "overridableExistingInstanceStates": "NonRunningStates",
+      "storageProvider": {
+        "connectionStringName": "AzureWebJobsStorage",
+        "partitionCount": 4,
+        "controlQueueVisibilityTimeout": "00:01:00",
+        "workItemQueueVisibilityTimeout": "00:01:00"
+      },
+      "maxConcurrentActivityFunctions": 8,
+      "maxConcurrentOrchestratorFunctions": 8
+    }
+  }
+}

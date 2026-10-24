@@ -100,6 +100,430 @@ namespace Template.Infrastructure.Persistence.Migrations
                     b.ToTable("AccessSessionFamilies", (string)null);
                 });
 
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalHistoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssigneeRole")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("AssigneeUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("DecisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("InstanceId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("ApprovalHistory", (string)null);
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalInstance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AmountEvaluated")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("AwardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BaseCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("CostCenterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EndCause")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("EndReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("EndedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EscalationRole")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("MaxEscalations")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PendingOutcome")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PolicyVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeSpan>("ReminderAfter")
+                        .HasColumnType("interval");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("RequisitionAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("RequisitionCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("RequisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequisitionNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<TimeSpan>("StepDuration")
+                        .HasColumnType("interval");
+
+                    b.Property<Guid?>("SubmittedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("WorkflowInstanceId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("WorkflowVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AwardId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApprovalInstances_AwardId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("RequesterId");
+
+                    b.HasIndex("RequisitionId");
+
+                    b.HasIndex("WorkflowInstanceId")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "UpdatedAtUtc");
+
+                    b.HasIndex("SupplierId", "Status");
+
+                    b.ToTable("ApprovalInstances", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ApprovalInstances_Amounts", "\"AmountEvaluated\" > 0 AND \"RequisitionAmount\" > 0");
+
+                            t.HasCheckConstraint("CK_ApprovalInstances_CurrentLevel", "\"CurrentLevel\" >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalPolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BaseCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("EffectiveFromUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EscalationRole")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("FirstUsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MaxEscalations")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<TimeSpan>("ReminderAfter")
+                        .HasColumnType("interval");
+
+                    b.Property<TimeSpan>("StepDuration")
+                        .HasColumnType("interval");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectiveFromUtc");
+
+                    b.HasIndex("Version")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApprovalPolicies_Version");
+
+                    b.ToTable("ApprovalPolicies", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ApprovalPolicies_MaxEscalations", "\"MaxEscalations\" >= 0");
+
+                            t.HasCheckConstraint("CK_ApprovalPolicies_Version", "\"Version\" >= 1");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("6a1f3c52-7d0e-4b8a-9b51-31a0c0de0001"),
+                            BaseCurrency = "BRL",
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EffectiveFromUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EscalationRole = "ProcurementManager",
+                            MaxEscalations = 1,
+                            Reason = "Policy version 1 seed (B23-11).",
+                            ReminderAfter = new TimeSpan(3, 0, 0, 0, 0),
+                            StepDuration = new TimeSpan(5, 0, 0, 0, 0),
+                            Version = 1
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalPolicyLevel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("MinimumAmountExclusive")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Resolver")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PolicyId", "Level")
+                        .IsUnique();
+
+                    b.ToTable("ApprovalPolicyLevels", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ApprovalPolicyLevels_Level", "\"Level\" >= 1");
+
+                            t.HasCheckConstraint("CK_ApprovalPolicyLevels_Minimum", "\"MinimumAmountExclusive\" >= 0");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("6a1f3c52-7d0e-4b8a-9b51-31a0c0de0001"),
+                            Level = 1,
+                            MinimumAmountExclusive = 0m,
+                            PolicyId = new Guid("6a1f3c52-7d0e-4b8a-9b51-31a0c0de0001"),
+                            Resolver = "CostCenterManager"
+                        },
+                        new
+                        {
+                            Id = new Guid("6a1f3c52-7d0e-4b8a-9b51-31a0c0de0002"),
+                            Level = 2,
+                            MinimumAmountExclusive = 10000m,
+                            PolicyId = new Guid("6a1f3c52-7d0e-4b8a-9b51-31a0c0de0001"),
+                            Resolver = "DepartmentHead"
+                        },
+                        new
+                        {
+                            Id = new Guid("6a1f3c52-7d0e-4b8a-9b51-31a0c0de0003"),
+                            Level = 3,
+                            MinimumAmountExclusive = 100000m,
+                            PolicyId = new Guid("6a1f3c52-7d0e-4b8a-9b51-31a0c0de0001"),
+                            Resolver = "RoleGroup",
+                            Role = "FinanceApprover"
+                        });
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AssignedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AssigneeRole")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("AssigneeUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AssignmentSequence")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecidedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Decision")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("DecisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DueAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EscalationCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("InstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("RemindedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ReminderCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReminderDueAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Resolver")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ResolverRole")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssigneeRole", "Status");
+
+                    b.HasIndex("AssigneeUserId", "Status");
+
+                    b.HasIndex("InstanceId", "Level")
+                        .IsUnique();
+
+                    b.ToTable("ApprovalSteps", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ApprovalSteps_Assignee", "NOT (\"AssigneeUserId\" IS NOT NULL AND \"AssigneeRole\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_ApprovalSteps_Level", "\"Level\" >= 1");
+                        });
+                });
+
             modelBuilder.Entity("Template.Domain.Auditing.AuditRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2753,6 +3177,48 @@ namespace Template.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalHistoryEntry", b =>
+                {
+                    b.HasOne("Template.Domain.Approvals.ApprovalInstance", null)
+                        .WithMany("History")
+                        .HasForeignKey("InstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalInstance", b =>
+                {
+                    b.HasOne("Template.Domain.Approvals.ApprovalPolicy", null)
+                        .WithMany()
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Template.Domain.Requisitions.PurchaseRequisition", null)
+                        .WithMany()
+                        .HasForeignKey("RequisitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalPolicyLevel", b =>
+                {
+                    b.HasOne("Template.Domain.Approvals.ApprovalPolicy", null)
+                        .WithMany("Levels")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalStep", b =>
+                {
+                    b.HasOne("Template.Domain.Approvals.ApprovalInstance", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("InstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Template.Domain.Budgeting.BudgetAllocation", b =>
                 {
                     b.HasOne("Template.Domain.Organization.CostCenter", null)
@@ -3157,6 +3623,18 @@ namespace Template.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Template.Domain.Access.SessionFamily", b =>
                 {
                     b.Navigation("Tokens");
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalInstance", b =>
+                {
+                    b.Navigation("History");
+
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("Template.Domain.Approvals.ApprovalPolicy", b =>
+                {
+                    b.Navigation("Levels");
                 });
 
             modelBuilder.Entity("Template.Domain.Budgeting.BudgetAllocation", b =>

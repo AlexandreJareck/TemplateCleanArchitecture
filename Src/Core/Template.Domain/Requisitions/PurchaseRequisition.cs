@@ -465,6 +465,61 @@ public sealed class PurchaseRequisition : VersionedAggregateRoot
         return null;
     }
 
+    /// <summary>
+    /// APR-013 (Phase 31): <c>PendingApproval → Approved</c> for the pending award; the use case commits the reservation
+    /// (BUD-010) in the same transaction. Idempotent for the same award.
+    /// </summary>
+    public (bool Changed, DomainError? Error) ApproveAward(Guid awardId, DateTime nowUtc, string correlationId, string eventType)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        if (Status == RequisitionStatus.Approved && AwardId == awardId)
+            return (false, null);
+        if (Status != RequisitionStatus.PendingApproval || AwardId != awardId)
+            return (false, DomainError.InvalidTransition(Status.ToString(), "Only a requisition pending approval of this award is approved.", "APR-013"));
+
+        Transition(RequisitionStatus.Approved, null, nowUtc, null, null, correlationId, eventType);
+        return (true, null);
+    }
+
+    /// <summary>
+    /// APR-009 rejection or APR-011 expiry (Phase 31): <c>PendingApproval → Rejected/Expired</c>. Returns the allocation
+    /// whose reservation the use case releases with the matching reason in the same transaction; <c>Changed = false</c>
+    /// when the requisition already left the approval of this award (idempotent).
+    /// </summary>
+    public (Guid? AllocationId, bool Changed) EndApproval(
+        Guid awardId, RequisitionStatus outcome, string? reason, DateTime nowUtc, string correlationId, string eventType)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        if (outcome is not (RequisitionStatus.Rejected or RequisitionStatus.Expired))
+            throw new ArgumentOutOfRangeException(nameof(outcome));
+        if (Status != RequisitionStatus.PendingApproval || AwardId != awardId)
+            return (null, false);
+
+        var allocationId = DetachReservation();
+        Transition(outcome, null, nowUtc, reason, outcome == RequisitionStatus.Rejected ? "ApprovalRejected" : "ApprovalExpired", correlationId, eventType);
+        return (allocationId, true);
+    }
+
+    /// <summary>
+    /// APR-012 invalidation or APR-015 administrative cancel (Phase 31): <c>PendingApproval → InSourcing</c>; the award
+    /// snapshot is cleared and the reservation stays <c>Reserved</c> for the next award. Idempotent per award.
+    /// </summary>
+    public bool ReturnToSourcingFromApproval(
+        Guid awardId, string reasonCode, string? reason, Guid? actorId, DateTime nowUtc, string correlationId, string eventType)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        ArgumentException.ThrowIfNullOrWhiteSpace(reasonCode);
+        if (Status != RequisitionStatus.PendingApproval || AwardId != awardId)
+            return false;
+
+        AwardId = null;
+        AwardedSupplierId = null;
+        AwardedSupplierName = null;
+        AwardAmount = null;
+        Transition(RequisitionStatus.InSourcing, actorId, nowUtc, reason, reasonCode, correlationId, eventType);
+        return true;
+    }
+
     private static (string? Currency, string? Purpose, DomainError? Error) ValidateHeader(
         CostCenterSnapshot costCenter, string? currency, bool isSupportedCurrency, string? purpose, bool requireActiveCostCenter)
     {

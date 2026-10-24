@@ -15,13 +15,19 @@ public static class ProcurementMessagingTopology
     public const string NotificationConsumer = ProcurementConsumers.Notification;
     public const string NotificationQueue = "procurement.notifications.v1";
     public const string NotificationDeadLetterQueue = "procurement.notifications.v1.dead-letter";
+
+    // Phase 31 (APR-001): award submissions start the approval orchestration through their own queue and DLQ.
+    public const string ApprovalConsumer = ProcurementConsumers.Approval;
+    public const string ApprovalQueue = "procurement.approvals.v1";
+    public const string ApprovalDeadLetterQueue = "procurement.approvals.v1.dead-letter";
     public const string ContractType = "procurement.integration-event.v1";
 
     /// <summary>Consumers hosted by the Worker: queue and Inbox consumer name.</summary>
     public static IReadOnlyList<(string Queue, string Consumer)> Consumers { get; } =
     [
         (ProjectionQueue, ProjectionConsumer),
-        (NotificationQueue, NotificationConsumer)
+        (NotificationQueue, NotificationConsumer),
+        (ApprovalQueue, ApprovalConsumer)
     ];
 
     public static async Task DeclareAsync(IChannel channel, CancellationToken cancellationToken)
@@ -38,5 +44,11 @@ public static class ProcurementMessagingTopology
             await channel.QueueBindAsync(NotificationQueue, Exchange, eventType, cancellationToken: cancellationToken);
         await channel.QueueDeclareAsync(NotificationDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
         await channel.QueueBindAsync(NotificationDeadLetterQueue, DeadLetterExchange, NotificationQueue, cancellationToken: cancellationToken);
+
+        await channel.QueueDeclareAsync(ApprovalQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
+        foreach (var eventType in ProcurementConsumers.ApprovalEventTypes.Order(StringComparer.Ordinal))
+            await channel.QueueBindAsync(ApprovalQueue, Exchange, eventType, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(ApprovalDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(ApprovalDeadLetterQueue, DeadLetterExchange, ApprovalQueue, cancellationToken: cancellationToken);
     }
 }
