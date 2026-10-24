@@ -34,6 +34,8 @@ public sealed class RequestForQuotation : VersionedAggregateRoot
     public const string ActionRateRecorded = "rate-recorded";
     public const string ActionAwardSubmitted = "award-submitted";
     public const string ActionCancelled = "cancelled";
+    public const string ActionAwardApproved = "award-approved";
+    public const string ActionAwardEnded = "award-ended";
 
     private readonly List<RfqLine> lines = [];
     private readonly List<RfqInvitation> invitations = [];
@@ -566,6 +568,58 @@ public sealed class RequestForQuotation : VersionedAggregateRoot
             new AwardSubmitted(nowUtc, awardId, Id, RequisitionId, entry.SupplierId, new Money(award.NormalizedTotal, BaseCurrency),
                 requisitionTotal, $"{SourcingPolicy.PolicyType}:{PolicyVersion.ToString(NumberFormatInfo.InvariantInfo)}"));
         return (award, null);
+    }
+
+    /// <summary>
+    /// APR-013 (Phase 31): <c>AwardPending → Awarded</c> with the award <c>Approved</c>, in the commit that approves the
+    /// instance. Idempotent: an RFQ already awarded with this award returns <c>false</c>.
+    /// </summary>
+    public (bool Changed, DomainError? Error) ApproveAward(Guid awardId, DateTime nowUtc, string correlationId, string eventType)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        var award = awards.FirstOrDefault(candidate => candidate.Id == awardId);
+        if (award is null)
+            return (false, SourcingErrors.NotFound("award"));
+        if (award.Status == AwardStatus.Approved && Status == RfqStatus.Awarded)
+            return (false, null);
+        if (Status != RfqStatus.AwardPending || award.Status != AwardStatus.PendingApproval)
+            return (false, DomainError.InvalidTransition(Status.ToString(), "Only a pending award is approved.", "APR-013"));
+
+        award.End(AwardStatus.Approved, nowUtc);
+        var from = Status;
+        Status = RfqStatus.Awarded;
+        Append(ActionAwardApproved, from, Status, null, nowUtc, null, correlationId, eventType, awardId);
+        Touch(nowUtc);
+        return (true, null);
+    }
+
+    /// <summary>
+    /// Phase 31 ends of a pending award other than approval. <paramref name="reopen"/> <c>true</c> (APR-012 invalidation,
+    /// APR-015 administrative cancel) returns the RFQ to <c>Closed</c> so the buyer can award again from the frozen
+    /// comparison; <c>false</c> (APR-009 rejection, APR-011 expiry) cancels the RFQ. Idempotent per award.
+    /// </summary>
+    public bool EndPendingAward(Guid awardId, AwardStatus outcome, bool reopen, string reasonCode, DateTime nowUtc, string correlationId, string eventType)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        ArgumentException.ThrowIfNullOrWhiteSpace(reasonCode);
+        if (outcome is AwardStatus.PendingApproval or AwardStatus.Approved)
+            throw new ArgumentOutOfRangeException(nameof(outcome));
+        var award = awards.FirstOrDefault(candidate => candidate.Id == awardId);
+        if (award is null || award.Status != AwardStatus.PendingApproval || Status != RfqStatus.AwardPending)
+            return false;
+
+        award.End(outcome, nowUtc);
+        if (!reopen)
+        {
+            CancelCore(null, reasonCode, null, nowUtc, correlationId);
+            return true;
+        }
+
+        var from = Status;
+        Status = RfqStatus.Closed;
+        Append(ActionAwardEnded, from, Status, null, nowUtc, reasonCode, correlationId, eventType, awardId);
+        Touch(nowUtc);
+        return true;
     }
 
     /// <summary>

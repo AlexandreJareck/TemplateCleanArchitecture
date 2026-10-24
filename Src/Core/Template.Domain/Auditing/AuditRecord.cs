@@ -34,7 +34,11 @@ public sealed class AuditRecord
         "rfqId", "supplierId", "quoteId", "quoteRevisionId", "awardId", "comparisonId", "waiverType", "deadline", "previousDeadline",
         "roundNumber", "method", "rate", "rateSource", "quoteDate", "comparisonStatus", "validQuoteCount", "rank", "invitationCount",
         // Phase 30 (RPT-*, FIL-*): identifiers, types, safe codes and sizes only; never file names, digests or parameters.
-        "reportJobId", "reportType", "outputFileId", "failureCode", "attempt", "length", "ownerType"
+        "reportJobId", "reportType", "outputFileId", "failureCode", "attempt", "length", "ownerType",
+        // Phase 31 (APR-*): instance and workflow IDs, levels, assignee user IDs or role names, decision IDs and policy
+        // versions only; never decision comments, names or commercial details.
+        "approvalInstanceId", "workflowInstanceId", "requiredLevels", "level", "finalLevel", "assignee", "assignmentSequence", "dueAt",
+        "decisionId", "delegatedBy", "delegateUserId", "escalationCount", "operation", "awardStatus", "version", "effectiveFrom", "levels"
     };
 
     private AuditRecord()
