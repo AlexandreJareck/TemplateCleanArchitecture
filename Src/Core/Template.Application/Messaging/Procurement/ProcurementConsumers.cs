@@ -16,6 +16,20 @@ public static class ProcurementConsumers
     public static IReadOnlySet<string> ApprovalEventTypes { get; } = new HashSet<string>(StringComparer.Ordinal) { "procurement.award.submitted" };
 
     /// <summary>
+    /// Phase 32 (PUR-001, PUR-007): creates the draft order of each completed approval, records the outcome of the
+    /// purchase-order document job and delivers the queued supplier notification, each once through the Inbox.
+    /// </summary>
+    public const string Purchasing = "procurement-purchasing-v1";
+
+    public static IReadOnlySet<string> PurchasingEventTypes { get; } = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "procurement.approval.completed",
+        "procurement.report.ready",
+        "procurement.report.failed",
+        "procurement.purchase-order.notification-requested"
+    };
+
+    /// <summary>
     /// Events the notification consumer receives: SRC-022 invitation, extension and reminder, and the Phase 30 in-app
     /// report completion or failure for the requester (event catalog §2).
     /// </summary>
@@ -69,6 +83,9 @@ public static class RfqNotificationPlanner
         ArgumentNullException.ThrowIfNull(envelope);
         if (envelope.EventType is "procurement.report.ready" or "procurement.report.failed")
         {
+            // D32-4: the issued purchase-order document is a system job; its outcome goes to the order, not the issuer's inbox.
+            if (envelope.Payload.TryGetProperty("reportType", out var reportType) && reportType.GetString() == "PurchaseOrderPdf")
+                return [];
             if (!envelope.Payload.TryGetProperty("requestedBy", out var requester) || requester.ValueKind != JsonValueKind.String)
                 throw new JsonException("The report payload has no requester.");
             var reportTemplate = envelope.EventType == "procurement.report.ready" ? ReportReadyTemplate : ReportFailedTemplate;

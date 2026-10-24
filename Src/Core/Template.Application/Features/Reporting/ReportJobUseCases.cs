@@ -216,7 +216,7 @@ public sealed class ReportJobHandlers(
     {
         var mayRequest = await access.MayRequestAsync(cancellationToken);
         var views = new List<ReportTypeView>();
-        foreach (var type in Enum.GetValues<ReportType>())
+        foreach (var type in Enum.GetValues<ReportType>().Where(type => !ReportCatalog.IsSystemOnly(type)))
         {
             views.Add(new ReportTypeView(
                 type.ToString(), ReportCatalog.Format(type).ToString(), ReportCatalog.MediaType(type),
@@ -288,11 +288,11 @@ public sealed class ReportJobHandlers(
     }
 
     private static bool TryParseType(string? value, out ReportType type) =>
-        Enum.TryParse(value?.Trim(), ignoreCase: true, out type) && !int.TryParse(value, out _) && Enum.IsDefined(type);
+        Enum.TryParse(value?.Trim(), ignoreCase: true, out type) && !int.TryParse(value, out _) && Enum.IsDefined(type) && !ReportCatalog.IsSystemOnly(type);
 
     private static ApplicationError TypeUnknown() => new(
         ProblemCodes.ReportTypeUnknown, ErrorCategory.Validation, "The report type is not in the report catalog.", "RPT-009",
-        FieldErrors: new Dictionary<string, string[]> { ["reportType"] = [$"reportType accepts: {string.Join(", ", Enum.GetNames<ReportType>())}."] });
+        FieldErrors: new Dictionary<string, string[]> { ["reportType"] = [$"reportType accepts: {string.Join(", ", Enum.GetValues<ReportType>().Where(type => !ReportCatalog.IsSystemOnly(type)))}."] });
 
     private static ApplicationError FileUnavailable() => new(
         ProblemCodes.FileUnavailable, ErrorCategory.Unavailable, "The stored output is temporarily unavailable.", "FIL-003");

@@ -100,4 +100,15 @@ public static class ProblemCodes
     public const string ApprovalInstanceEnded = "approval.instance-ended";
     public const string ApprovalWorkflowUnavailable = "approval.workflow-unavailable";
     public const string PolicyVersionInUse = "policy.version-in-use";
+
+    // Phase 32: purchase orders and receiving (PUR-*, RCV-*).
+    public const string PurchaseOrderImmutable = "purchase-order.immutable";
+    public const string PurchaseOrderNotIssuable = "purchase-order.not-issuable";
+    public const string PurchaseOrderHasReceipts = "purchase-order.has-receipts";
+    public const string PurchaseOrderDocumentNotReady = "purchase-order.document-not-ready";
+    public const string PurchaseOrderNotRetryable = "purchase-order.not-retryable";
+    public const string ReceiptOrderNotReceivable = "receipt.order-not-receivable";
+    public const string ReceiptOverReceipt = "receipt.over-receipt";
+    public const string ReceiptImmutable = "receipt.immutable";
+    public const string ReceiptCorrectionOutOfRange = "receipt.correction-out-of-range";
 }

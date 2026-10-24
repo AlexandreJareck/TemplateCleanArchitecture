@@ -52,6 +52,10 @@ public static class ServiceRegistration
         services.AddScoped<Features.Approvals.ApprovalReconciliation>();
         services.AddScoped<Features.Approvals.ApprovalWorkflowStarter>();
         services.AddScoped<Features.Approvals.ApprovalCascade>();
+        // Phase 32: purchase orders and receiving; the Worker runs the purchasing consumer and the order document builder.
+        services.AddScoped<Features.Purchasing.PurchasingAccess>();
+        services.AddScoped<Features.Purchasing.PurchasingEventHandler>();
+        services.AddScoped<Services.Reporting.IReportBuilder, Services.Reporting.PurchaseOrderPdfBuilder>();
         services.AddScoped<ISessionRevocationService, SessionRevocationService>();
         services.AddSingleton<IValidateOptions<SessionSettings>, SessionSettingsValidator>();
         // The composition root binds SessionSettings from configuration and validates it on start.

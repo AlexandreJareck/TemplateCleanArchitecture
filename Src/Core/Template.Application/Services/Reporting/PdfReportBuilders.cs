@@ -242,3 +242,78 @@ public sealed class QuoteComparisonPdfBuilder(IRequestForQuotationRepository rfq
         return new ReportContent(FileName(Type, "comparacao", rfq.Number, $"c{comparison.Sequence}"), Pdf: document);
     }
 }
+
+/// <summary>
+/// <c>PurchaseOrderPdf</c> (Phase 32, PUR-007): the issued order's immutable commercial snapshot (PUR-002) — supplier,
+/// buyer, delivery address, lines with promised dates, freight, discount, the informational taxes-included amount and the
+/// total (CALC-006). It is rendered only for an issued order; nothing is recomputed from current master data.
+/// </summary>
+public sealed class PurchaseOrderPdfBuilder(Interfaces.Purchasing.IPurchaseOrderRepository orders) : IReportBuilder
+{
+    public ReportType Type => ReportType.PurchaseOrderPdf;
+
+    public async Task<ReportContent> BuildAsync(ReportBuildContext context, CancellationToken cancellationToken)
+    {
+        var order = await orders.FindAsync(context.Parameters.PurchaseOrderId!.Value, cancellationToken)
+            ?? throw new ReportSourceException(ReportFailureCodes.SourceNotFound, "The purchase order no longer exists.");
+        if (order.Number is null || order.IssueDate is not { } issueDate)
+            throw new ReportSourceException(ReportFailureCodes.SourceNotFound, "The purchase order is not issued.");
+        var zone = context.TimeZone;
+        var currency = order.Currency;
+        var contact = string.Join(" · ", new[] { order.SupplierContactName, order.SupplierContactEmail, order.SupplierContactPhone }
+            .Where(part => !string.IsNullOrWhiteSpace(part)));
+        var lines = new ReportTable(
+            [
+                new("#", ReportColumnAlignment.End), new("Descrição"), new("Tipo"), new("Quantidade", ReportColumnAlignment.End), new("Unidade"),
+                new("Preço unitário", ReportColumnAlignment.End), new("Total da linha", ReportColumnAlignment.End), new("Entrega prometida", ReportColumnAlignment.Center)
+            ],
+            order.Lines.OrderBy(line => line.LineNumber).Select(line => (IReadOnlyList<string>)
+            [
+                line.LineNumber.ToString(Culture), line.Description, line.Kind == "Service" ? "Serviço" : "Bem", Decimal(line.Quantity), line.UnitCode,
+                Money(line.UnitPrice, currency), Money(line.LineTotal, currency), Date(line.PromisedDeliveryDate)
+            ]).ToArray(),
+            ["", "Subtotal", "", "", "", "", Money(order.Subtotal, currency), ""]).Validate();
+        var document = new ReportDocument(
+            "Pedido de compra",
+            order.Number,
+            Language,
+            Context(context,
+                new ReportField("Pedido", order.Number),
+                new ReportField("Moeda", currency),
+                new ReportField("Filtros", $"purchaseOrderId = {order.Id:D}")),
+            [
+                new ReportSection("Fornecedor", Fields:
+                [
+                    new("Razão social", order.SupplierLegalName),
+                    new("Nome fantasia", order.SupplierTradeName ?? "—"),
+                    new("Identificação fiscal", $"{order.SupplierTaxId} ({order.SupplierCountry})"),
+                    new("Endereço", order.SupplierAddress ?? "—"),
+                    new("Contato", contact.Length == 0 ? "—" : contact)
+                ]),
+                new ReportSection("Pedido", Fields:
+                [
+                    new("Número", order.Number),
+                    new("Emitido em", $"{Date(issueDate)} ({Instant(order.IssuedAtUtc!.Value, zone)})"),
+                    new("Comprador", order.BuyerName ?? "—"),
+                    new("Requisição", order.RequisitionNumber),
+                    new("Cotação (RFQ)", order.RfqNumber),
+                    new("Condições de pagamento", order.PaymentTerms),
+                    new("Endereço de entrega", order.DeliveryAddress ?? "—"),
+                    new("Observações", order.Notes ?? "—")
+                ]),
+                new ReportSection("Itens", Table: lines, EmptyMessage: "Nenhum item.",
+                    Notes: ["Preços, quantidades e condições copiados da revisão de cotação adjudicada e aprovada (CALC-006); imutáveis após a emissão (PUR-002)."]),
+                new ReportSection("Totais", Fields:
+                [
+                    new("Subtotal", Money(order.Subtotal, currency)),
+                    new("Frete", Money(order.Freight, currency)),
+                    new("Desconto", Money(order.Discount, currency)),
+                    new("Total do pedido", Money(order.Total, currency)),
+                    new("Impostos incluídos (informativo)", Money(order.TaxesIncluded, currency))
+                ], Notes: ["Total = Σ linhas + frete − desconto (CALC-002). Impostos são o valor cotado já contido nos preços; não há cálculo tributário."])
+            ],
+            context.Job.TemplateVersion,
+            $"{order.Number} · emitido em {Date(issueDate)}");
+        return new ReportContent(FileName(Type, "pedido", order.Number), Pdf: document);
+    }
+}
