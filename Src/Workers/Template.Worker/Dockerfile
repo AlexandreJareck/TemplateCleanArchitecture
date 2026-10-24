@@ -14,6 +14,7 @@ COPY ["Src/Infrastructure/Template.Infrastructure.Files/Template.Infrastructure.
 COPY ["Src/Infrastructure/Template.Infrastructure.Messaging/Template.Infrastructure.Messaging.csproj", "Src/Infrastructure/Template.Infrastructure.Messaging/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Persistence/Template.Infrastructure.Persistence.csproj", "Src/Infrastructure/Template.Infrastructure.Persistence/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Reporting/Template.Infrastructure.Reporting.csproj", "Src/Infrastructure/Template.Infrastructure.Reporting/"]
+COPY ["Src/Infrastructure/Template.Infrastructure.Workflow/Template.Infrastructure.Workflow.csproj", "Src/Infrastructure/Template.Infrastructure.Workflow/"]
 RUN dotnet restore "Src/Workers/Template.Worker/Template.Worker.csproj"
 COPY . .
 WORKDIR "/src/Src/Workers/Template.Worker"

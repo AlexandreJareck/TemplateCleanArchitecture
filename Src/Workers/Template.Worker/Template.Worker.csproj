@@ -10,5 +10,6 @@
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Workflow\Template.Infrastructure.Workflow.csproj" />
   </ItemGroup>
 </Project>

@@ -6,6 +6,7 @@ using Template.Infrastructure.Files;
 using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Reporting;
+using Template.Infrastructure.Workflow;
 using Template.Worker;
 
 if (args is ["--health-probe", var probeUrl])
@@ -41,6 +42,13 @@ builder.Services.AddOptions<ReportWorkerSettings>()
     .Bind(builder.Configuration.GetSection(ReportWorkerSettings.SectionName))
     .ValidateOnStart();
 builder.Services.AddHostedService<ReportWorkerService>();
+// Phase 31: starts approval orchestrations for submitted awards (APR-001) and runs the reconciliation sweep (APR-016).
+builder.Services.AddWorkflowInfrastructure(builder.Configuration, useInMemoryClient: useInMemoryDatabase);
+builder.Services.AddSingleton<IValidateOptions<ApprovalReconciliationSettings>, ApprovalReconciliationSettingsValidator>();
+builder.Services.AddOptions<ApprovalReconciliationSettings>()
+    .Bind(builder.Configuration.GetSection(ApprovalReconciliationSettings.SectionName))
+    .ValidateOnStart();
+builder.Services.AddHostedService<ApprovalReconciliationService>();
 // An in-flight report attempt hands its job back on shutdown; allow it to finish that bounded step.
 builder.Services.Configure<HostOptions>(host => host.ShutdownTimeout = TimeSpan.FromSeconds(45));
 
