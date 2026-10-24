@@ -29,3 +29,14 @@ Award approval waits for human decisions for days, with reminders, escalation an
 - An additional host, local emulator/storage provider and test tier.
 - Versioning of running orchestrations must be planned before deployment changes (Phase 31 report).
 - If Functions is unavailable, award submission still commits and the start waits in the Outbox (NFR availability table).
+
+## Addendum (Phase 31, 2026-10-24): SP-3 resolution
+
+Sources checked on 2026-10-23: the Microsoft Learn Azure Functions supported-languages and .NET isolated worker guides (net10.0 GA for Functions 4.x, page updated 2026-10-12), the Durable Functions versioning, storage-provider, code-constraints and HTTP-features guides, and nuget.org.
+
+- **TFM and packages**: .NET isolated worker on `net10.0`, Functions 4.x; `Microsoft.Azure.Functions.Worker` 2.52.0, `Worker.Sdk` 2.1.0, `Worker.Extensions.DurableTask` 1.19.2, `Worker.Extensions.Http` 3.3.0 (MIT). Base image `mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated10.0` pinned by digest (D31-1).
+- **Provider**: the default Azure Storage provider on a dedicated Azurite 3.37.0 (`workflow-storage`), separate from the report-output Azurite. The Durable Task Scheduler emulator was not needed: the emulator suite proved start, waits, timers, restart and replay on Azurite (D31-2).
+- **Internal mechanism (Decision 5)**: HTTP functions protected by the shared `X-Workflow-Key`; no Durable management URL or key leaves the host (D31-3).
+- **Instance ID (Decision 6)**: `approval-{awardId:N}`, derived from the award ID (D31-4).
+- **Versioning**: orchestration version `1.0` with `CurrentOrOlder`/`Reject`; rollback repaired by reconciliation (D31-13).
+- **Testing**: `Microsoft.DurableTask.InProcessTestHost` exists only as a preview package, so orchestrator branches are tested with a scripted `TaskOrchestrationContext` and the real host is tested on Azurite.
