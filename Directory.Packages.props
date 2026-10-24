@@ -14,6 +14,12 @@
     <!-- Transitive pin: Azure.Core -> Microsoft.Identity.Client.Extensions.Msal asks for >= 4.5.0, which declares its license only
          by a legacy URL; 10.0.13 (same .NET 10.0.13 servicing line) declares MIT. -->
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
+    <!-- Phase 31 (ADR-0003, SP-3): Azure Functions .NET isolated worker (Functions 4.x, net10.0 GA) with the Durable Functions
+         extension on the built-in Azure Storage provider (Azurite locally); versions and MIT licenses verified on 2026-10-23. -->
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.1.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.DurableTask" Version="1.19.2" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
     <PackageVersion Include="coverlet.collector" Version="10.1.0" />
     <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.5.3" />
     <PackageVersion Include="Elastic.Serilog.Sinks" Version="9.0.0" />
