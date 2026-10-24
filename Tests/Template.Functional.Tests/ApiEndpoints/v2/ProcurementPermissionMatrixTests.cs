@@ -51,7 +51,18 @@ public sealed class ProcurementPermissionMatrixTests(ProcurementWebApplicationFa
         ("GET", "/api/v2/report-jobs", [Permissions.ReportsRequest, Permissions.ReportsReadAll]),
         ("GET", "/api/v2/report-jobs?scope=all", [Permissions.ReportsReadAll]),
         ("POST", "/api/v2/report-jobs", [Permissions.ReportsRequest]),
-        ("POST", $"/api/v2/report-jobs/{Guid.Empty}/cancel", [Permissions.ReportsRequest])
+        ("POST", $"/api/v2/report-jobs/{Guid.Empty}/cancel", [Permissions.ReportsRequest]),
+        // Phase 31 approvals (reads without assignedTo are participant-scoped by the use case and open to every role).
+        ("GET", "/api/v2/approval-instances?assignedTo=me", [Permissions.ApprovalsDecide]),
+        ("GET", "/api/v2/approval-instances/reconciliation", [Permissions.ApprovalsAdminister]),
+        ("POST", "/api/v2/approval-instances/reconciliation/repair", [Permissions.ApprovalsAdminister]),
+        ("GET", $"/api/v2/approval-instances/{Guid.Empty}/workflow", [Permissions.ApprovalsAdminister]),
+        ("POST", $"/api/v2/approval-instances/{Guid.Empty}/steps/1/decision", [Permissions.ApprovalsDecide]),
+        ("POST", $"/api/v2/approval-instances/{Guid.Empty}/steps/1/delegate", [Permissions.ApprovalsDelegate]),
+        ("POST", $"/api/v2/approval-instances/{Guid.Empty}/steps/1/reassign", [Permissions.ApprovalsAdminister]),
+        ("POST", $"/api/v2/approval-instances/{Guid.Empty}/cancel", [Permissions.ApprovalsAdminister]),
+        ("GET", "/api/v2/approval-policies", [Permissions.ApprovalsPoliciesManage, Permissions.ApprovalsReadAll]),
+        ("POST", "/api/v2/approval-policies", [Permissions.ApprovalsPoliciesManage])
     ];
 
     public static TheoryData<string> Roles => new(SeededRoles.All);

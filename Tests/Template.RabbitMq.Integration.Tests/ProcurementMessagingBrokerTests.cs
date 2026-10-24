@@ -185,6 +185,27 @@ public sealed class ProcurementMessagingBrokerTests(RabbitMqFixture fixture) : I
         (await fixture.InspectQueueAsync(ProcurementMessagingTopology.NotificationQueue)).MessageCount.ShouldBe(0u);
     }
 
+    [Fact]
+    public async Task T_APR_001_W_AwardSubmitted_ReachesTheApprovalConsumer_AndTheProjection_ButNotNotifications()
+    {
+        var handler = new Handler();
+        await using var harness = CreateHarness(handler);
+        await harness.StartAsync();
+        var envelope = ProcurementIntegrationEventContract.FromDomainEvent(
+            new AwardSubmitted(new DateTime(2027, 3, 4, 13, 0, 0, DateTimeKind.Utc), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+                new Template.Domain.Common.Money(900m, "BRL"), new Template.Domain.Common.Money(900m, "BRL"), "SourcingPolicy:1"), "rabbit-phase31");
+
+        await harness.Publisher.PublishAsync(envelope, CancellationToken.None);
+        await harness.Publisher.PublishAsync(envelope, CancellationToken.None); // duplicate publish: the start is idempotent per award
+
+        await Eventually.TrueAsync(() => Task.FromResult(handler.EffectsFor(ProcurementMessagingTopology.ApprovalConsumer) == 1
+            && handler.EffectsFor(ProcurementMessagingTopology.ProjectionConsumer) == 1), "the approval and projection consumers handled the award");
+        handler.EffectsFor(ProcurementMessagingTopology.NotificationConsumer).ShouldBe(0);
+        await Eventually.TrueAsync(async () => (await fixture.InspectQueueAsync(ProcurementMessagingTopology.ApprovalQueue)).MessageCount == 0,
+            "the approval queue drains");
+        (await fixture.InspectQueueAsync(ProcurementMessagingTopology.ApprovalDeadLetterQueue)).MessageCount.ShouldBe(0u);
+    }
+
     private static IntegrationEventEnvelope RfqPublishedEnvelope() => ProcurementIntegrationEventContract.FromDomainEvent(
         new RfqPublished(new DateTime(2027, 3, 1, 13, 0, 0, DateTimeKind.Utc), Guid.NewGuid(), "RFQ-2027-000001", Guid.NewGuid(),
             new DateTime(2027, 3, 4, 13, 0, 0, DateTimeKind.Utc), [Guid.NewGuid(), Guid.NewGuid()], SourcingMethod.Competitive), "rabbit-phase29");

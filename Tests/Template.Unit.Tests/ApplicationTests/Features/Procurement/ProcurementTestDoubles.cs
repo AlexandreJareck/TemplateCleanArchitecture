@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Template.Application.Common.Concurrency;
 using Template.Application.Common.Paging;
+using Template.Application.Features.Approvals;
 using Template.Application.Features.Requisitions;
 using Template.Application.Features.Sourcing;
 using Template.Application.Interfaces.Integrations;
@@ -38,7 +39,9 @@ internal sealed class ProcurementTestDoubles
     public ProcurementTestDoubles()
     {
         Settings.Current = OrganizationSettings.CreateDefault(Now);
-        var department = Department.Create(Guid.NewGuid(), "OPS", "Operations", null, null, Now).Department!;
+        var department = Department.Create(Guid.NewGuid(), "OPS", "Operations", DepartmentHead, null, Now).Department!;
+        Department = department;
+        Departments.Add(department);
         CostCenter = Template.Domain.Organization.CostCenter.Create(Guid.NewGuid(), "CC-OPS", "Operations", department, Manager, null, Now).CostCenter!;
         CostCenters.Add(CostCenter);
         Period = FiscalPeriod.Create(Guid.NewGuid(), "FY27", "Fiscal year 2027", new DateOnly(2027, 1, 1), new DateOnly(2027, 12, 31), null, Now).Period!;
@@ -52,10 +55,14 @@ internal sealed class ProcurementTestDoubles
         References.Units.Add(Unit);
         Accounts.ActiveUsers.Add(Requester.Id);
         Permissions.Grant(Requester.Id, SeededRoles.PermissionsByRole[SeededRoles.Requester]);
+        Approvals = new ApprovalTestDoubles.FakeApprovalInstances(Rfqs);
     }
 
     public Actor Requester { get; } = new();
     public Guid Manager { get; } = Guid.NewGuid();
+    public Guid DepartmentHead { get; } = Guid.NewGuid();
+    public Department Department { get; }
+    public MasterDataTestDoubles.FakeDepartments Departments { get; } = new();
     public CostCenter CostCenter { get; }
     public FiscalPeriod Period { get; }
     public BudgetAllocation Allocation { get; }
@@ -81,6 +88,10 @@ internal sealed class ProcurementTestDoubles
     public FakeRfqNumbers RfqNumbers { get; } = new();
     public FakeSuppliers Suppliers { get; } = new();
     public FakeRates Rates { get; } = new();
+    public ApprovalTestDoubles.FakeApprovalInstances Approvals { get; }
+    public ApprovalTestDoubles.FakeApprovalPolicies Policies { get; } = new();
+    public ApprovalTestDoubles.FakeApprovers Approvers { get; } = new();
+    public ApprovalTestDoubles.FakeWorkflow Workflow { get; } = new();
 
     public ProcurementWriter NewWriter() => new(
         UnitOfWork, Audit, Clock, new AccessTestDoubles.FixedRequestContext(), User, Permissions, Settings, Outbox, NullLogger<ProcurementWriter>.Instance);
@@ -94,8 +105,40 @@ internal sealed class ProcurementTestDoubles
     public RequisitionTransitionHandlers Transitions()
     {
         var writer = NewWriter();
-        return new(Requisitions, Allocations, Periods, CostCenters, References, Numbers, Accounts, Rfqs, new RequisitionAccess(writer, Scope), writer);
+        return new(Requisitions, Allocations, Periods, CostCenters, References, Numbers, Accounts, Rfqs, new RequisitionAccess(writer, Scope),
+            ApprovalCascade(writer), writer);
     }
+
+    public ApprovalOutcomes ApprovalOutcomes(ProcurementWriter writer) => new(Rfqs, Requisitions, Allocations, writer);
+
+    public ApprovalCascade ApprovalCascade(ProcurementWriter? writer = null)
+    {
+        writer ??= NewWriter();
+        return new(Approvals, ApprovalOutcomes(writer), Workflow, writer, NullLogger<ApprovalCascade>.Instance);
+    }
+
+    public ApprovalAccess ApprovalAccess(ProcurementWriter writer) => new(Approvers, Rfqs, writer);
+
+    public ApprovalWorkflowActivities ApprovalActivities()
+    {
+        var writer = NewWriter();
+        return new(Approvals, Policies, Rfqs, Requisitions, CostCenters, Departments, Approvers, ApprovalOutcomes(writer), writer,
+            NullLogger<ApprovalWorkflowActivities>.Instance);
+    }
+
+    public ApprovalDecisionHandlers ApprovalDecisions()
+    {
+        var writer = NewWriter();
+        return new(Approvals, Approvers, Workflow, ApprovalAccess(writer), ApprovalOutcomes(writer), writer, NullLogger<ApprovalDecisionHandlers>.Instance);
+    }
+
+    public ApprovalQueryHandlers ApprovalQueries()
+    {
+        var writer = NewWriter();
+        return new(Approvals, Approvers, Workflow, ApprovalAccess(writer), writer);
+    }
+
+    public ApprovalReconciliation ApprovalReconciliation() => new(Approvals, Workflow, NewWriter(), NullLogger<ApprovalReconciliation>.Instance);
 
     public RfqCommandHandlers RfqCommands()
     {

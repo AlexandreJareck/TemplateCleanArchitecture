@@ -85,6 +85,7 @@ public sealed class SourcingPostgreSqlTests(PostgreSqlFixture fixture) : IAsyncL
         services.AddScoped<RfqCommandHandlers>();
         services.AddScoped<QuoteCommandHandlers>();
         services.AddScoped<RfqQueryHandlers>();
+        services.AddApprovalCascade();
         provider = services.BuildServiceProvider();
 
         await using var scope = provider.CreateAsyncScope();
@@ -125,8 +126,11 @@ public sealed class SourcingPostgreSqlTests(PostgreSqlFixture fixture) : IAsyncL
             """)).ShouldBe(7);
         (await PostgreSqlFixture.ExecuteScalarAsync<long>(context, """
             SELECT count(*) FROM information_schema.columns
-            WHERE column_name IN ('ActiveRfqId', 'AwardId', 'AwardedSupplierId', 'AwardedSupplierName', 'AwardAmount', 'LastAwardId') AND is_nullable = 'NO'
-            """)).ShouldBe(0);
+            WHERE ((table_name = 'PurchaseRequisitions' AND column_name IN ('ActiveRfqId', 'AwardId', 'AwardedSupplierId', 'AwardedSupplierName', 'AwardAmount'))
+                OR (table_name = 'BudgetReservations' AND column_name = 'LastAwardId')
+                OR (table_name = 'BudgetReservationChanges' AND column_name = 'AwardId'))
+              AND is_nullable = 'NO'
+            """)).ShouldBe(0); // Phase 31 approval tables carry their own required AwardId; only the Phase 29 columns are checked
 
         var migrator = context.Database.GetService<IMigrator>();
         await migrator.MigrateAsync(Phase28Migration);

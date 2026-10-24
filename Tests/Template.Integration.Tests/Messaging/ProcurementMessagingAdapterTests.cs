@@ -137,12 +137,15 @@ public sealed class ProcurementMessagingAdapterTests
         var calls = ((ChannelProxy)(object)channel).Calls;
         calls.Count(name => name == nameof(IChannel.ExchangeDeclareAsync)).ShouldBe(2);
         // Phase 29 adds the notification queue (bound to the three SRC-022 event types) and its dead-letter queue.
-        calls.Count(name => name == nameof(IChannel.QueueDeclareAsync)).ShouldBe(4);
-        // Phase 30 binds the report ready/failed events (in-app requester notification) to the same queue.
-        calls.Count(name => name == nameof(IChannel.QueueBindAsync)).ShouldBe(2 + 3 + 2 + 1);
+        // Phase 31 adds the approval-start queue (bound to award.submitted) and its dead-letter queue.
+        calls.Count(name => name == nameof(IChannel.QueueDeclareAsync)).ShouldBe(6);
+        // Phase 30 binds the report ready/failed events (in-app requester notification) to the same queue; Phase 31 binds
+        // the six approval notification events there and award.submitted to the approval queue.
+        calls.Count(name => name == nameof(IChannel.QueueBindAsync)).ShouldBe(2 + (3 + 2 + 6 + 1) + (1 + 1));
         ProcurementMessagingTopology.Consumers.ShouldBe([
             (ProcurementMessagingTopology.ProjectionQueue, ProcurementConsumers.Projection),
-            (ProcurementMessagingTopology.NotificationQueue, ProcurementConsumers.Notification)]);
+            (ProcurementMessagingTopology.NotificationQueue, ProcurementConsumers.Notification),
+            (ProcurementMessagingTopology.ApprovalQueue, ProcurementConsumers.Approval)]);
     }
 
     [Fact]

@@ -57,6 +57,7 @@ public sealed class MasterDataPostgreSqlTests(PostgreSqlFixture fixture) : IAsyn
         services.AddScoped<UnitOfMeasureCommandHandlers>();
         services.AddScoped<CatalogItemCommandHandlers>();
         services.AddScoped<SupplierCommandHandlers>();
+        services.AddApprovalCascade();
         provider = services.BuildServiceProvider();
         return Task.CompletedTask;
     }

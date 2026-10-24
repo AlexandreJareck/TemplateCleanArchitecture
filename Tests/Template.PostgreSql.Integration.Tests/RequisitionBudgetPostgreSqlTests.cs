@@ -69,6 +69,7 @@ public sealed class RequisitionBudgetPostgreSqlTests(PostgreSqlFixture fixture, 
         services.AddScoped<RequisitionDraftCommandHandlers>();
         services.AddScoped<RequisitionTransitionHandlers>();
         services.AddScoped<RequisitionQueryHandlers>();
+        services.AddApprovalCascade();
         provider = services.BuildServiceProvider();
 
         await using var scope = provider.CreateAsyncScope();
