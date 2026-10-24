@@ -1,4 +1,6 @@
 export * from './account/account.service';
+export * from './approval-instances/approval-instances.service';
+export * from './approval-policies/approval-policies.service';
 export * from './audit-records/audit-records.service';
 export * from './auth-sessions/auth-sessions.service';
 export * from './budget-allocations/budget-allocations.service';

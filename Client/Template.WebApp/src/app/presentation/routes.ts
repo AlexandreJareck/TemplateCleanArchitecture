@@ -185,6 +185,20 @@ export const routes: Routes = [
         title: 'Solicitação de cotação',
       },
       {
+        path: 'approvals/inbox',
+        canActivate: [permissionGuard],
+        data: { permission: 'approvals.decide' },
+        loadComponent: () =>
+          import('./features/approvals-inbox.page').then((module) => module.ApprovalsInboxPage),
+        title: 'Aprovações',
+      },
+      {
+        path: 'approvals/:id',
+        loadComponent: () =>
+          import('./features/approval-detail.page').then((module) => module.ApprovalDetailPage),
+        title: 'Aprovação',
+      },
+      {
         path: 'dev/primitives',
         loadComponent: () =>
           import('./shell/primitive-gallery').then((module) => module.PrimitiveGallery),

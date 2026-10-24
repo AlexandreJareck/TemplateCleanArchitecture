@@ -68,7 +68,8 @@
     "budgetPeriods": "Períodos fiscais",
     "budgetAllocations": "Alocações orçamentárias",
     "sourcing": "Cotações",
-    "reports": "Relatórios"
+    "reports": "Relatórios",
+    "approvals": "Aprovações"
   },
   "dashboard": {
     "title": "Painel",
@@ -450,6 +451,119 @@
       "attempts-exhausted": "A geração falhou após 3 tentativas.",
       "output-invalid": "O arquivo gerado foi rejeitado na verificação.",
       "unexpected": "Falha inesperada na geração."
+    }
+  },
+  "approvals": {
+    "inbox": "Caixa de aprovações",
+    "pending": "Aprovações pendentes",
+    "escalatedOnly": "Somente escalonadas",
+    "empty": "Nenhuma aprovação pendente para você.",
+    "inboxTable": "Tabela de aprovações pendentes",
+    "requisition": "Requisição",
+    "amount": "Valor avaliado",
+    "level": "Nível",
+    "assignee": "Responsável",
+    "dueAt": "Prazo",
+    "roleGroup": "Grupo {{role}}",
+    "assignedToMe": "Você",
+    "escalated": "Escalonada",
+    "open": "Abrir",
+    "due": {
+      "overdue": "Prazo vencido",
+      "due-soon": "Vence em até 24 h"
+    },
+    "title": "Aprovação {{number}}",
+    "summary": "Resumo",
+    "requester": "Requisitante",
+    "policy": "Política",
+    "endedAt": "Encerrada em",
+    "award": "Seleção do fornecedor",
+    "rank": "{{rank}}º colocado",
+    "waiver": "Dispensa aplicada: {{type}}",
+    "comparison": "Comparativo congelado",
+    "rankColumn": "Posição",
+    "supplier": "Fornecedor",
+    "quoted": "Cotado",
+    "normalized": "Normalizado",
+    "deliveryDays": "Prazo de entrega (dias)",
+    "invalidQuote": "Inválida",
+    "awarded": "Selecionado",
+    "steps": "Etapas",
+    "levelLabel": "Nível {{level}}",
+    "remindedAt": "lembrete em",
+    "escalations": "Escalonada {{count}} vez(es)",
+    "decision": "Decisão",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "delegate": "Delegar",
+    "cancel": "Cancelar aprovação",
+    "delegateSearch": "Pesquisar aprovador",
+    "delegateTo": "Delegar para",
+    "comment": "Comentário (opcional)",
+    "reasonHint": "Rejeição, delegação e cancelamento exigem motivo de {{min}} a {{max}} caracteres.",
+    "reasonErrors": {
+      "required": "Informe um motivo com pelo menos {{min}} caracteres.",
+      "too-long": "O motivo deve ter no máximo {{max}} caracteres."
+    },
+    "confirm": {
+      "Approved": "Confirmar aprovação",
+      "Rejected": "Confirmar rejeição",
+      "delegate": "Confirmar delegação",
+      "cancel": "Confirmar cancelamento"
+    },
+    "stale": "Esta aprovação mudou desde que você a abriu. A versão atual foi recarregada; revise antes de agir.",
+    "announce": "Aprovação atualizada: {{status}}",
+    "statuses": {
+      "Pending": "Em aprovação",
+      "Approved": "Aprovada",
+      "Rejected": "Rejeitada",
+      "Cancelled": "Cancelada",
+      "Expired": "Expirada",
+      "Invalidated": "Invalidada"
+    },
+    "stepStatuses": {
+      "Waiting": "Aguardando nível anterior",
+      "Pending": "Pendente",
+      "Approved": "Aprovada",
+      "Rejected": "Rejeitada",
+      "Cancelled": "Cancelada",
+      "Expired": "Expirada"
+    },
+    "resolvers": {
+      "CostCenterManager": "Gestor do centro de custo",
+      "DepartmentHead": "Responsável pelo departamento",
+      "RoleGroup": "Grupo aprovador"
+    },
+    "ineligible": {
+      "current-assignee": "responsável atual",
+      "separation-of-duties": "segregação de funções"
+    },
+    "history": {
+      "started": "Aprovação iniciada",
+      "step-assigned": "Etapa atribuída",
+      "step-approved": "Etapa aprovada",
+      "step-rejected": "Etapa rejeitada",
+      "step-delegated": "Etapa delegada",
+      "step-reassigned": "Etapa reatribuída",
+      "step-reminded": "Lembrete enviado",
+      "step-escalated": "Etapa escalonada",
+      "step-expired": "Etapa expirada",
+      "approved": "Aprovação concluída",
+      "rejected": "Aprovação rejeitada",
+      "expired": "Aprovação expirada",
+      "invalidated": "Aprovação invalidada",
+      "cancelled": "Aprovação cancelada"
+    },
+    "problems": {
+      "not-assignee": "Esta etapa não está atribuída a você.",
+      "step-not-current": "Esta etapa não é a etapa atual.",
+      "self-approval": "Você não pode aprovar uma requisição criada por você.",
+      "duplicate-approver": "Você já decidiu outro nível desta aprovação.",
+      "maker-checker": "Quem submeteu a seleção do fornecedor não pode aprová-la.",
+      "invalid-delegate": "O usuário escolhido não pode receber esta delegação.",
+      "step-already-decided": "Esta etapa já foi decidida.",
+      "instance-ended": "Esta aprovação já foi encerrada.",
+      "workflow-unavailable": "O serviço de fluxo de aprovação está indisponível. Tente novamente em instantes."
     }
   }
 }

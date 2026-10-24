@@ -68,7 +68,8 @@
     "budgetPeriods": "Fiscal periods",
     "budgetAllocations": "Budget allocations",
     "sourcing": "Sourcing",
-    "reports": "Reports"
+    "reports": "Reports",
+    "approvals": "Approvals"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -450,6 +451,119 @@
       "attempts-exhausted": "Generation failed after 3 attempts.",
       "output-invalid": "The generated file failed verification.",
       "unexpected": "Unexpected generation failure."
+    }
+  },
+  "approvals": {
+    "inbox": "Approval inbox",
+    "pending": "Pending approvals",
+    "escalatedOnly": "Escalated only",
+    "empty": "No approvals waiting for you.",
+    "inboxTable": "Pending approvals table",
+    "requisition": "Requisition",
+    "amount": "Evaluated amount",
+    "level": "Level",
+    "assignee": "Assignee",
+    "dueAt": "Due",
+    "roleGroup": "{{role}} group",
+    "assignedToMe": "You",
+    "escalated": "Escalated",
+    "open": "Open",
+    "due": {
+      "overdue": "Overdue",
+      "due-soon": "Due within 24 h"
+    },
+    "title": "Approval {{number}}",
+    "summary": "Summary",
+    "requester": "Requester",
+    "policy": "Policy",
+    "endedAt": "Ended at",
+    "award": "Supplier award",
+    "rank": "Rank {{rank}}",
+    "waiver": "Waiver applied: {{type}}",
+    "comparison": "Frozen comparison",
+    "rankColumn": "Rank",
+    "supplier": "Supplier",
+    "quoted": "Quoted",
+    "normalized": "Normalized",
+    "deliveryDays": "Delivery (days)",
+    "invalidQuote": "Invalid",
+    "awarded": "Awarded",
+    "steps": "Steps",
+    "levelLabel": "Level {{level}}",
+    "remindedAt": "reminded at",
+    "escalations": "Escalated {{count}} time(s)",
+    "decision": "Decision",
+    "approve": "Approve",
+    "reject": "Reject",
+    "delegate": "Delegate",
+    "cancel": "Cancel approval",
+    "delegateSearch": "Search approver",
+    "delegateTo": "Delegate to",
+    "comment": "Comment (optional)",
+    "reasonHint": "Rejection, delegation and cancellation need a reason of {{min}} to {{max}} characters.",
+    "reasonErrors": {
+      "required": "Enter a reason of at least {{min}} characters.",
+      "too-long": "The reason must have at most {{max}} characters."
+    },
+    "confirm": {
+      "Approved": "Confirm approval",
+      "Rejected": "Confirm rejection",
+      "delegate": "Confirm delegation",
+      "cancel": "Confirm cancellation"
+    },
+    "stale": "This approval changed since you opened it. The current version was reloaded; review it before acting.",
+    "announce": "Approval updated: {{status}}",
+    "statuses": {
+      "Pending": "Pending approval",
+      "Approved": "Approved",
+      "Rejected": "Rejected",
+      "Cancelled": "Cancelled",
+      "Expired": "Expired",
+      "Invalidated": "Invalidated"
+    },
+    "stepStatuses": {
+      "Waiting": "Waiting for previous level",
+      "Pending": "Pending",
+      "Approved": "Approved",
+      "Rejected": "Rejected",
+      "Cancelled": "Cancelled",
+      "Expired": "Expired"
+    },
+    "resolvers": {
+      "CostCenterManager": "Cost center manager",
+      "DepartmentHead": "Department head",
+      "RoleGroup": "Approver group"
+    },
+    "ineligible": {
+      "current-assignee": "current assignee",
+      "separation-of-duties": "separation of duties"
+    },
+    "history": {
+      "started": "Approval started",
+      "step-assigned": "Step assigned",
+      "step-approved": "Step approved",
+      "step-rejected": "Step rejected",
+      "step-delegated": "Step delegated",
+      "step-reassigned": "Step reassigned",
+      "step-reminded": "Reminder sent",
+      "step-escalated": "Step escalated",
+      "step-expired": "Step expired",
+      "approved": "Approval completed",
+      "rejected": "Approval rejected",
+      "expired": "Approval expired",
+      "invalidated": "Approval invalidated",
+      "cancelled": "Approval cancelled"
+    },
+    "problems": {
+      "not-assignee": "This step is not assigned to you.",
+      "step-not-current": "This step is not the current step.",
+      "self-approval": "You cannot approve a requisition you created.",
+      "duplicate-approver": "You already decided another level of this approval.",
+      "maker-checker": "Whoever submitted the supplier award cannot approve it.",
+      "invalid-delegate": "The chosen user cannot receive this delegation.",
+      "step-already-decided": "This step was already decided.",
+      "instance-ended": "This approval has already ended.",
+      "workflow-unavailable": "The approval workflow service is unavailable. Try again shortly."
     }
   }
 }
