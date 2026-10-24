@@ -23,7 +23,8 @@ public sealed record ReportParameters(
     string? Currency = null,
     DateOnly? From = null,
     DateOnly? To = null,
-    Guid? SupplierId = null)
+    Guid? SupplierId = null,
+    Guid? PurchaseOrderId = null)
 {
     /// <summary>Longest local-date window of the supplier quotes report.</summary>
     public const int MaxWindowDays = 366;
@@ -36,6 +37,7 @@ public sealed record ReportParameters(
         Add(values, "currency", Currency);
         Add(values, "fiscalPeriodId", FiscalPeriodId?.ToString("D"));
         Add(values, "from", From?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        Add(values, "purchaseOrderId", PurchaseOrderId?.ToString("D"));
         Add(values, "requisitionId", RequisitionId?.ToString("D"));
         Add(values, "requisitionVersion", RequisitionVersion?.ToString(CultureInfo.InvariantCulture));
         Add(values, "rfqId", RfqId?.ToString("D"));
@@ -67,6 +69,7 @@ public sealed record ReportParameters(
                 "currency" => parameters with { Currency = value },
                 "fiscalPeriodId" => parameters with { FiscalPeriodId = Guid.Parse(value) },
                 "from" => parameters with { From = DateOnly.ParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture) },
+                "purchaseOrderId" => parameters with { PurchaseOrderId = Guid.Parse(value) },
                 "requisitionId" => parameters with { RequisitionId = Guid.Parse(value) },
                 "requisitionVersion" => parameters with { RequisitionVersion = long.Parse(value, CultureInfo.InvariantCulture) },
                 "rfqId" => parameters with { RfqId = Guid.Parse(value) },

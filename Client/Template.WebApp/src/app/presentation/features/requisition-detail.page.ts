@@ -103,6 +103,13 @@ type PendingAction = 'withdraw' | 'cancel' | undefined;
             }}</a>
           </p>
         }
+        @if (current.purchaseOrderId) {
+          <p class="notice" data-testid="purchase-order-link">
+            <a [routerLink]="['/purchasing/orders', current.purchaseOrderId]">{{
+              'purchasing.openOrder' | transloco
+            }}</a>
+          </p>
+        }
         @if (current.sourceRequisitionId) {
           <p class="notice">
             <a [routerLink]="['/requisitions', current.sourceRequisitionId]">{{

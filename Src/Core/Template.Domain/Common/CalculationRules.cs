@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Template.Domain.Common;
 
@@ -62,6 +63,38 @@ public static class CalculationRules
         if (!IsValidExchangeRate(requisitionToBaseRate))
             throw new ArgumentOutOfRangeException(nameof(requisitionToBaseRate), "Exchange rates are positive with at most 6 decimals.");
         return new Money(RoundMoney(inBase.Amount / requisitionToBaseRate, requisitionCurrency), requisitionCurrency);
+    }
+
+    /// <summary>
+    /// CALC-009 (Phase 32): receipt cap per line = ordered × (1 + tolerance % ÷ 100), truncated to the unit's allowed
+    /// decimals (at most 3). Tolerance 0 % (<c>ReceivingPolicy</c> v1, D23-18) makes the cap the ordered quantity.
+    /// </summary>
+    public static decimal ReceiptCap(decimal ordered, decimal tolerancePercent, int unitDecimals)
+    {
+        if (ordered <= 0)
+            throw new ArgumentOutOfRangeException(nameof(ordered), "The ordered quantity is positive.");
+        if (tolerancePercent < 0)
+            throw new ArgumentOutOfRangeException(nameof(tolerancePercent), "The tolerance is not negative.");
+        var decimals = Math.Clamp(unitDecimals, 0, MaxQuantityDecimals);
+        var factor = (decimal)Math.Pow(10, decimals);
+        return Math.Truncate(ordered * (1 + tolerancePercent / 100m) * factor) / factor;
+    }
+
+    /// <summary>
+    /// CALC-008 (Phase 32): short-close release = round(Σ (ordered − accepted) × unit price) in the PO currency, converted
+    /// to the requisition currency with the award rates (CALC-007) and capped at the committed amount.
+    /// </summary>
+    public static Money ShortCloseRelease(
+        IEnumerable<(decimal Ordered, decimal Accepted, decimal UnitPrice)> lines, string orderCurrency, decimal quoteToBaseRate,
+        string requisitionCurrency, decimal requisitionToBaseRate, string baseCurrency, decimal committedAmount)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        var unreceived = 0m;
+        foreach (var (ordered, accepted, unitPrice) in lines)
+            unreceived += Math.Max(0m, ordered - accepted) * unitPrice;
+        var inOrderCurrency = new Money(RoundMoney(unreceived, orderCurrency), orderCurrency);
+        var converted = ToRequisitionCurrency(inOrderCurrency, quoteToBaseRate, requisitionCurrency, requisitionToBaseRate, baseCurrency);
+        return converted.Amount > committedAmount ? new Money(committedAmount, requisitionCurrency) : converted;
     }
 }
 

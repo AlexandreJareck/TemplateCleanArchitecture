@@ -84,6 +84,18 @@ import { filter } from 'rxjs';
           routerLinkActive="active"
           >{{ 'nav.approvals' | transloco }}</a
         >
+        <a
+          *appPermission="'purchasing.orders.read'"
+          routerLink="/purchasing/orders"
+          routerLinkActive="active"
+          >{{ 'nav.purchaseOrders' | transloco }}</a
+        >
+        <a
+          *appPermission="'receiving.receipts.create'"
+          routerLink="/receiving/queue"
+          routerLinkActive="active"
+          >{{ 'nav.receiving' | transloco }}</a
+        >
         <a *appPermission="'reports.request'" routerLink="/reports" routerLinkActive="active">{{
           'nav.reports' | transloco
         }}</a>

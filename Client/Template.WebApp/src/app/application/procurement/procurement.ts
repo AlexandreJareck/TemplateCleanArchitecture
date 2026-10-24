@@ -155,6 +155,8 @@ export interface Requisition extends RequisitionSummary {
   /** Phase 29: current sourcing round and the awarded supplier as requesters may see it (SRC-021). */
   readonly activeRfqId?: string;
   readonly awardedSupplierName?: string;
+  /** Phase 32: the purchase order of the approved award (PUR-001); its visibility is decided by the order endpoint (PUR-011). */
+  readonly purchaseOrderId?: string;
 }
 
 export interface TimelineEntry {

@@ -418,7 +418,7 @@ public sealed class ArchitectureRulesTests
             .Where(path => File.ReadAllText(path).Contains("[StableProblemCodes]", StringComparison.Ordinal))
             .ToArray();
 
-        controllers.Length.ShouldBe(19); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers; Phase 29: +1 requests for quotation; Phase 30: +1 report jobs; Phase 31: +2 approval instances and policies
+        controllers.Length.ShouldBe(21); // Phase 24: 3; Phase 25: +9 master-data, enrichment and user-lookup; Phase 27: +3 budget and requisition controllers; Phase 29: +1 requests for quotation; Phase 30: +1 report jobs; Phase 31: +2 approval instances and policies; Phase 32: +2 purchase orders and receipts
         foreach (var path in controllers)
             ActionsWithoutExplicitAuthorization(File.ReadAllText(path)).ShouldBe(0, Relative(path));
     }
@@ -479,7 +479,7 @@ public sealed class ArchitectureRulesTests
         ContainsAny("string? HashRefreshToken(string? token);", SessionCryptoMarkers()).ShouldBeFalse();
     }
 
-    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions", "Sourcing", "Files", "Reporting", "Approvals"];
+    private static readonly string[] MasterDataModules = ["Organization", "Suppliers", "Catalog", "Budgeting", "Requisitions", "Sourcing", "Files", "Reporting", "Approvals", "Purchasing", "Receiving"];
 
     [Fact]
     public void Domain_Modules_Reference_Each_Other_Only_Through_The_Shared_Kernel()
@@ -569,9 +569,11 @@ public sealed class ArchitectureRulesTests
     {
         // BUD-004..008 / REQ-005: reserve and release run inside the requisition transition use cases (one transaction);
         // Phase 31: the approval outcome commits (BUD-010, APR-013) or releases (APR-009, APR-011) in the same commit as
-        // the instance. No controller or other use case reserves, commits or releases funds directly.
+        // the instance. Phase 32: the purchase-order cancel (PUR-008) and short close (PUR-010) release or return the
+        // commitment in the order's commit. No controller or other use case reserves, commits or releases funds directly.
         SourceViolations("Src/Core/Template.Application", ReservationMutationMarkers())
             .ShouldBe(["Src/Core/Template.Application/Features/Approvals/ApprovalOutcomes.cs",
+                "Src/Core/Template.Application/Features/Purchasing/PurchaseOrderUseCases.cs",
                 "Src/Core/Template.Application/Features/Requisitions/RequisitionTransitionUseCases.cs"]);
         SourceViolations("Src/Presentation/Template.WebApi/Controllers", ReservationMutationMarkers()).ShouldBeEmpty();
         var budgetController = ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/BudgetAllocationsController.cs");
@@ -770,6 +772,47 @@ public sealed class ArchitectureRulesTests
         ContainsAny("using Template.Domain.Sourcing;", OtherDomainModuleMarkers("Approvals")).ShouldBeTrue();
     }
 
+    [Fact]
+    public void Phase32_Purchasing_And_Receiving_Are_Encapsulated_Append_Only_And_Gapless()
+    {
+        foreach (var module in new[] { "Purchasing", "Receiving" })
+        {
+            SourceViolations($"Src/Core/Template.Domain/{module}", PublicSetterMarkers()).ShouldBeEmpty(module);
+            SourceViolations($"Src/Core/Template.Domain/{module}", OtherDomainModuleMarkers(module)).ShouldBeEmpty(module);
+        }
+
+        // RCV-006: posted receipts are never edited or deleted; PUR records are never deleted (NFR retention).
+        ContainsAny(ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/ReceiptsController.cs"), ReceiptMutationEndpointMarkers()).ShouldBeFalse();
+        ContainsAny(ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/PurchaseOrdersController.cs"), ["[HttpDelete"]).ShouldBeFalse();
+        ContainsAny(ReadSource("Src/Core/Template.Application/Interfaces/Purchasing/IPurchasingPorts.cs"), ["void Remove(", "void Delete("]).ShouldBeFalse();
+        // SP-2: purchase-order numbers come from the per-year counter inside the issue transaction, never from a sequence.
+        ContainsAny(ReadSource("Src/Infrastructure/Template.Infrastructure.Persistence/Repositories/PurchasingRepositories.cs"), SequenceMarkers()).ShouldBeFalse();
+        // The API never exposes storage or broker details (handoff): views carry API paths and IDs only.
+        ContainsAny(ReadSource("Src/Core/Template.Application/Features/Purchasing/PurchasingViews.cs"), InfrastructureLeakMarkers()).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Phase32_Controlled_Mutations_Are_Detected()
+    {
+        ContainsAny("[HttpPut(\"{id:guid}\")]", ReceiptMutationEndpointMarkers()).ShouldBeTrue();
+        ContainsAny("[HttpDelete(\"{id:guid}\")]", ReceiptMutationEndpointMarkers()).ShouldBeTrue();
+        ContainsAny("[HttpPost(\"{id:guid}/corrections\")]", ReceiptMutationEndpointMarkers()).ShouldBeFalse();
+        ContainsAny("SELECT nextval('purchasing_order_numbers')", SequenceMarkers()).ShouldBeTrue();
+        ContainsAny("CREATE SEQUENCE po_numbers", SequenceMarkers()).ShouldBeTrue();
+        ContainsAny("UPDATE \"PurchasingOrderNumberCounters\" SET \"LastValue\" = \"LastValue\" + 1 RETURNING", SequenceMarkers()).ShouldBeFalse();
+        ContainsAny("string BlobUri,", InfrastructureLeakMarkers()).ShouldBeTrue();
+        ContainsAny("string RoutingKey,", InfrastructureLeakMarkers()).ShouldBeTrue();
+        ContainsAny("string? ContentUrl);", InfrastructureLeakMarkers()).ShouldBeFalse();
+        ContainsAny("using Template.Domain.Purchasing;", OtherDomainModuleMarkers("Receiving")).ShouldBeTrue();
+        ContainsAny("public decimal AcceptedQuantity { get; set; }", PublicSetterMarkers()).ShouldBeTrue();
+    }
+
+    private static string[] ReceiptMutationEndpointMarkers() => ["[HttpPut", "[HttpPatch", "[HttpDelete"];
+
+    private static string[] SequenceMarkers() => ["nextval", "NEXTVAL", "CREATE SEQUENCE", "HasSequence", "UseHiLo", "UseSequence"];
+
+    private static string[] InfrastructureLeakMarkers() => ["Blob", "Azurite", "ContainerName", "StorageKey", "RabbitMq", "RoutingKey", "Exchange", "QueueName"];
+
     private static string[] DurableVendorMarkers() =>
         ["using Microsoft.DurableTask", "using Microsoft.Azure.Functions", "DurableTaskClient", "TaskOrchestrationContext", "[OrchestrationTrigger]", "[ActivityTrigger]"];
 
@@ -796,7 +839,7 @@ public sealed class ArchitectureRulesTests
 
     private static string[] RawSqlMarkers() => ["ExecuteSqlRaw", "ExecuteSqlInterpolated", "FromSqlRaw", "FromSqlInterpolated", "SqlQuery<", "SqlQueryRaw<"];
 
-    private static string[] ReservationMutationMarkers() => [".Reserve(", ".Release(", ".Commit("];
+    private static string[] ReservationMutationMarkers() => [".Reserve(", ".Release(", ".Commit(", ".Uncommit(", ".ReleasePartially("];
 
     private static string[] PublicSetterMarkers() => ["{ get; set; }", "{ get; init; }", "{ set; }", " public set "];
 

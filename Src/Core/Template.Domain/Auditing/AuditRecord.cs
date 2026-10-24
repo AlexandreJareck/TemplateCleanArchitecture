@@ -38,7 +38,11 @@ public sealed class AuditRecord
         // Phase 31 (APR-*): instance and workflow IDs, levels, assignee user IDs or role names, decision IDs and policy
         // versions only; never decision comments, names or commercial details.
         "approvalInstanceId", "workflowInstanceId", "requiredLevels", "level", "finalLevel", "assignee", "assignmentSequence", "dueAt",
-        "decisionId", "delegatedBy", "delegateUserId", "escalationCount", "operation", "awardStatus", "version", "effectiveFrom", "levels"
+        "decisionId", "delegatedBy", "delegateUserId", "escalationCount", "operation", "awardStatus", "version", "effectiveFrom", "levels",
+        // Phase 32 (PUR-*, RCV-*): order, receipt, correction and file IDs, totals, quantities, line numbers, discrepancy
+        // types and template versions only; never supplier contacts, addresses, notes, discrepancy notes or reasons.
+        "purchaseOrderId", "total", "fileId", "templateVersion", "previousReportJobId", "releasedAmount", "shortClosedLines",
+        "completionSequence", "correctionId", "poLineNumber", "acceptedDelta", "lineCount", "receivedOn", "lines", "reasonCode"
     };
 
     private AuditRecord()

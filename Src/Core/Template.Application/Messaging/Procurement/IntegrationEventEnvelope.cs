@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 using Template.Domain.Approvals;
 using Template.Domain.Budgeting;
 using Template.Domain.Common;
+using Template.Domain.Purchasing;
+using Template.Domain.Receiving;
 using Template.Domain.Reporting;
 using Template.Domain.Requisitions;
 using Template.Domain.Sourcing;
@@ -225,6 +227,74 @@ public static class ProcurementIntegrationEventContract
                 cause = value.Cause,
                 requisitionId = value.RequisitionId
             }),
+            BudgetReservationUncommitted value => Map(nameof(BudgetReservation), value.ReservationId, new
+            {
+                reservationId = value.ReservationId,
+                requisitionId = value.RequisitionId,
+                amount = MoneyPayload(value.Amount)
+            }),
+            PurchaseOrderDrafted value => Map(nameof(PurchaseOrder), value.PurchaseOrderId, new
+            {
+                purchaseOrderId = value.PurchaseOrderId,
+                awardId = value.AwardId,
+                requisitionId = value.RequisitionId,
+                buyerId = value.BuyerId
+            }),
+            PurchaseOrderIssued value => Map(nameof(PurchaseOrder), value.PurchaseOrderId, new
+            {
+                purchaseOrderId = value.PurchaseOrderId,
+                number = value.Number,
+                supplierId = value.SupplierId,
+                requisitionId = value.RequisitionId,
+                total = MoneyPayload(value.Total)
+            }),
+            PurchaseOrderCancelled value => Map(nameof(PurchaseOrder), value.PurchaseOrderId, new
+            {
+                purchaseOrderId = value.PurchaseOrderId,
+                requisitionId = value.RequisitionId,
+                reasonCode = value.ReasonCode
+            }),
+            PurchaseOrderCompleted value => Map(nameof(PurchaseOrder), value.PurchaseOrderId, new
+            {
+                purchaseOrderId = value.PurchaseOrderId,
+                requisitionId = value.RequisitionId,
+                shortClosed = value.ShortClosed,
+                completionSequence = value.CompletionSequence
+            }),
+            PurchaseOrderReopened value => Map(nameof(PurchaseOrder), value.PurchaseOrderId, new
+            {
+                purchaseOrderId = value.PurchaseOrderId,
+                requisitionId = value.RequisitionId,
+                completionSequence = value.CompletionSequence
+            }),
+            PurchaseOrderNotificationRequested value => Map(nameof(PurchaseOrder), value.PurchaseOrderId, new
+            {
+                purchaseOrderId = value.PurchaseOrderId,
+                supplierId = value.SupplierId,
+                documentFileId = value.DocumentFileId,
+                attempt = value.Attempt
+            }),
+            ReceiptPosted value => Map(nameof(Receipt), value.ReceiptId, new
+            {
+                receiptId = value.ReceiptId,
+                purchaseOrderId = value.PurchaseOrderId,
+                lineCount = value.LineCount,
+                hasDiscrepancy = value.HasDiscrepancy
+            }),
+            ReceiptDiscrepancyRecorded value => Map(nameof(Receipt), value.ReceiptId, new
+            {
+                receiptId = value.ReceiptId,
+                purchaseOrderId = value.PurchaseOrderId,
+                lineNumbers = value.LineNumbers
+            }),
+            ReceiptCorrected value => Map(nameof(Receipt), value.ReceiptId, new
+            {
+                receiptId = value.ReceiptId,
+                correctionId = value.CorrectionId,
+                purchaseOrderId = value.PurchaseOrderId,
+                poLineNumber = value.PoLineNumber,
+                acceptedDelta = value.AcceptedDelta
+            }),
             _ => throw new NotSupportedException($"Domain event '{domainEvent.GetType().Name}' has no approved integration contract.")
         };
 
@@ -287,11 +357,21 @@ public static class ProcurementIntegrationEventContract
         "procurement.approval.rejected",
         "procurement.approval.expired",
         "procurement.approval.invalidated",
-        "procurement.approval.cancelled"
+        "procurement.approval.cancelled",
+        "procurement.budget.reservation-uncommitted",
+        "procurement.purchase-order.drafted",
+        "procurement.purchase-order.issued",
+        "procurement.purchase-order.cancelled",
+        "procurement.purchase-order.completed",
+        "procurement.purchase-order.reopened",
+        "procurement.purchase-order.notification-requested",
+        "procurement.receipt.posted",
+        "procurement.receipt.discrepancy-recorded",
+        "procurement.receipt.corrected"
     };
 
     /// <summary>
-    /// Phase 29 sourcing, Phase 30 report and Phase 31 approval events carry the aggregate type and ID; their <c>aggregateVersion</c> is the constant "1"
+    /// Phase 29 sourcing, Phase 30 report, Phase 31 approval and Phase 32 purchasing/receiving events carry the aggregate type and ID; their <c>aggregateVersion</c> is the constant "1"
     /// like reservation events (consumers order by the per-aggregate Outbox sequence and use the payload state).
     /// </summary>
     private static (string AggregateType, Guid AggregateId, string AggregateVersion, object Payload) Map(

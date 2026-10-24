@@ -44,7 +44,8 @@ public sealed class ProcurementIntegrationEventContractTests
         var effects = new Effects();
         var handler = new ProcurementIntegrationEventHandler(effects, new Notifications(),
             new Template.Application.Features.Approvals.ApprovalWorkflowStarter(new Features.Procurement.ApprovalTestDoubles.FakeWorkflow(),
-                Microsoft.Extensions.Logging.Abstractions.NullLogger<Template.Application.Features.Approvals.ApprovalWorkflowStarter>.Instance), new Clock());
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<Template.Application.Features.Approvals.ApprovalWorkflowStarter>.Instance),
+            new Features.Procurement.ProcurementTestDoubles().PurchasingEvents(), new Clock());
 
         (await handler.HandleAsync("projection-v1", envelope, CancellationToken.None)).ShouldBe(InboxApplyResult.Applied);
         effects.Calls.ShouldBe(1);
@@ -100,7 +101,17 @@ public sealed class ProcurementIntegrationEventContractTests
             new Template.Domain.Approvals.ApprovalRejected(Occurred, Guid.NewGuid(), 2, requisitionId, Guid.NewGuid()),
             new Template.Domain.Approvals.ApprovalExpired(Occurred, Guid.NewGuid(), requisitionId, Guid.NewGuid()),
             new Template.Domain.Approvals.ApprovalInvalidated(Occurred, Guid.NewGuid(), "supplier-unavailable", requisitionId),
-            new Template.Domain.Approvals.ApprovalCancelled(Occurred, Guid.NewGuid(), "requisition-cancelled", requisitionId)
+            new Template.Domain.Approvals.ApprovalCancelled(Occurred, Guid.NewGuid(), "requisition-cancelled", requisitionId),
+            new BudgetReservationUncommitted(Occurred, reservationId, requisitionId, new Money(10m, "BRL")),
+            new Template.Domain.Purchasing.PurchaseOrderDrafted(Occurred, Guid.NewGuid(), Guid.NewGuid(), requisitionId, Guid.NewGuid()),
+            new Template.Domain.Purchasing.PurchaseOrderIssued(Occurred, Guid.NewGuid(), "PO-2027-000001", Guid.NewGuid(), new Money(10m, "BRL"), requisitionId),
+            new Template.Domain.Purchasing.PurchaseOrderCancelled(Occurred, Guid.NewGuid(), requisitionId, "DraftCancelled"),
+            new Template.Domain.Purchasing.PurchaseOrderCompleted(Occurred, Guid.NewGuid(), requisitionId, false, 1),
+            new Template.Domain.Purchasing.PurchaseOrderReopened(Occurred, Guid.NewGuid(), requisitionId, 1),
+            new Template.Domain.Purchasing.PurchaseOrderNotificationRequested(Occurred, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1),
+            new Template.Domain.Receiving.ReceiptPosted(Occurred, Guid.NewGuid(), Guid.NewGuid(), 1, true),
+            new Template.Domain.Receiving.ReceiptDiscrepancyRecorded(Occurred, Guid.NewGuid(), Guid.NewGuid(), [1]),
+            new Template.Domain.Receiving.ReceiptCorrected(Occurred, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, -1m)
         ];
 
         var envelopes = events.Select(value =>

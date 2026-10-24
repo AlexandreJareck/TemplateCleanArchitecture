@@ -83,6 +83,13 @@ public static class ServiceRegistration
         services.AddScoped<ISupplierSnapshotReader, SupplierSnapshotReader>();
         services.AddScoped<Template.Application.Interfaces.Approvals.IApprovalInstanceRepository, ApprovalInstanceRepository>();
         services.AddScoped<Template.Application.Interfaces.Approvals.IApprovalPolicyRepository, ApprovalPolicyRepository>();
+        // Phase 32: purchase orders, receipts, the gapless order counter, the transactional Inbox and the local supplier notifier.
+        services.AddScoped<Template.Application.Interfaces.Purchasing.IPurchaseOrderRepository, PurchaseOrderRepository>();
+        services.AddScoped<Template.Application.Interfaces.Purchasing.IPurchaseOrderNumberAllocator, PurchaseOrderNumberAllocator>();
+        services.AddScoped<Template.Application.Interfaces.Purchasing.IReceiptRepository, ReceiptRepository>();
+        services.AddScoped<Template.Application.Interfaces.Purchasing.IReceiptNumberAllocator, ReceiptNumberAllocator>();
+        services.AddScoped<Template.Application.Interfaces.Purchasing.ITransactionalInbox, TransactionalInbox>();
+        services.AddScoped<Template.Application.Interfaces.Purchasing.ISupplierOrderNotifier, LocalSupplierOrderNotifier>();
 
         return services;
     }

@@ -10,11 +10,11 @@ namespace Template.Application.Features.Reporting;
 
 public sealed record ReportParametersView(
     Guid? RequisitionId, Guid? RfqId, int? ComparisonSequence, Guid? FiscalPeriodId, Guid? CostCenterId, string? Currency,
-    DateOnly? From, DateOnly? To, Guid? SupplierId)
+    DateOnly? From, DateOnly? To, Guid? SupplierId, Guid? PurchaseOrderId = null)
 {
     public static ReportParametersView Of(ReportParameters parameters) => new(
         parameters.RequisitionId, parameters.RfqId, parameters.ComparisonSequence, parameters.FiscalPeriodId, parameters.CostCenterId,
-        parameters.Currency, parameters.From, parameters.To, parameters.SupplierId);
+        parameters.Currency, parameters.From, parameters.To, parameters.SupplierId, parameters.PurchaseOrderId);
 }
 
 /// <summary>
@@ -94,6 +94,7 @@ public sealed class ReportAccess(ProcurementWriter writer)
         ReportType.RequisitionPdf => [Permissions.RequisitionsCreate, Permissions.RequisitionsReadTeam, Permissions.RequisitionsReadAll],
         ReportType.QuoteComparisonPdf => [Permissions.SourcingQuotesRead],
         ReportType.BudgetConsumptionXlsx => [Permissions.BudgetRead],
+        ReportType.PurchaseOrderPdf => [Permissions.PurchasingOrdersRead],
         _ => [Permissions.SourcingQuotesRead, Permissions.SuppliersRead]
     };
 
@@ -105,6 +106,7 @@ public sealed class ReportAccess(ProcurementWriter writer)
         ReportType.RequisitionPdf => ["requisitionId"],
         ReportType.QuoteComparisonPdf => ["rfqId"],
         ReportType.BudgetConsumptionXlsx => ["fiscalPeriodId", "currency?", "costCenterId?"],
+        ReportType.PurchaseOrderPdf => ["purchaseOrderId"],
         _ => ["from", "to", "supplierId?"]
     };
 

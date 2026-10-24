@@ -345,7 +345,7 @@ foreach ($version in 'v1', 'v2') {
     $response = Get-Status 'GET' "/swagger/$version/swagger.json"
     $captured = Join-Path $outputDirectory "openapi-$version.json"
     [System.IO.File]::WriteAllText($captured, $response.Content)
-    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-31\openapi-$version.json"))
+    $baseline = [System.IO.File]::ReadAllText((Join-Path $repositoryRoot "docs\refactoring\baseline-phase-32\openapi-$version.json"))
     $bytesEqual = ($baseline -replace "`r`n", "`n") -ceq ($response.Content -replace "`r`n", "`n")
     $structuralEqual = (($baseline | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress) -ceq (($response.Content | ConvertFrom-Json) | ConvertTo-Json -Depth 100 -Compress)
     Write-Check "openapi.$version.byte-equal-normalized" $bytesEqual ''
@@ -742,6 +742,102 @@ Write-Check 'approvals.events-dispatched' $outboxApproval ''
 $functionsLog = Invoke-Compose logs --no-color workflow-functions 2>&1 | Out-String
 Write-Check 'approvals.no-key-in-functions-log' (-not $functionsLog.Contains([string]$functionsConfig.environment.ApprovalWorkflowSettings__Key)) ''
 
+# Phase 32: requisition to receipt on the isolated stack. The buyer awards the RFQ again (it is Closed after the Phase
+# 31 cancel); a second synthetic user holding ProcurementManager (copied from the seed user's credential row, so no
+# password is introduced) approves the single level through the real Functions host; the completed approval reaches the
+# Worker purchasing consumer through Outbox and RabbitMQ, which creates exactly one draft. The buyer issues it while the
+# Worker is stopped (document Pending, number allocated once), the Worker renders the PDF with Chromium after its restart,
+# records the document, queues and delivers the supplier notification locally, and the order is received in full.
+function Invoke-ApiAs([hashtable]$Headers, [string]$Method, [string]$Path, $Body, [string]$Version = '') {
+    $requestHeaders = $Headers + @{ 'Idempotency-Key' = [guid]::NewGuid().ToString() }
+    if ($Version) { $requestHeaders['If-Match'] = '"' + $Version + '"' }
+    $json = if ($null -ne $Body) { $Body | ConvertTo-Json -Compress -Depth 6 } else { '' }
+    $result = Get-Status $Method $Path $json $requestHeaders
+    $view = if ($result.Content) { $result.Content | ConvertFrom-Json } else { $null }
+    return [pscustomobject]@{ Status = $result.Status; View = $view }
+}
+
+$managerSql = @'
+CREATE TEMP TABLE p32_user AS SELECT * FROM "Identity"."User" WHERE "NormalizedUserName" = 'ADMIN';
+UPDATE p32_user SET "Id" = gen_random_uuid(), "UserName" = 'p32manager', "NormalizedUserName" = 'P32MANAGER', "Email" = 'p32manager@example.invalid',
+    "NormalizedEmail" = 'P32MANAGER@EXAMPLE.INVALID', "SecurityStamp" = gen_random_uuid()::text, "ConcurrencyStamp" = gen_random_uuid()::text, "Name" = 'Synthetic Manager';
+INSERT INTO "Identity"."User" SELECT * FROM p32_user ON CONFLICT DO NOTHING;
+INSERT INTO "Identity"."UserRoles" ("UserId", "RoleId")
+SELECT u."Id", r."Id" FROM "Identity"."User" u CROSS JOIN "Identity"."Role" r
+WHERE u."NormalizedUserName" = 'P32MANAGER' AND r."NormalizedName" IN ('PROCUREMENTMANAGER', 'RECEIVER')
+ON CONFLICT DO NOTHING;
+SELECT count(*) FROM "Identity"."UserRoles" ur JOIN "Identity"."User" u ON u."Id" = ur."UserId" WHERE u."NormalizedUserName" = 'P32MANAGER';
+'@
+$managerRoles = Invoke-Sql 'POSTGRES_IDENTITY_DB_NAME' $managerSql
+Write-Check 'purchasing.synthetic-manager-created' ([int](($managerRoles -split "`n")[-1]) -eq 2) "roles=$managerRoles"
+$managerAuth = Get-Status 'POST' '/api/v2/account/authenticate' (@{ userName = 'p32manager'; password = $seedPassword } | ConvertTo-Json -Compress)
+$managerToken = if ($managerAuth.Status -eq 200) { ($managerAuth.Content | ConvertFrom-Json).data.jwToken } else { $null }
+$managerHeaders = @{ Authorization = "Bearer $managerToken" }
+Write-Check 'purchasing.manager-authenticated' ($null -ne $managerToken) "status=$($managerAuth.Status)"
+
+$closedRfq = Invoke-Api 'GET' "/api/v2/requests-for-quotation/$($rfq.View.id)" $null
+$reawarded = Invoke-Api 'POST' "/api/v2/requests-for-quotation/$($rfq.View.id)/award" @{ quoteRevisionId = $closedRfq.View.comparison.recommendedQuoteRevisionId } $closedRfq.View.version
+$poAwardId = if ($reawarded.Status -eq 200) { @($reawarded.View.awards | Where-Object { $_.status -eq 'PendingApproval' })[0].id } else { $null }
+Write-Check 'purchasing.rfq-awarded-again' ($null -ne $poAwardId) "status=$($reawarded.Status) code=$($reawarded.View.code)"
+$poAssigned = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT i.""Status"" || ':' || s.""Status"" FROM ""ApprovalInstances"" i JOIN ""ApprovalSteps"" s ON s.""InstanceId"" = i.""Id"" AND s.""Level"" = i.""CurrentLevel"" WHERE i.""AwardId"" = '$poAwardId';" 'Pending:Pending' 120
+Write-Check 'purchasing.approval-assigned' $poAssigned ''
+$poInstanceId = (Invoke-Sql 'POSTGRES_DB_NAME' "SELECT ""Id"" FROM ""ApprovalInstances"" WHERE ""AwardId"" = '$poAwardId';").Trim()
+$poInstance = Invoke-ApiAs $managerHeaders 'GET' "/api/v2/approval-instances/$poInstanceId" $null
+$approved = Invoke-ApiAs $managerHeaders 'POST' "/api/v2/approval-instances/$poInstanceId/steps/1/decision" @{ decision = 'Approved' } $poInstance.View.version
+Write-Check 'purchasing.manager-approves-final-level' ($approved.Status -eq 200) "status=$($approved.Status) code=$($approved.View.code)"
+$draftCreated = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT count(*) || ':' || min(""Status"") FROM ""PurchasingOrders"" WHERE ""AwardId"" = '$poAwardId';" '1:Draft' 180
+Write-Check 'purchasing.functions-finalize-outbox-worker-create-one-draft' $draftCreated ''
+$completedInbox = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT count(*) FROM ""MessagingInbox"" i JOIN ""MessagingOutbox"" o ON o.""EventId"" = i.""EventId"" WHERE i.""ConsumerName"" = 'procurement-purchasing-v1' AND o.""AggregateId"" = '$poInstanceId' AND o.""EventType"" = 'procurement.approval.completed' AND i.""CompletedAtUtc"" IS NOT NULL;" '1' 60
+Write-Check 'purchasing.approval-completed-consumed-once' $completedInbox ''
+
+$orders = Invoke-Api 'GET' "/api/v2/purchase-orders?requisitionId=$requisitionId" $null
+$orderId = if ($orders.Status -eq 200 -and $orders.View.items.Count -eq 1) { $orders.View.items[0].id } else { $null }
+$draft = Invoke-Api 'GET' "/api/v2/purchase-orders/$orderId" $null
+Write-Check 'purchasing.draft-snapshot' ($draft.Status -eq 200 -and $draft.View.total.amount -eq '2900.00' -and $draft.View.supplier.legalName -eq 'Synthetic Approval Supplier Ltda') "status=$($draft.Status) total=$($draft.View.total.amount)"
+$updated = Invoke-Api 'PUT' "/api/v2/purchase-orders/$orderId" @{ deliveryAddress = 'Rua Sintetica 100, Sao Paulo - SP' } $draft.View.version
+Write-Check 'purchasing.draft-delivery-address' ($updated.Status -eq 200) "status=$($updated.Status)"
+
+Invoke-Compose stop worker 2>&1 | Out-Null
+$issued = Invoke-Api 'POST' "/api/v2/purchase-orders/$orderId/issue" $null $updated.View.version
+$poNumber = [string]$issued.View.number
+Write-Check 'purchasing.issued-with-gapless-number' ($issued.Status -eq 200 -and $poNumber -match '^PO-\d{4}-000001$' -and $issued.View.document.status -eq 'Pending') "status=$($issued.Status) number=$poNumber"
+$repeated = Invoke-Api 'POST' "/api/v2/purchase-orders/$orderId/issue" $null $updated.View.version
+Write-Check 'purchasing.repeated-issue-same-number' ($repeated.Status -eq 200 -and $repeated.View.number -eq $poNumber) "status=$($repeated.Status)"
+$requisitionOrdered = Invoke-Api 'GET' "/api/v2/purchase-requisitions/$requisitionId" $null
+Write-Check 'purchasing.requisition-ordered' ($requisitionOrdered.View.status -eq 'Ordered' -and $requisitionOrdered.View.purchaseOrderId -eq $orderId) "status=$($requisitionOrdered.View.status)"
+Write-Check 'purchasing.worker-outage-document-pending' ((Invoke-Api 'GET' "/api/v2/purchase-orders/$orderId" $null).View.document.status -eq 'Pending') ''
+Invoke-Compose up -d --no-build --no-recreate --wait --wait-timeout 180 worker 2>&1 | Out-Null
+$documentReady = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT ""DocumentStatus"" || ':' || ""NotificationStatus"" FROM ""PurchasingOrders"" WHERE ""Id"" = '$orderId';" 'Ready:Sent' 240
+Write-Check 'purchasing.worker-renders-document-and-notifies-after-restart' $documentReady ''
+$deliveries = (Invoke-Sql 'POSTGRES_DB_NAME' "SELECT count(*) FROM ""MessagingNotificationDeliveries"" WHERE ""AggregateId"" = '$orderId' AND ""RecipientType"" = 'Supplier';").Trim()
+Write-Check 'purchasing.supplier-notified-once-locally' ($deliveries -eq '1') "deliveries=$deliveries"
+$documentPath = Join-Path $outputDirectory 'purchase-order.pdf'
+function Save-OrderDocument([string]$Target) {
+    try {
+        $response = Invoke-WebRequest -Uri "$baseUri/api/v2/purchase-orders/$orderId/document" -Headers $reportHeaders -UseBasicParsing -TimeoutSec 60 -OutFile $Target -PassThru
+        return [int]$response.StatusCode
+    }
+    catch { return $(if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }) }
+}
+$documentStatus = Save-OrderDocument $documentPath
+Write-Check 'purchasing.document-downloaded-pdf' ($documentStatus -eq 200 -and (Test-Signature $documentPath ([byte[]](0x25, 0x50, 0x44, 0x46)))) "status=$documentStatus"
+$documentFile = (Invoke-Sql 'POSTGRES_DB_NAME' "SELECT f.""Status"" || ':' || coalesce(f.""ExpiresAtUtc""::text, 'never') FROM ""PurchasingOrders"" o JOIN ""FilesStoredFiles"" f ON f.""Id"" = o.""DocumentFileId"" WHERE o.""Id"" = '$orderId';").Trim()
+Write-Check 'purchasing.document-kept-without-expiry' ($documentFile -eq 'Available:never') $documentFile
+
+$issuedOrder = Invoke-ApiAs $managerHeaders 'GET' "/api/v2/purchase-orders/$orderId" $null
+$overReceipt = Invoke-ApiAs $managerHeaders 'POST' '/api/v2/receipts' @{ purchaseOrderId = $orderId; receivedOn = (Get-Date).ToString('yyyy-MM-dd');
+    lines = @(@{ poLineNumber = 1; received = '2'; accepted = '2'; rejected = '0' }) }
+Write-Check 'purchasing.over-receipt-rejected' ($overReceipt.Status -eq 422) "status=$($overReceipt.Status)"
+$receiptPosted = Invoke-ApiAs $managerHeaders 'POST' '/api/v2/receipts' @{ purchaseOrderId = $orderId; receivedOn = (Get-Date).ToString('yyyy-MM-dd'); location = 'Dock 1';
+    lines = @(@{ poLineNumber = 1; received = '1'; accepted = '1'; rejected = '0' }) }
+Write-Check 'purchasing.receipt-completes-order' ($receiptPosted.Status -eq 201 -and $receiptPosted.View.purchaseOrder.status -eq 'Completed') "status=$($receiptPosted.Status) issued=$($issuedOrder.Status)"
+$requisitionClosed = Invoke-Api 'GET' "/api/v2/purchase-requisitions/$requisitionId" $null
+Write-Check 'purchasing.requisition-closed' ($requisitionClosed.View.status -eq 'Closed') "status=$($requisitionClosed.View.status)"
+$purchasingEvents = Wait-SqlValue 'POSTGRES_DB_NAME' "SELECT count(DISTINCT ""EventType"") FROM ""MessagingOutbox"" WHERE ""AggregateId"" IN ('$orderId', '$($receiptPosted.View.receipt.id)') AND ""EventType"" IN ('procurement.purchase-order.drafted', 'procurement.purchase-order.issued', 'procurement.purchase-order.notification-requested', 'procurement.purchase-order.completed', 'procurement.receipt.posted') AND ""DispatchedAtUtc"" IS NOT NULL;" '5' 90
+Write-Check 'purchasing.events-dispatched' $purchasingEvents ''
+$numberCounter = (Invoke-Sql 'POSTGRES_DB_NAME' "SELECT ""LastValue"" FROM ""PurchasingOrderNumberCounters"" WHERE ""Year"" = $([int]$poNumber.Substring(3, 4));").Trim()
+Write-Check 'purchasing.counter-advanced-once' ($numberCounter -eq '1') "lastValue=$numberCounter"
+
 # Phase 30 changed the run's data on purpose (synthetic roles, master data and reports); the restart idempotency and
 # persistence checks below compare against this state.
 $snapshot1 = Get-DatabaseSnapshot
@@ -782,6 +878,9 @@ Write-Check 'restart.rabbitmq-durable-queues-persisted' ($queuesAfter -match 'de
 Write-Check 'restart.product-v2-get' ((Get-Status 'GET' "/api/v2/product/$productId").Status -eq 200) ''
 $persistedReport = Save-ReportContent $xlsxJob $reportHeaders 'report-after-restart.xlsx'
 Write-Check 'restart.report-output-persisted-in-azurite' ($persistedReport.Status -eq 200 -and (Test-Signature $persistedReport.Path ([byte[]](0x50, 0x4B, 0x03, 0x04)))) "status=$($persistedReport.Status)"
+$persistedOrderDocument = Join-Path $outputDirectory 'purchase-order-after-restart.pdf'
+$persistedOrderStatus = Save-OrderDocument $persistedOrderDocument
+Write-Check 'restart.purchase-order-document-persisted' ($persistedOrderStatus -eq 200 -and (Test-Signature $persistedOrderDocument ([byte[]](0x25, 0x50, 0x44, 0x46)))) "status=$persistedOrderStatus"
 
 # ---------------------------------------------------------------- 6. Graceful shutdown without deleting volumes
 Invoke-Compose stop 2>&1 | Set-Content (Join-Path $outputDirectory '10-final-stop.log')

@@ -5,7 +5,7 @@ const generatedRoot = process.env['ORVAL_OUTPUT'] ?? 'src/app/infrastructure/api
 export default defineConfig({
   templateApi: {
     input: {
-      target: '../../docs/refactoring/baseline-phase-31/openapi-v2.json',
+      target: '../../docs/refactoring/baseline-phase-32/openapi-v2.json',
     },
     output: {
       target: `${generatedRoot}/services.ts`,

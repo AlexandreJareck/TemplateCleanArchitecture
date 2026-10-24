@@ -4,13 +4,14 @@ using Template.Domain.Common;
 
 namespace Template.Domain.Reporting;
 
-/// <summary>Report catalog (RPT-009). <c>PurchaseOrderPdf</c> arrives with Phase 32.</summary>
+/// <summary>Report catalog (RPT-009). <c>PurchaseOrderPdf</c> (Phase 32) is requested by the issue use case only (D32-4).</summary>
 public enum ReportType
 {
     RequisitionPdf,
     QuoteComparisonPdf,
     BudgetConsumptionXlsx,
-    SupplierQuotesXlsx
+    SupplierQuotesXlsx,
+    PurchaseOrderPdf
 }
 
 public enum ReportFormat
@@ -52,7 +53,7 @@ public static class ReportCatalog
 
     public static ReportFormat Format(ReportType type) => type switch
     {
-        ReportType.RequisitionPdf or ReportType.QuoteComparisonPdf => ReportFormat.Pdf,
+        ReportType.RequisitionPdf or ReportType.QuoteComparisonPdf or ReportType.PurchaseOrderPdf => ReportFormat.Pdf,
         _ => ReportFormat.Xlsx
     };
 
@@ -66,10 +67,23 @@ public static class ReportCatalog
         ReportType.RequisitionPdf => "requisition-pdf.v1",
         ReportType.QuoteComparisonPdf => "quote-comparison-pdf.v1",
         ReportType.BudgetConsumptionXlsx => "budget-consumption-xlsx.v1",
+        ReportType.PurchaseOrderPdf => "purchase-order-pdf.v1",
         _ => "supplier-quotes-xlsx.v1"
     };
 
     public static bool IsKnown(ReportType type) => Enum.IsDefined(type);
+
+    /// <summary>
+    /// D32-4: the issued purchase-order document is a business record produced by the issue use case, not a user
+    /// request; the report-jobs API neither lists nor accepts it.
+    /// </summary>
+    public static bool IsSystemOnly(ReportType type) => type == ReportType.PurchaseOrderPdf;
+
+    /// <summary>
+    /// D32-4: the stored output of a business-record document never expires (NFR retention: five years after closure,
+    /// owner-approved purge only); the job itself still expires after the report retention.
+    /// </summary>
+    public static bool KeepsOutput(ReportType type) => type == ReportType.PurchaseOrderPdf;
 }
 
 /// <summary>Safe failure codes exposed on a failed job (RPT-005); never exception text.</summary>

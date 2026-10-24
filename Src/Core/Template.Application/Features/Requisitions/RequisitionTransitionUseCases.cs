@@ -6,7 +6,9 @@ using Template.Application.Common.Results;
 using Template.Application.Features.Approvals;
 using Template.Application.Features.Budgeting;
 using Template.Application.Interfaces.Access;
+using Template.Application.Features.Purchasing;
 using Template.Application.Interfaces.Budgeting;
+using Template.Application.Interfaces.Purchasing;
 using Template.Application.Interfaces.Organization;
 using Template.Application.Interfaces.Requisitions;
 using Template.Application.Interfaces.Sourcing;
@@ -14,6 +16,7 @@ using Template.Application.Services.MasterData;
 using Template.Application.Services.Procurement;
 using Template.Domain.Budgeting;
 using Template.Domain.Common;
+using Template.Domain.Purchasing;
 using Template.Domain.Requisitions;
 using Template.Domain.Sourcing;
 
@@ -52,6 +55,7 @@ public sealed class RequisitionTransitionHandlers(
     IRequisitionNumberAllocator numbers,
     IAccountDirectory accounts,
     IRequestForQuotationRepository rfqs,
+    IPurchaseOrderRepository orders,
     RequisitionAccess access,
     ApprovalCascade approvals,
     ProcurementWriter writer) :
@@ -288,7 +292,21 @@ public sealed class RequisitionTransitionHandlers(
         var cascade = releaseReason == BudgetReleaseReason.Cancelled
             ? await approvals.CancelForRequisitionAsync(requisition.AwardId, cancellationToken)
             : ApprovalCascadeResult.None;
-        return await CommitAsync(requisition, allocation, cancellationToken, rfq, cascade);
+        // Phase 32 (REQ-008, PUR-008): the draft order of an Approved requisition is cancelled in the same commit.
+        var order = releaseReason == BudgetReleaseReason.Cancelled ? await CancelDraftOrderAsync(requisition, reason, cancellationToken) : null;
+        return await CommitAsync(requisition, allocation, cancellationToken, rfq, cascade, order);
+    }
+
+    private async Task<PurchaseOrder?> CancelDraftOrderAsync(PurchaseRequisition requisition, string? reason, CancellationToken cancellationToken)
+    {
+        if (requisition.PurchaseOrderId is not { } id || await orders.FindAsync(id, cancellationToken) is not { Status: PurchaseOrderStatus.Draft } order)
+            return null;
+        var (_, changed, _) = order.Cancel(reason, writer.ActorId, writer.UtcNow, writer.CorrelationId);
+        if (!changed)
+            return null;
+        writer.Audit(PurchasingAudit.Cancelled, PurchasingAudit.Resource, order.Id, "Draft", "Cancelled", reason, ["REQ-008", "PUR-008"],
+            new Dictionary<string, string> { ["requisitionId"] = requisition.Id.ToString(), ["reasonCode"] = "RequisitionCancelled" });
+        return order;
     }
 
     /// <summary>Cancels the requisition's non-terminal RFQ in the same commit (idempotent cascade).</summary>
@@ -331,15 +349,16 @@ public sealed class RequisitionTransitionHandlers(
 
     private async Task<Result<RequisitionView>> CommitAsync(
         PurchaseRequisition requisition, BudgetAllocation? allocation, CancellationToken cancellationToken, RequestForQuotation? rfq = null,
-        ApprovalCascadeResult? cascade = null)
+        ApprovalCascadeResult? cascade = null, PurchaseOrder? order = null)
     {
-        var events = writer.Stage(Events(requisition, allocation, rfq));
+        var events = writer.Stage(Events(requisition, allocation, rfq).Concat(order?.DomainEvents ?? []).ToArray());
         var commit = await writer.CommitAsync(token => requisitions.GetVersionAsync(requisition.Id, token), null, cancellationToken);
         if (commit is not null)
             return commit;
 
         writer.Record(events);
         ClearEvents(requisition, allocation, rfq);
+        order?.ClearDomainEvents();
         if (cascade is not null)
             await approvals.CompleteAsync(cascade, cancellationToken);
         return await access.ViewAsync(requisition, cancellationToken);

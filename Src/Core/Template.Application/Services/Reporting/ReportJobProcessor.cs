@@ -142,7 +142,7 @@ public sealed class ReportJobProcessor(
             // by the FIL-005 cleanup (never an untracked blob).
             var now = writer.UtcNow;
             var (file, fileError) = StoredFile.CreatePending(Guid.NewGuid(), ReportOwnerType, job.Id, content.FileName, mediaType,
-                FileClassification.Confidential, null, now, now + policy.OutputRetention);
+                FileClassification.Confidential, null, now, ReportCatalog.KeepsOutput(job.ReportType) ? null : now + policy.OutputRetention);
             if (fileError is not null)
                 throw new ReportSourceException(ReportFailureCodes.OutputInvalid, "The output metadata is invalid.");
             files.Add(file!);

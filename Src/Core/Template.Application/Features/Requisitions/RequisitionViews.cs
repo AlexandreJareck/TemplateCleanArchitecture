@@ -70,7 +70,8 @@ public sealed record RequisitionView(
     IReadOnlyList<string> AllowedActions,
     string Version,
     Guid? ActiveRfqId = null,
-    RequisitionAwardView? Award = null)
+    RequisitionAwardView? Award = null,
+    Guid? PurchaseOrderId = null)
 {
     public static RequisitionView From(PurchaseRequisition requisition, IReadOnlyList<string> allowedActions) => new(
         requisition.Id,
@@ -113,7 +114,8 @@ public sealed record RequisitionView(
         requisition.ActiveRfqId,
         requisition.AwardId is { } awardId && requisition.AwardedSupplierId is { } supplierId
             ? new RequisitionAwardView(awardId, supplierId, requisition.AwardedSupplierName ?? string.Empty)
-            : null);
+            : null,
+        requisition.PurchaseOrderId);
 
     private static RequisitionLineView Line(RequisitionLine line, string currency) => new(
         line.LineNumber, line.CatalogItemId, line.Description, line.Kind.ToString(), line.CategoryId, line.CategoryCode, line.UnitOfMeasureId,

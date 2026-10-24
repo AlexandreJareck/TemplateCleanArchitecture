@@ -111,4 +111,11 @@ public static class LogEvents
     public static readonly EventId ApprovalWorkflowStartRequested = new(11308, nameof(ApprovalWorkflowStartRequested));
     public static readonly EventId ApprovalReconciliationCompleted = new(11309, nameof(ApprovalReconciliationCompleted));
     public static readonly EventId ApprovalReconciliationRepairFailed = new(11310, nameof(ApprovalReconciliationRepairFailed));
+
+    // Phase 32: purchase orders and receiving (IDs, codes and attempts only; never supplier contacts, prices or reasons).
+    public static readonly EventId PurchaseOrderDrafted = new(11400, nameof(PurchaseOrderDrafted));
+    public static readonly EventId PurchaseOrderDocumentFailed = new(11401, nameof(PurchaseOrderDocumentFailed));
+    public static readonly EventId PurchaseOrderNotificationFailed = new(11402, nameof(PurchaseOrderNotificationFailed));
+    public static readonly EventId PurchasingEventDuplicate = new(11403, nameof(PurchasingEventDuplicate));
+    public static readonly EventId PurchasingEventSkipped = new(11404, nameof(PurchasingEventSkipped));
 }

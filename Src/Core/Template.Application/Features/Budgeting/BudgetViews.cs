@@ -124,6 +124,9 @@ public static class BudgetMoney
     /// <summary>BUD-010 (Phase 31): written with the final approval (APR-013).</summary>
     public const string ReservationCommitted = "budget.reservation.committed";
 
+    /// <summary>PUR-008 (Phase 32): a draft order cancel returns the commitment to <c>Reserved</c>.</summary>
+    public const string ReservationUncommitted = "budget.reservation.uncommitted";
+
     public static readonly ApplicationError PeriodCodeDuplicate = new(
         ProblemCodes.BudgetPeriodCodeDuplicate, ErrorCategory.Conflict, "Another fiscal period already uses this code.", "BUD-001");
 

@@ -262,6 +262,61 @@ public sealed class BudgetAllocation : VersionedAggregateRoot
         return (reservation, true, null);
     }
 
+    /// <summary>
+    /// PUR-008 (Phase 32): a draft purchase-order cancel returns the requisition's <c>Committed</c> reservation to
+    /// <c>Reserved</c> so the buyer can award again (BUD-009 adjusts it then). Idempotent: an already reserved
+    /// reservation is returned unchanged.
+    /// </summary>
+    public (BudgetReservation? Reservation, bool Changed, DomainError? Error) Uncommit(Guid requisitionId, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        ArgumentException.ThrowIfNullOrWhiteSpace(correlationId);
+        var reservation = reservations.FirstOrDefault(candidate => candidate.RequisitionId == requisitionId && candidate.IsActive);
+        if (reservation is null)
+            return (null, false, DomainError.InvalidTransition(BudgetReservationStatus.Released.ToString(), "The requisition has no active reservation.", "PUR-008"));
+        if (reservation.Status == BudgetReservationStatus.Reserved)
+            return (reservation, false, null);
+
+        reservation.MarkReserved(nowUtc);
+        reservation.Record(BudgetReservationOperation.Uncommitted, BudgetReservationStatus.Committed, BudgetReservationStatus.Reserved, null, actorId, nowUtc,
+            correlationId);
+        CommittedAmount -= reservation.Amount;
+        ReservedAmount += reservation.Amount;
+        events.Raise(new BudgetReservationUncommitted(nowUtc, reservation.Id, requisitionId, new Money(reservation.Amount, Currency)));
+        Touch(nowUtc);
+        return (reservation, true, null);
+    }
+
+    /// <summary>
+    /// PUR-010 (Phase 32): releases <paramref name="amount"/> (CALC-008, already capped at the committed amount) of the
+    /// requisition's <c>Committed</c> reservation with reason <c>ShortClosed</c>; the received part stays committed. A
+    /// zero amount changes nothing. The caller holds the allocation row lock and calls it once per short close.
+    /// </summary>
+    public (BudgetReservation? Reservation, bool Changed, DomainError? Error) ReleasePartially(
+        Guid requisitionId, Money amount, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        ArgumentException.ThrowIfNullOrWhiteSpace(correlationId);
+        var reservation = reservations.FirstOrDefault(candidate => candidate.RequisitionId == requisitionId && candidate.IsActive);
+        if (reservation is not { Status: BudgetReservationStatus.Committed })
+            return (null, false, DomainError.InvalidTransition(
+                (reservation?.Status ?? BudgetReservationStatus.Released).ToString(), "Only a Committed reservation is partially released.", "PUR-010"));
+        if (!string.Equals(amount.Currency, Currency, StringComparison.Ordinal))
+            throw new ArgumentException("The released amount must be in the allocation currency (D23-17).", nameof(amount));
+        if (amount.Amount < 0 || amount.Amount > reservation.Amount || !CalculationRules.HasMinorUnitPrecision(amount.Amount, Currency))
+            throw new ArgumentOutOfRangeException(nameof(amount), "The released amount is between zero and the committed amount.");
+        if (amount.Amount == 0)
+            return (reservation, false, null);
+
+        reservation.Reduce(amount.Amount, nowUtc);
+        CommittedAmount -= amount.Amount;
+        reservation.Record(BudgetReservationOperation.PartiallyReleased, BudgetReservationStatus.Committed, BudgetReservationStatus.Committed,
+            BudgetReleaseReason.ShortClosed, actorId, nowUtc, correlationId);
+        events.Raise(new BudgetReservationReleased(nowUtc, reservation.Id, requisitionId, amount, BudgetReleaseReason.ShortClosed));
+        Touch(nowUtc);
+        return (reservation, true, null);
+    }
+
     private static bool IsValidAmount(decimal amount, string currency) =>
         amount > 0 && amount <= CalculationRules.MaxAmount && CalculationRules.HasMinorUnitPrecision(amount, currency);
 
@@ -298,4 +353,11 @@ public sealed record BudgetReservationAdjusted(DateTime OccurredAtUtc, Guid Rese
     : DomainEvent(OccurredAtUtc)
 {
     public override string EventType => "procurement.budget.reservation-adjusted";
+}
+
+/// <summary><c>procurement.budget.reservation-uncommitted</c> (Phase 32, PUR-008 draft purchase-order cancel).</summary>
+public sealed record BudgetReservationUncommitted(DateTime OccurredAtUtc, Guid ReservationId, Guid RequisitionId, Money Amount)
+    : DomainEvent(OccurredAtUtc)
+{
+    public override string EventType => "procurement.budget.reservation-uncommitted";
 }
