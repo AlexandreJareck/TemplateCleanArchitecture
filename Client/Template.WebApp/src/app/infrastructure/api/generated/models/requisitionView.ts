@@ -50,4 +50,6 @@ export interface RequisitionView {
   /** @nullable */
   activeRfqId?: string | null;
   award?: RequisitionAwardView;
+  /** @nullable */
+  purchaseOrderId?: string | null;
 }

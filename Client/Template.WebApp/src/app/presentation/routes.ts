@@ -199,6 +199,46 @@ export const routes: Routes = [
         title: 'Aprovação',
       },
       {
+        path: 'purchasing/orders',
+        canActivate: [permissionGuard],
+        data: { permission: 'purchasing.orders.read' },
+        loadComponent: () =>
+          import('./features/purchase-orders.page').then((module) => module.PurchaseOrdersPage),
+        title: 'Pedidos de compra',
+      },
+      {
+        path: 'purchasing/orders/:id',
+        loadComponent: () =>
+          import('./features/purchase-order-detail.page').then(
+            (module) => module.PurchaseOrderDetailPage,
+          ),
+        title: 'Pedido de compra',
+      },
+      {
+        path: 'receiving/queue',
+        canActivate: [permissionGuard],
+        data: { permission: 'receiving.receipts.create', receiving: true },
+        loadComponent: () =>
+          import('./features/purchase-orders.page').then((module) => module.PurchaseOrdersPage),
+        title: 'Recebimento',
+      },
+      {
+        path: 'receiving/orders/:id/receipts/new',
+        canActivate: [permissionGuard],
+        data: { permission: 'receiving.receipts.create' },
+        loadComponent: () =>
+          import('./features/receipt-editor.page').then((module) => module.ReceiptEditorPage),
+        title: 'Novo recebimento',
+      },
+      {
+        path: 'receiving/receipts/:id',
+        canActivate: [permissionGuard],
+        data: { anyPermission: ['receiving.receipts.read', 'receiving.receipts.create'] },
+        loadComponent: () =>
+          import('./features/receipt-detail.page').then((module) => module.ReceiptDetailPage),
+        title: 'Recebimento',
+      },
+      {
         path: 'dev/primitives',
         loadComponent: () =>
           import('./shell/primitive-gallery').then((module) => module.PrimitiveGallery),

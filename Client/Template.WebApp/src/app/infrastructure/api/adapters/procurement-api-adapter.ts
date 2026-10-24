@@ -426,6 +426,7 @@ export function mapRequisition(value: RequisitionView): Requisition {
     ),
     activeRfqId: value.activeRfqId ?? undefined,
     awardedSupplierName: value.award?.supplierName ?? undefined,
+    purchaseOrderId: value.purchaseOrderId ?? undefined,
   };
 }
 

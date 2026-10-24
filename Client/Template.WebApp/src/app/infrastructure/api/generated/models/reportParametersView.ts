@@ -24,4 +24,6 @@ export interface ReportParametersView {
   to?: string | null;
   /** @nullable */
   supplierId?: string | null;
+  /** @nullable */
+  purchaseOrderId?: string | null;
 }
