@@ -124,6 +124,12 @@ public static class ServiceRegistration
         await DefaultRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
         await PermissionRoles.SeedAsync(services.GetRequiredService<RoleManager<ApplicationRole>>());
         await DefaultBasicUser.SeedAsync(services.GetRequiredService<UserManager<ApplicationUser>>());
+
+        var configuration = services.GetRequiredService<IConfiguration>();
+        if (configuration.GetValue<bool>("DemoData:Enabled"))
+            await DemoIdentityData.SeedAsync(
+                services.GetRequiredService<UserManager<ApplicationUser>>(),
+                configuration["DemoData:Password"] ?? string.Empty);
     }
 
     /// <summary>Readiness probe of the Identity database (EF Core <c>CanConnectAsync</c>), without exposing the context.</summary>

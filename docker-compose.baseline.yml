@@ -4,14 +4,26 @@
 # over HTTP on a loopback port, and does not mount user secrets or certificates. docker-compose.override.yml is not
 # loaded. Volumes are created under the project name, so they are new and distinct from the normal volumes.
 services:
+  webapp:
+    container_name: !reset null
+
+  worker:
+    container_name: !reset null
+
+  workflow-functions:
+    container_name: !reset null
+
+  workflow-storage:
+    container_name: !reset null
+
+  azurite:
+    container_name: !reset null
+
   webapi:
     container_name: !reset null
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
-      # HTTP only: clear the base file's default certificate, which Kestrel loads eagerly and is not mounted here.
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=
     ports:
       - "127.0.0.1:${P14_WEBAPI_PORT:?P14_WEBAPI_PORT must be set}:8080"
 

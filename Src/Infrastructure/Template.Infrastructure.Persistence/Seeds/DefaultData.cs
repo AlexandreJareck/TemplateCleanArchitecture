@@ -7,7 +7,7 @@ namespace Template.Infrastructure.Persistence.Seeds;
 
 public static class DefaultData
 {
-    public static async Task SeedAsync(ApplicationDbContext applicationDbContext)
+    public static async Task SeedAsync(ApplicationDbContext applicationDbContext, bool includeDemoData = false)
     {
         if (!await applicationDbContext.Products.AnyAsync())
         {
@@ -29,6 +29,9 @@ public static class DefaultData
             applicationDbContext.Add(OrganizationSettings.CreateDefault(DateTime.UtcNow));
             await applicationDbContext.SaveChangesAsync();
         }
+
+        if (includeDemoData)
+            await DemoApplicationData.SeedAsync(applicationDbContext);
     }
 }
 

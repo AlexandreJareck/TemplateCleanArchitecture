@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using Template.Application.Common.Paging;
 using Template.Application.Interfaces;
@@ -11,6 +12,9 @@ using Template.Domain.Common;
 using Template.Domain.Organization;
 using Template.Domain.Suppliers;
 using Template.Infrastructure.Persistence;
+using Template.Infrastructure.Persistence.Contexts;
+using Template.Domain.Budgeting;
+using Template.Domain.Requisitions;
 
 namespace Template.Integration.Tests.Data;
 
@@ -191,6 +195,36 @@ public sealed class MasterDataPersistenceAdapterTests : IAsyncDisposable
         settings!.Id.ShouldBe(OrganizationSettings.SingletonId);
         (settings.BaseCurrency, settings.TimeZone).ShouldBe(("BRL", "America/Sao_Paulo"));
         (await read.ServiceProvider.GetRequiredService<IOrganizationSettingsLock>().HasBudgetAllocationsAsync(CancellationToken.None)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Initialization_WhenDemoDataIsEnabled_SeedsARepeatableAcademicScenario()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["TestDatabaseName"] = Guid.NewGuid().ToString("N"),
+            ["DemoData:Enabled"] = "true"
+        }).Build();
+        var services = new ServiceCollection();
+        services.AddPersistenceInfrastructure(configuration, useInMemoryDatabase: true);
+        services.AddScoped<IAuthenticatedUserService>(_ => new AuthenticatedUserService(Guid.NewGuid().ToString(), "integration"));
+        await using var demoProvider = services.BuildServiceProvider();
+
+        await using (var scope = demoProvider.CreateAsyncScope())
+            await scope.ServiceProvider.InitializeApplicationDatabaseAsync(applyMigrations: false);
+        await using (var scope = demoProvider.CreateAsyncScope())
+            await scope.ServiceProvider.InitializeApplicationDatabaseAsync(applyMigrations: false);
+
+        await using var read = demoProvider.CreateAsyncScope();
+        var context = read.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        (await context.Set<Department>().CountAsync()).ShouldBe(3);
+        (await context.Set<CostCenter>().CountAsync()).ShouldBe(4);
+        (await context.Set<Category>().CountAsync()).ShouldBe(4);
+        (await context.Set<CatalogItem>().CountAsync()).ShouldBe(6);
+        (await context.Set<Supplier>().CountAsync()).ShouldBe(3);
+        (await context.Set<FiscalPeriod>().CountAsync()).ShouldBe(1);
+        (await context.Set<BudgetAllocation>().CountAsync()).ShouldBe(4);
+        (await context.Set<PurchaseRequisition>().CountAsync()).ShouldBe(3);
     }
 
     public async ValueTask DisposeAsync() => await provider.DisposeAsync();

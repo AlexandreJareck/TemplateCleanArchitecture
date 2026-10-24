@@ -1,9 +1,27 @@
 services:
+  webapp:
+    build:
+      context: Client/Template.WebApp
+      dockerfile: Dockerfile
+    container_name: templatecleanarch-webapp
+    restart: unless-stopped
+    depends_on:
+      - webapi
+    networks:
+      - nw
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
   worker:
     build:
       context: .
       dockerfile: Src/Workers/Template.Worker/Dockerfile
     restart: always
+    container_name: templatecleanarch-worker
     depends_on:
       db:
         condition: service_healthy
@@ -36,7 +54,7 @@ services:
     build:
       context: .
       dockerfile: Src/Presentation/Template.WebApi/Dockerfile
-    container_name: my_dotnet_app
+    container_name: templatecleanarch-webapi
     # Startup order (Phase 14): migrations and seeds run at WebApi startup, so it waits until both PostgreSQL
     # databases accept queries. Elasticsearch and RabbitMQ keep their pre-Phase 14 health conditions; Redis stays
     # optional (the cache misses when Redis is down), so it is not a startup prerequisite.
@@ -50,8 +68,6 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB_NAME};SearchPath=public
       - ConnectionStrings__IdentityConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_IDENTITY_DB_NAME};SearchPath=public
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetcore.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_CERTIFICATE_PASSWORD}
       - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD}
       - RabbitMqSettings__HostName=rabbitmq
       - RabbitMqSettings__Port=5672
@@ -66,6 +82,8 @@ services:
       - ApprovalWorkflowSettings__Enabled=true
       - ApprovalWorkflowSettings__BaseUrl=http://workflow-functions/api/
       - ApprovalWorkflowSettings__Key=${APPROVAL_WORKFLOW_KEY}
+      - DemoData__Enabled=${DEMO_DATA_ENABLED:-false}
+      - DemoData__Password=${DEMO_USER_PASSWORD}
     networks:
       - nw
 
@@ -77,6 +95,7 @@ services:
       context: .
       dockerfile: Src/Functions/Template.WorkflowFunctions/Dockerfile
     restart: always
+    container_name: templatecleanarch-workflow
     depends_on:
       db:
         condition: service_healthy
@@ -101,6 +120,7 @@ services:
     # provider, on its own workflow-storage-data volume, so orchestration state never shares a store with report outputs.
     # Same synthetic account variables as azurite; nothing publishes its ports.
     image: mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1da1a2d537e08f3e6764dd1f5ae00cf0346bcaf625b968ec3f0971fd5
+    container_name: templatecleanarch-workflow-storage
     restart: always
     command: ["azurite", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--tableHost", "0.0.0.0", "--location", "/data", "--skipApiVersionCheck"]
     environment:
@@ -121,6 +141,7 @@ services:
     # whose name and key come from the git-ignored .env (never the published development account). The container holding
     # report outputs is private; nothing publishes the blob port. Azure Blob Storage in Azure is never provisioned here.
     image: mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1da1a2d537e08f3e6764dd1f5ae00cf0346bcaf625b968ec3f0971fd5
+    container_name: templatecleanarch-files
     restart: always
     command: ["azurite-blob", "--blobHost", "0.0.0.0", "--blobPort", "10000", "--location", "/data", "--skipApiVersionCheck"]
     environment:
@@ -140,7 +161,7 @@ services:
     # PostgreSQL 16.15 (Phase 16 minor update; same on-disk format as the Phase 14 pin 16.11, no dump/restore needed).
     # Rollback to 16.11: docker-compose.postgres-rollback.yml. PostgreSQL 18 is a separate, not yet authorized migration.
     image: postgres:16.15@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
-    container_name: my_postgres_db
+    container_name: templatecleanarch-postgres
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -163,7 +184,7 @@ services:
       start_period: 30s
 
   elasticsearch:
-    container_name: elasticsearch
+    container_name: templatecleanarch-elasticsearch
     # Elasticsearch 9.x on its own volume. Never mount v01 here: it holds 8.17.4 data that a 9.x node must not open,
     # and an upgraded volume cannot be reopened by 8.x. Move data only through snapshot/restore
     # (docs/refactoring/phase-11-report.md); v01 stays untouched for rollback to the 8.17.4 image.
@@ -186,7 +207,7 @@ services:
       start_period: 30s
 
   kibana:
-    container_name: kibana
+    container_name: templatecleanarch-kibana
     image: docker.elastic.co/kibana/kibana:9.5.5@sha256:13b72ce7222c36e4213229004ae62a87aeb32fd372ebfa6fb38f7a3285fdbb78
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
@@ -204,7 +225,7 @@ services:
       start_period: 60s
 
   rabbitmq:
-    container_name: rabbitmq
+    container_name: templatecleanarch-rabbitmq
     # Phase 17: RabbitMQ 4.3.6 (Erlang/OTP 27.3.4.18) management image on new volumes. 4.3 is reachable only from the
     # latest 4.2 patch with every stable feature flag (including khepri_db) enabled, and feature flags cannot be
     # disabled, so never mount rabbitmq-lib here: it holds the pre-Phase 17 4.2.2 data kept for rollback
@@ -240,7 +261,7 @@ services:
     # source data kept for rollback (docker-compose.redis-rollback.yml). Move data only through an RDB copy or
     # MIGRATE COPY (docs/refactoring/phase-15-report.md).
     image: redis:8.10.2@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6
-    container_name: redis
+    container_name: templatecleanarch-redis
     restart: always
     networks:
       - nw
@@ -266,7 +287,7 @@ services:
     # It uses the new redis-insight-data volume. Never mount redis-insight-volume_data here: it holds the Redis Insight
     # 1.14 state (/db, different format) kept for rollback (docker-compose.redis-insight-rollback.yml).
     image: redis/redisinsight:3.8.0@sha256:b5e19ee240abef6edb435871b90ff8a210995422e8e018ab61c0339d318a1f84
-    container_name: redis-insight
+    container_name: templatecleanarch-redis-insight
     restart: always
     depends_on:
       - redis
