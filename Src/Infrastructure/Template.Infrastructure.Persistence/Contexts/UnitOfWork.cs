@@ -37,7 +37,9 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         "IX_SourcingQuoteRevisions_QuoteId_RevisionNumber",
         "IX_SourcingComparisons_RfqId_Sequence",
         "IX_SourcingAwards_RfqId_Pending",
-        "IX_SourcingRfqs_RequisitionId_RoundNumber"
+        "IX_SourcingRfqs_RequisitionId_RoundNumber",
+        "IX_ApprovalHistory_InstanceId_Sequence",
+        "IX_ApprovalSteps_InstanceId_Level"
     };
 
     /// <summary>
@@ -57,7 +59,9 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         IFiscalPeriodRepository.NoOverlapKey,
         IBudgetAllocationRepository.UniqueKey,
         IRequestForQuotationRepository.ActiveRfqUniqueKey,
-        Template.Application.Interfaces.Reporting.IReportJobRepository.ActiveUniqueKey
+        Template.Application.Interfaces.Reporting.IReportJobRepository.ActiveUniqueKey,
+        Template.Application.Interfaces.Approvals.IApprovalInstanceRepository.AwardUniqueKey,
+        Template.Application.Interfaces.Approvals.IApprovalPolicyRepository.VersionUniqueKey
     };
 
     private IDbContextTransaction? transaction;

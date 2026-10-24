@@ -78,6 +78,8 @@ public static class ServiceRegistration
         services.AddScoped<IReportSourceReader, ReportSourceReader>();
         services.AddScoped<IRfqNumberAllocator, RfqNumberAllocator>();
         services.AddScoped<ISupplierSnapshotReader, SupplierSnapshotReader>();
+        services.AddScoped<Template.Application.Interfaces.Approvals.IApprovalInstanceRepository, ApprovalInstanceRepository>();
+        services.AddScoped<Template.Application.Interfaces.Approvals.IApprovalPolicyRepository, ApprovalPolicyRepository>();
 
         return services;
     }
@@ -91,6 +93,9 @@ public static class ServiceRegistration
         var context = services.GetRequiredService<ApplicationDbContext>();
         if (applyMigrations)
             await context.Database.MigrateAsync();
+        else if (context.Database.IsInMemory())
+            // Model seed data (approval policy version 1, APR-017) is applied by migrations; the in-memory provider needs EnsureCreated.
+            await context.Database.EnsureCreatedAsync();
 
         if (seedDefaultData)
             await DefaultData.SeedAsync(context);
