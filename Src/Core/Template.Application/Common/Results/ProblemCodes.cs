@@ -88,4 +88,16 @@ public static class ProblemCodes
     public const string ReportNotReady = "report.not-ready";
     public const string ReportExpired = "report.expired";
     public const string FileUnavailable = "file.unavailable";
+
+    // Phase 31: approval workflow (APR-*, POL-001).
+    public const string ApprovalNotAssignee = "approval.not-assignee";
+    public const string ApprovalStepNotCurrent = "approval.step-not-current";
+    public const string ApprovalSelfApproval = "approval.self-approval";
+    public const string ApprovalDuplicateApprover = "approval.duplicate-approver";
+    public const string ApprovalMakerChecker = "approval.maker-checker";
+    public const string ApprovalInvalidDelegate = "approval.invalid-delegate";
+    public const string ApprovalStepAlreadyDecided = "approval.step-already-decided";
+    public const string ApprovalInstanceEnded = "approval.instance-ended";
+    public const string ApprovalWorkflowUnavailable = "approval.workflow-unavailable";
+    public const string PolicyVersionInUse = "policy.version-in-use";
 }

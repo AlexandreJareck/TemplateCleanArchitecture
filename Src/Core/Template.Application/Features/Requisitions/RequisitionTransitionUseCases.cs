@@ -3,6 +3,7 @@ using System.Globalization;
 using MediatR;
 using Template.Application.Common.Concurrency;
 using Template.Application.Common.Results;
+using Template.Application.Features.Approvals;
 using Template.Application.Features.Budgeting;
 using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Budgeting;
@@ -52,6 +53,7 @@ public sealed class RequisitionTransitionHandlers(
     IAccountDirectory accounts,
     IRequestForQuotationRepository rfqs,
     RequisitionAccess access,
+    ApprovalCascade approvals,
     ProcurementWriter writer) :
     IRequestHandler<SubmitRequisitionCommand, Result<RequisitionView>>,
     IRequestHandler<WithdrawRequisitionCommand, Result<RequisitionView>>,
@@ -282,7 +284,11 @@ public sealed class RequisitionTransitionHandlers(
         var rfq = await CancelActiveRfqAsync(
             requisition, releaseReason == BudgetReleaseReason.Withdrawn ? "RequisitionWithdrawn" : "RequisitionCancelled",
             releaseReason == BudgetReleaseReason.Withdrawn ? "REQ-007" : "REQ-008", cancellationToken);
-        return await CommitAsync(requisition, allocation, cancellationToken, rfq);
+        // Phase 31 (REQ-008): a pending approval of the cancelled award ends Cancelled in the same commit.
+        var cascade = releaseReason == BudgetReleaseReason.Cancelled
+            ? await approvals.CancelForRequisitionAsync(requisition.AwardId, cancellationToken)
+            : ApprovalCascadeResult.None;
+        return await CommitAsync(requisition, allocation, cancellationToken, rfq, cascade);
     }
 
     /// <summary>Cancels the requisition's non-terminal RFQ in the same commit (idempotent cascade).</summary>
@@ -324,7 +330,8 @@ public sealed class RequisitionTransitionHandlers(
     }
 
     private async Task<Result<RequisitionView>> CommitAsync(
-        PurchaseRequisition requisition, BudgetAllocation? allocation, CancellationToken cancellationToken, RequestForQuotation? rfq = null)
+        PurchaseRequisition requisition, BudgetAllocation? allocation, CancellationToken cancellationToken, RequestForQuotation? rfq = null,
+        ApprovalCascadeResult? cascade = null)
     {
         var events = writer.Stage(Events(requisition, allocation, rfq));
         var commit = await writer.CommitAsync(token => requisitions.GetVersionAsync(requisition.Id, token), null, cancellationToken);
@@ -333,6 +340,8 @@ public sealed class RequisitionTransitionHandlers(
 
         writer.Record(events);
         ClearEvents(requisition, allocation, rfq);
+        if (cascade is not null)
+            await approvals.CompleteAsync(cascade, cancellationToken);
         return await access.ViewAsync(requisition, cancellationToken);
     }
 

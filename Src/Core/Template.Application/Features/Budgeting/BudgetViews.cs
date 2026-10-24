@@ -121,6 +121,9 @@ public static class BudgetMoney
     public const string ReservationCreated = "budget.reservation.created";
     public const string ReservationReleased = "budget.reservation.released";
 
+    /// <summary>BUD-010 (Phase 31): written with the final approval (APR-013).</summary>
+    public const string ReservationCommitted = "budget.reservation.committed";
+
     public static readonly ApplicationError PeriodCodeDuplicate = new(
         ProblemCodes.BudgetPeriodCodeDuplicate, ErrorCategory.Conflict, "Another fiscal period already uses this code.", "BUD-001");
 

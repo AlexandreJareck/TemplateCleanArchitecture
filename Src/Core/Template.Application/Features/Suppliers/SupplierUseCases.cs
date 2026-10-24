@@ -4,6 +4,7 @@ using MediatR;
 using Template.Application.Common.Concurrency;
 using Template.Application.Common.Paging;
 using Template.Application.Common.Results;
+using Template.Application.Features.Approvals;
 using Template.Application.Interfaces.Catalog;
 using Template.Application.Interfaces.Suppliers;
 using Template.Application.Services.MasterData;
@@ -117,6 +118,7 @@ public sealed class ChangeSupplierStatusCommandValidator : AbstractValidator<Cha
 public sealed class SupplierCommandHandlers(
     ISupplierRepository suppliers,
     ICategoryRepository categories,
+    ApprovalCascade approvals,
     MasterDataWriter writer) :
     IRequestHandler<CreateSupplierCommand, Result<SupplierView>>,
     IRequestHandler<UpdateSupplierCommand, Result<SupplierView>>,
@@ -201,8 +203,15 @@ public sealed class SupplierCommandHandlers(
 
         writer.Audit(action, SupplierAudit.Resource, supplier.Id, from.ToString(), supplier.Status.ToString(),
             MasterDataRules.NormalizeReason(request.Reason), rules, occurredAtUtc: now);
+        // APR-012 (SUP-004 -b): pending approvals that award this supplier end Invalidated in the same commit.
+        var cascade = request.Transition is SupplierStatusTransition.Suspend or SupplierStatusTransition.Inactivate
+            ? await approvals.InvalidateForSupplierAsync(supplier.Id, cancellationToken)
+            : ApprovalCascadeResult.None;
         var commit = await writer.CommitAsync(token => suppliers.GetVersionAsync(supplier.Id, token), null, cancellationToken);
-        return commit is null ? SupplierView.From(supplier) : commit;
+        if (commit is not null)
+            return commit;
+        await approvals.CompleteAsync(cascade, cancellationToken);
+        return SupplierView.From(supplier);
     }
 
     private async Task<Result<SupplierView>> ChangeAsync(

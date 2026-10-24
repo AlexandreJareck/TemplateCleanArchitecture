@@ -24,6 +24,7 @@ public static class DomainErrorMapping
             DomainErrorKind.NotFound => new ApplicationError(ProblemCodes.NotFound, ErrorCategory.NotFound, error.Message),
             DomainErrorKind.TooLarge => new ApplicationError(error.Code, ErrorCategory.PayloadTooLarge, error.Message, error.RuleId, extensions),
             DomainErrorKind.UnsupportedMediaType => new ApplicationError(error.Code, ErrorCategory.UnsupportedMediaType, error.Message, error.RuleId, extensions),
+            DomainErrorKind.Forbidden => new ApplicationError(error.Code, ErrorCategory.Forbidden, error.Message, error.RuleId, extensions),
             _ => new ApplicationError(error.Code, ErrorCategory.Conflict, error.Message, error.RuleId, extensions)
         };
     }

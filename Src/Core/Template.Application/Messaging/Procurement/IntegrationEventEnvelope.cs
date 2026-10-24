@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Template.Domain.Approvals;
 using Template.Domain.Budgeting;
 using Template.Domain.Common;
 using Template.Domain.Reporting;
@@ -159,6 +160,71 @@ public static class ProcurementIntegrationEventContract
                 requestedBy = value.RequestedBy,
                 failureCode = value.FailureCode
             }),
+            ApprovalStarted value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                awardId = value.AwardId,
+                requisitionId = value.RequisitionId,
+                requiredLevels = value.RequiredLevels,
+                policyVersion = value.PolicyRef
+            }),
+            ApprovalStepAssigned value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                level = value.Level,
+                assigneeUserId = value.AssigneeUserId,
+                assigneeRole = value.AssigneeRole,
+                dueAt = value.DueAtUtc,
+                assignmentSequence = value.AssignmentSequence
+            }),
+            ApprovalReminderDue value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                level = value.Level,
+                reminderNumber = value.ReminderNumber,
+                assigneeUserId = value.AssigneeUserId,
+                assigneeRole = value.AssigneeRole
+            }),
+            ApprovalStepEscalated value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                level = value.Level,
+                escalationCount = value.EscalationCount,
+                assigneeRole = value.AssigneeRole,
+                dueAt = value.DueAtUtc
+            }),
+            ApprovalCompleted value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                awardId = value.AwardId,
+                requisitionId = value.RequisitionId,
+                requesterId = value.RequesterId
+            }),
+            ApprovalRejected value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                level = value.Level,
+                requisitionId = value.RequisitionId,
+                requesterId = value.RequesterId
+            }),
+            ApprovalExpired value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                requisitionId = value.RequisitionId,
+                requesterId = value.RequesterId
+            }),
+            ApprovalInvalidated value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                cause = value.Cause,
+                requisitionId = value.RequisitionId
+            }),
+            ApprovalCancelled value => Map(nameof(ApprovalInstance), value.ApprovalInstanceId, new
+            {
+                approvalInstanceId = value.ApprovalInstanceId,
+                cause = value.Cause,
+                requisitionId = value.RequisitionId
+            }),
             _ => throw new NotSupportedException($"Domain event '{domainEvent.GetType().Name}' has no approved integration contract.")
         };
 
@@ -212,11 +278,20 @@ public static class ProcurementIntegrationEventContract
         "procurement.award.submitted",
         "procurement.report.requested",
         "procurement.report.ready",
-        "procurement.report.failed"
+        "procurement.report.failed",
+        "procurement.approval.started",
+        "procurement.approval.step-assigned",
+        "procurement.approval.reminder-due",
+        "procurement.approval.step-escalated",
+        "procurement.approval.completed",
+        "procurement.approval.rejected",
+        "procurement.approval.expired",
+        "procurement.approval.invalidated",
+        "procurement.approval.cancelled"
     };
 
     /// <summary>
-    /// Phase 29 sourcing and Phase 30 report events carry the aggregate type and ID; their <c>aggregateVersion</c> is the constant "1"
+    /// Phase 29 sourcing, Phase 30 report and Phase 31 approval events carry the aggregate type and ID; their <c>aggregateVersion</c> is the constant "1"
     /// like reservation events (consumers order by the per-aggregate Outbox sequence and use the payload state).
     /// </summary>
     private static (string AggregateType, Guid AggregateId, string AggregateVersion, object Payload) Map(
