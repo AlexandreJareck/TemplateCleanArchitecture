@@ -13,6 +13,9 @@ services:
   workflow-functions:
     container_name: !reset null
 
+  workflow-monitor:
+    container_name: !reset null
+
   workflow-storage:
     container_name: !reset null
 
