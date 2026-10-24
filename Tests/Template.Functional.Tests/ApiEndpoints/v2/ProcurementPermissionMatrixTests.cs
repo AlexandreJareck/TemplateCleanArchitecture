@@ -62,7 +62,18 @@ public sealed class ProcurementPermissionMatrixTests(ProcurementWebApplicationFa
         ("POST", $"/api/v2/approval-instances/{Guid.Empty}/steps/1/reassign", [Permissions.ApprovalsAdminister]),
         ("POST", $"/api/v2/approval-instances/{Guid.Empty}/cancel", [Permissions.ApprovalsAdminister]),
         ("GET", "/api/v2/approval-policies", [Permissions.ApprovalsPoliciesManage, Permissions.ApprovalsReadAll]),
-        ("POST", "/api/v2/approval-policies", [Permissions.ApprovalsPoliciesManage])
+        ("POST", "/api/v2/approval-policies", [Permissions.ApprovalsPoliciesManage]),
+        // Phase 32 purchasing and receiving (order reads are PUR-011 scoped by the use case; receipts need a receiving permission).
+        ("PUT", $"/api/v2/purchase-orders/{Guid.Empty}", [Permissions.PurchasingOrdersManage]),
+        ("POST", $"/api/v2/purchase-orders/{Guid.Empty}/issue", [Permissions.PurchasingOrdersIssue]),
+        ("POST", $"/api/v2/purchase-orders/{Guid.Empty}/cancel", [Permissions.PurchasingOrdersCancel]),
+        ("POST", $"/api/v2/purchase-orders/{Guid.Empty}/short-close", [Permissions.PurchasingOrdersShortClose]),
+        ("POST", $"/api/v2/purchase-orders/{Guid.Empty}/document/retry", [Permissions.PurchasingOrdersIssue]),
+        ("POST", $"/api/v2/purchase-orders/{Guid.Empty}/notification/retry", [Permissions.PurchasingOrdersIssue]),
+        ("GET", $"/api/v2/purchase-orders/{Guid.Empty}/document", [Permissions.PurchasingOrdersRead]),
+        ("GET", "/api/v2/receipts", [Permissions.ReceivingReceiptsRead, Permissions.ReceivingReceiptsCreate]),
+        ("POST", "/api/v2/receipts", [Permissions.ReceivingReceiptsCreate]),
+        ("POST", $"/api/v2/receipts/{Guid.Empty}/corrections", [Permissions.ReceivingReceiptsCorrect])
     ];
 
     public static TheoryData<string> Roles => new(SeededRoles.All);
@@ -118,5 +129,12 @@ public sealed class ProcurementPermissionMatrixTests(ProcurementWebApplicationFa
                      Permissions.SourcingWaiversNonLeading, Permissions.SourcingRatesManual })
             SeededRoles.All.Where(role => SeededRoles.PermissionsByRole[role].Contains(waiver)).ShouldBe([SeededRoles.ProcurementManager]);
         SeededRoles.PermissionsByRole[SeededRoles.Administrator].ShouldNotContain(Permissions.SourcingQuotesRead);
+        // Phase 32: the ShortClose waiver is ProcurementManager-only; issued-order cancel also needs cancel-any (D32-7);
+        // receivers post receipts but never issue or read prices.
+        SeededRoles.All.Where(role => SeededRoles.PermissionsByRole[role].Contains(Permissions.PurchasingOrdersShortClose)).ShouldBe([SeededRoles.ProcurementManager]);
+        SeededRoles.All.Where(role => SeededRoles.PermissionsByRole[role].Contains(Permissions.PurchasingOrdersCancel)
+            && SeededRoles.PermissionsByRole[role].Contains(Permissions.RequisitionsCancelAny)).ShouldBe([SeededRoles.ProcurementManager]);
+        SeededRoles.PermissionsByRole[SeededRoles.Receiver].ShouldNotContain(Permissions.PurchasingOrdersRead);
+        SeededRoles.PermissionsByRole[SeededRoles.Receiver].ShouldNotContain(Permissions.PurchasingOrdersIssue);
     }
 }

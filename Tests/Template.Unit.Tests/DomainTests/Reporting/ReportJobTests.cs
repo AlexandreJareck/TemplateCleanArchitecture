@@ -159,7 +159,12 @@ public sealed class ReportJobTests
         ReportCatalog.Format(ReportType.QuoteComparisonPdf).ShouldBe(ReportFormat.Pdf);
         ReportCatalog.MediaType(ReportType.BudgetConsumptionXlsx).ShouldBe(ReportCatalog.XlsxMediaType);
         ReportCatalog.Extension(ReportType.SupplierQuotesXlsx).ShouldBe(".xlsx");
-        Enum.GetValues<ReportType>().Select(ReportCatalog.TemplateVersion).Distinct().Count().ShouldBe(4);
+        Enum.GetValues<ReportType>().Select(ReportCatalog.TemplateVersion).Distinct().Count().ShouldBe(5);
+        // Phase 32 (D32-4): the purchase-order document is a system-only PDF whose output is kept as a business record.
+        ReportCatalog.Format(ReportType.PurchaseOrderPdf).ShouldBe(ReportFormat.Pdf);
+        ReportCatalog.TemplateVersion(ReportType.PurchaseOrderPdf).ShouldBe("purchase-order-pdf.v1");
+        Enum.GetValues<ReportType>().Where(ReportCatalog.IsSystemOnly).ShouldBe([ReportType.PurchaseOrderPdf]);
+        Enum.GetValues<ReportType>().Where(ReportCatalog.KeepsOutput).ShouldBe([ReportType.PurchaseOrderPdf]);
         Policy.RetryDelay(1).ShouldBe(TimeSpan.FromSeconds(30));
         Policy.RetryDelay(3).ShouldBe(TimeSpan.FromSeconds(120));
     }

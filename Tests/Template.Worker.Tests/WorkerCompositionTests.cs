@@ -32,7 +32,23 @@ public sealed class WorkerCompositionTests : IClassFixture<WorkerCompositionTest
         scope.ServiceProvider.GetRequiredService<IPdfRenderer>().ShouldNotBeNull();
         scope.ServiceProvider.GetRequiredService<ISpreadsheetWriter>().ShouldNotBeNull();
         scope.ServiceProvider.GetRequiredService<IFileStorage>().ShouldNotBeNull();
-        scope.ServiceProvider.GetServices<IReportBuilder>().Select(builder => builder.Type).Distinct().Count().ShouldBe(4);
+        scope.ServiceProvider.GetServices<IReportBuilder>().Select(builder => builder.Type).Distinct().Count().ShouldBe(5);
+    }
+
+    /// <summary>Phase 32: the purchasing consumer and its ports (Inbox, order repository, supplier notifier, approver directory) resolve.</summary>
+    [Fact]
+    public async Task PurchasingConsumer_ResolvesAndSettlesAnUnrelatedReport_WithTheSystemActor()
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<Template.Application.Interfaces.Purchasing.ISupplierOrderNotifier>().ShouldNotBeNull();
+        var handler = scope.ServiceProvider.GetRequiredService<Template.Application.Interfaces.Messaging.IProcurementIntegrationEventHandler>();
+        var envelope = Template.Application.Messaging.Procurement.ProcurementIntegrationEventContract.FromDomainEvent(
+            new Template.Domain.Reporting.ReportReady(DateTime.UtcNow, Guid.NewGuid(), Template.Domain.Reporting.ReportType.RequisitionPdf, Guid.NewGuid(), Guid.NewGuid()),
+            "worker-composition-test");
+        (await handler.HandleAsync(Template.Application.Messaging.Procurement.ProcurementConsumers.Purchasing, envelope, CancellationToken.None))
+            .ShouldBe(Template.Application.Interfaces.Messaging.InboxApplyResult.Applied);
+        (await handler.HandleAsync(Template.Application.Messaging.Procurement.ProcurementConsumers.Purchasing, envelope, CancellationToken.None))
+            .ShouldBe(Template.Application.Interfaces.Messaging.InboxApplyResult.Duplicate);
     }
 
     public sealed class WorkerFactory : WebApplicationFactory<Program>

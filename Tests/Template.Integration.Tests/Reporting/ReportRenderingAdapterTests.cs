@@ -301,6 +301,61 @@ public sealed class ReportRenderingAdapterTests(ChromiumFixture chromium)
         }
     }
 
+    [Fact]
+    public async Task T_PUR_007_e_PurchaseOrderPdf_RendersTheIssuedSnapshot_FromTheRealBuilderAndRepository()
+    {
+        await using var provider = Persistence();
+        var now = ReportSampleData.Now;
+        var issueDate = new DateOnly(2027, 3, 1);
+        var lines = new[]
+        {
+            new Template.Domain.Purchasing.PurchaseOrderLineInput(1, null, "Notebook 14\" <b>sem</b> HTML", "Good", Guid.NewGuid(), Guid.NewGuid(), "UN", 0, 18m, 900m,
+                issueDate.AddDays(7)),
+            new Template.Domain.Purchasing.PurchaseOrderLineInput(2, null, "Instalação e configuração", "Service", Guid.NewGuid(), Guid.NewGuid(), "H", 2, 2.5m, 120m,
+                issueDate.AddDays(9))
+        };
+        var input = new Template.Domain.Purchasing.PurchaseOrderDraftInput(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "RFQ-2027-000007", Guid.NewGuid(), Guid.NewGuid(), "REQ-2027-000042", Guid.NewGuid(), Guid.NewGuid(),
+            Guid.NewGuid(),
+            new Template.Domain.Purchasing.PurchaseOrderSupplierSnapshot(Guid.NewGuid(), "Fornecedor Ágil Ltda", "Ágil", "BR", "11222333000181",
+                "Avenida Paulista, 1000, Bela Vista, São Paulo - SP, 01310-100, BR", "Contato Sintético", "contato@example.invalid", null),
+            Guid.NewGuid(), "Compradora Sintética", "BRL", 150m, 50m, 1234.56m, 16_600m, "30 dias <script>x</script>", issueDate.AddDays(30), 7, "BRL", 1m, "BRL", 1m,
+            16_600m, lines);
+        var order = Template.Domain.Purchasing.PurchaseOrder.CreateDraft(Guid.NewGuid(), input, now, "sample");
+        order.UpdateDraft("Rua Sintética 100 & Anexo, São Paulo", "Entregar no almoxarifado <i>2</i>", null, issueDate, null, now, "sample").ShouldBeNull();
+        order.Issue("PO-2027-000123", issueDate, Guid.NewGuid(), true, true, true, null, now, "sample").Error.ShouldBeNull();
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        await using var read = provider.CreateAsyncScope();
+        var parameters = new ReportParameters(PurchaseOrderId: order.Id);
+        var job = ReportSampleData.Job(ReportType.PurchaseOrderPdf, parameters);
+        var content = await new PurchaseOrderPdfBuilder(read.ServiceProvider.GetRequiredService<Template.Application.Interfaces.Purchasing.IPurchaseOrderRepository>())
+            .BuildAsync(new ReportBuildContext(job, parameters, now.AddMinutes(1), TimeZoneInfo.FindSystemTimeZoneById(ReportSampleData.TimeZone), ReportPolicy.V1),
+                CancellationToken.None);
+        var bytes = await RenderAsync(content.Pdf!);
+        Save(content.FileName, bytes);
+
+        content.FileName.ShouldBe("pedido-PO-2027-000123.pdf");
+        job.TemplateVersion.ShouldBe("purchase-order-pdf.v1");
+        using var pdf = PdfDocument.Open(bytes);
+        var text = string.Join("\n", pdf.GetPages().Select(page => page.Text));
+        foreach (var expected in new[]
+                 {
+                     "Pedido de compra", "PO-2027-000123", "Fornecedor Ágil Ltda", "11222333000181", "Compradora Sintética", "REQ-2027-000042", "RFQ-2027-000007",
+                     "16.200,00 BRL", "300,00 BRL", "16.500,00 BRL", "16.600,00 BRL", "150,00 BRL", "50,00 BRL", "1.234,56 BRL", "08/03/2027", "10/03/2027", "purchase-order-pdf.v1",
+                     "<b>sem</b>", "<script>x</script>", "Rua Sintética 100 & Anexo", "CALC-006", "Impostos incluídos (informativo)"
+                 })
+            text.ShouldContain(expected);
+        await Should.ThrowAsync<ReportSourceException>(() => new PurchaseOrderPdfBuilder(
+                read.ServiceProvider.GetRequiredService<Template.Application.Interfaces.Purchasing.IPurchaseOrderRepository>())
+            .BuildAsync(new ReportBuildContext(job, new ReportParameters(PurchaseOrderId: Guid.NewGuid()), now, TimeZoneInfo.Utc, ReportPolicy.V1), CancellationToken.None));
+    }
+
     private async Task<byte[]> RenderAsync(ReportDocument document)
     {
         using var output = new MemoryStream();

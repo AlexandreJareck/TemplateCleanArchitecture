@@ -31,7 +31,7 @@ namespace Template.Unit.Tests.ApplicationTests.Features.Procurement;
 /// (10:00 in America/Sao_Paulo); an Open period covers 2027 and a BRL allocation of 1,000.00 exists for the cost
 /// center. All data is synthetic.
 /// </summary>
-internal sealed class ProcurementTestDoubles
+internal sealed partial class ProcurementTestDoubles
 {
     public static readonly DateTime Now = new(2027, 3, 1, 13, 0, 0, DateTimeKind.Utc);
     public static readonly DateOnly Today = new(2027, 3, 1);
@@ -105,7 +105,7 @@ internal sealed class ProcurementTestDoubles
     public RequisitionTransitionHandlers Transitions()
     {
         var writer = NewWriter();
-        return new(Requisitions, Allocations, Periods, CostCenters, References, Numbers, Accounts, Rfqs, new RequisitionAccess(writer, Scope),
+        return new(Requisitions, Allocations, Periods, CostCenters, References, Numbers, Accounts, Rfqs, Orders, new RequisitionAccess(writer, Scope),
             ApprovalCascade(writer), writer);
     }
 

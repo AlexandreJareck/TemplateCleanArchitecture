@@ -206,6 +206,31 @@ public sealed class ProcurementMessagingBrokerTests(RabbitMqFixture fixture) : I
         (await fixture.InspectQueueAsync(ProcurementMessagingTopology.ApprovalDeadLetterQueue)).MessageCount.ShouldBe(0u);
     }
 
+    [Fact]
+    public async Task T_PUR_001_W_ApprovalCompletion_ReachesThePurchasingConsumerOnce_AndNotTheApprovalQueue()
+    {
+        var handler = new Handler();
+        await using var harness = CreateHarness(handler);
+        await harness.StartAsync();
+        var completed = ProcurementIntegrationEventContract.FromDomainEvent(
+            new Template.Domain.Approvals.ApprovalCompleted(new DateTime(2027, 3, 5, 13, 0, 0, DateTimeKind.Utc), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()),
+            "rabbit-phase32");
+        var requested = ProcurementIntegrationEventContract.FromDomainEvent(
+            new Template.Domain.Purchasing.PurchaseOrderNotificationRequested(new DateTime(2027, 3, 6, 13, 0, 0, DateTimeKind.Utc), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1),
+            "rabbit-phase32");
+
+        await harness.Publisher.PublishAsync(completed, CancellationToken.None);
+        await harness.Publisher.PublishAsync(completed, CancellationToken.None); // redelivered copy: the Inbox settles it once
+        await harness.Publisher.PublishAsync(requested, CancellationToken.None);
+
+        await Eventually.TrueAsync(() => Task.FromResult(handler.EffectsFor(ProcurementMessagingTopology.PurchasingConsumer) == 2),
+            "the purchasing consumer handled the approval completion and the notification request once each");
+        handler.EffectsFor(ProcurementMessagingTopology.ApprovalConsumer).ShouldBe(0);
+        await Eventually.TrueAsync(async () => (await fixture.InspectQueueAsync(ProcurementMessagingTopology.PurchasingQueue)).MessageCount == 0,
+            "the purchasing queue drains");
+        (await fixture.InspectQueueAsync(ProcurementMessagingTopology.PurchasingDeadLetterQueue)).MessageCount.ShouldBe(0u);
+    }
+
     private static IntegrationEventEnvelope RfqPublishedEnvelope() => ProcurementIntegrationEventContract.FromDomainEvent(
         new RfqPublished(new DateTime(2027, 3, 1, 13, 0, 0, DateTimeKind.Utc), Guid.NewGuid(), "RFQ-2027-000001", Guid.NewGuid(),
             new DateTime(2027, 3, 4, 13, 0, 0, DateTimeKind.Utc), [Guid.NewGuid(), Guid.NewGuid()], SourcingMethod.Competitive), "rabbit-phase29");
