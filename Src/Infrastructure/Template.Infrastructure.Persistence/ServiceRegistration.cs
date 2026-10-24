@@ -28,6 +28,9 @@ public static class ServiceRegistration
 {
     public static IServiceCollection AddPersistenceInfrastructure(this IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase)
     {
+        var includeDemoData = bool.TryParse(configuration["DemoData:Enabled"], out var enabled) && enabled;
+        services.AddSingleton(new DemoDataInitializationSettings(includeDemoData));
+
         if (useInMemoryDatabase)
         {
             var databaseName = configuration["TestDatabaseName"] is { Length: > 0 } testDatabaseName
@@ -98,10 +101,15 @@ public static class ServiceRegistration
             await context.Database.EnsureCreatedAsync();
 
         if (seedDefaultData)
-            await DefaultData.SeedAsync(context);
+        {
+            var settings = services.GetRequiredService<DemoDataInitializationSettings>();
+            await DefaultData.SeedAsync(context, settings.Enabled);
+        }
     }
 
     /// <summary>Readiness probe of the application database (EF Core <c>CanConnectAsync</c>), without exposing the context.</summary>
     public static Task<bool> CanConnectToApplicationDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken) =>
         services.GetRequiredService<ApplicationDbContext>().Database.CanConnectAsync(cancellationToken);
+
+    private sealed record DemoDataInitializationSettings(bool Enabled);
 }
