@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Template.Application.Interfaces.Access;
+using Template.Application.Interfaces.Approvals;
 using Template.Application.Interfaces.UserInterfaces;
 using Template.Infrastructure.Identity.Authentication;
 using Template.Infrastructure.Identity.Contexts;
@@ -21,21 +22,8 @@ public static class ServiceRegistration
 {
     public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase)
     {
-        if (useInMemoryDatabase)
-        {
-            var databaseName = configuration["TestDatabaseName"] is { Length: > 0 } testDatabaseName
-                ? $"{nameof(IdentityContext)}-{testDatabaseName}"
-                : nameof(IdentityContext);
-            var databaseRoot = new InMemoryDatabaseRoot();
-            services.AddDbContext<IdentityContext>(options =>
-                options.UseInMemoryDatabase(databaseName, databaseRoot));
-        }
-        else
-        {
-            services.AddDbContext<IdentityContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("IdentityConnection")));
-        }
-
+        AddIdentityContext(services, configuration, useInMemoryDatabase);
+        services.AddScoped<IApproverDirectory, IdentityApproverDirectory>();
         services.AddTransient<IGetUserServices, GetUserServices>();
         services.AddTransient<IAccountServices, AccountServices>();
         services.AddSingleton<JwtTokenFactory>();
@@ -92,6 +80,35 @@ public static class ServiceRegistration
             });
 
         return services;
+    }
+
+    /// <summary>
+    /// Phase 31: read-only approver directory for the WorkflowFunctions host (APR-003/006). It registers the Identity
+    /// store and <see cref="IApproverDirectory"/> only: no sign-in, token, cookie or JWT configuration is needed there.
+    /// </summary>
+    public static IServiceCollection AddIdentityDirectoryInfrastructure(this IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase)
+    {
+        AddIdentityContext(services, configuration, useInMemoryDatabase);
+        services.AddScoped<IApproverDirectory, IdentityApproverDirectory>();
+        return services;
+    }
+
+    private static void AddIdentityContext(IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase)
+    {
+        if (useInMemoryDatabase)
+        {
+            var databaseName = configuration["TestDatabaseName"] is { Length: > 0 } testDatabaseName
+                ? $"{nameof(IdentityContext)}-{testDatabaseName}"
+                : nameof(IdentityContext);
+            var databaseRoot = new InMemoryDatabaseRoot();
+            services.AddDbContext<IdentityContext>(options =>
+                options.UseInMemoryDatabase(databaseName, databaseRoot));
+        }
+        else
+        {
+            services.AddDbContext<IdentityContext>(options =>
+                options.UseNpgsql(configuration.GetConnectionString("IdentityConnection")));
+        }
     }
 
     /// <summary>
