@@ -39,32 +39,7 @@ export const HLM_NATIVE_SELECT_VALUE_ACCESSOR = {
     'data-slot': 'native-select-wrapper',
     '[attr.data-size]': 'size()',
   },
-  template: `
-    <select
-      data-slot="native-select"
-      [id]="selectId()"
-      [class]="_computedSelectClass()"
-      [attr.data-size]="size()"
-      [attr.aria-invalid]="_ariaInvalid() ? 'true' : null"
-      [attr.data-invalid]="_ariaInvalid() ? 'true' : null"
-      [attr.data-dirty]="_dirty?.() ? 'true' : null"
-      [attr.data-touched]="_touched?.() ? 'true' : null"
-      [attr.data-matches-spartan-invalid]="_spartanInvalid() ? 'true' : null"
-      [value]="value()"
-      [disabled]="_disabled()"
-      (change)="_valueChanged($event)"
-      (blur)="_blur()"
-    >
-      <ng-content />
-    </select>
-
-    <ng-icon
-      name="lucideChevronDown"
-      [class]="_computedSelectIconClass()"
-      aria-hidden="true"
-      data-slot="native-select-icon"
-    />
-  `,
+  templateUrl: './hlm-native-select.html',
 })
 export class HlmNativeSelect implements ControlValueAccessor {
   private readonly _fieldControl = inject(BrnFieldControl, { optional: true });

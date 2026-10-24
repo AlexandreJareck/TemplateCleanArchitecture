@@ -8,15 +8,7 @@ import { classes } from '@presentation/shared-ui/utils';
   imports: [HlmSeparator],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { 'data-slot': 'field-separator' },
-  template: `
-    <hlm-separator class="absolute inset-0 top-1/2" />
-    <span
-      data-slot="field-separator-content"
-      class="text-muted-foreground px-2 bg-background relative mx-auto block w-fit"
-    >
-      <ng-content />
-    </span>
-  `,
+  templateUrl: './hlm-field-separator.html',
 })
 export class HlmFieldSeparator {
   constructor() {

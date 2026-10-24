@@ -16,9 +16,6 @@ import { HlmDialogOverlay } from './hlm-dialog-overlay';
     }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <hlm-dialog-overlay />
-    <ng-content />
-  `,
+  templateUrl: './hlm-dialog.html',
 })
 export class HlmDialog extends BrnDialog {}

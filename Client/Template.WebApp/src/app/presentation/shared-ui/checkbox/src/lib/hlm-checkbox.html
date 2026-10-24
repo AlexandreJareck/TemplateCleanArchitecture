@@ -1,0 +1,23 @@
+<brn-checkbox
+  [id]="inputId()"
+  [name]="name()"
+  [class]="_computedClass()"
+  [checked]="checked()"
+  [(indeterminate)]="indeterminate"
+  [disabled]="_disabled()"
+  [required]="required()"
+  [aria-label]="ariaLabel()"
+  [aria-labelledby]="ariaLabelledby()"
+  [aria-describedby]="ariaDescribedby()"
+  [forceInvalid]="forceInvalid()"
+  (checkedChange)="_handleChange($event)"
+  (touched)="_onTouched?.()"
+>
+  @if (checked() || indeterminate()) {
+    <span
+      class="[&>ng-icon]:text-[length:--spacing(3.5)] flex items-center justify-center text-current transition-none"
+    >
+      <ng-icon name="lucideCheck" />
+    </span>
+  }
+</brn-checkbox>

@@ -23,11 +23,7 @@ import { classes } from '@presentation/shared-ui/utils';
     '[attr.id]': 'id()',
     '[hidden]': '!_display()',
   },
-  template: `
-    @if (_display()) {
-      <ng-content />
-    }
-  `,
+  templateUrl: './hlm-field-error.html',
 })
 export class HlmFieldError implements OnDestroy {
   private static _id = 0;

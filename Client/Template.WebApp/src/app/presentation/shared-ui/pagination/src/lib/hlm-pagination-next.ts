@@ -21,20 +21,7 @@ import { injectHlmPaginationConfig } from './hlm-pagination.token';
   imports: [HlmPaginationLink, NgIcon],
   providers: [provideIcons({ lucideChevronRight })],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <a
-      hlmPaginationLink
-      [class]="_computedClass()"
-      [link]="link()"
-      [queryParams]="queryParams()"
-      [queryParamsHandling]="queryParamsHandling()"
-      [size]="_size()"
-      [attr.aria-label]="ariaLabel()"
-    >
-      <span [class]="_labelClass()">{{ text() }}</span>
-      <ng-icon name="lucideChevronRight" class="rtl:rotate-180" />
-    </a>
-  `,
+  templateUrl: './hlm-pagination-next.html',
 })
 export class HlmPaginationNext {
   private readonly _config = injectHlmPaginationConfig();

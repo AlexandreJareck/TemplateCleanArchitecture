@@ -33,65 +33,7 @@ import { injectHlmPaginationConfig } from './hlm-pagination.token';
     HlmSelectImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="flex items-center justify-between gap-2 px-4 py-2">
-      <div class="text-muted-foreground flex items-center gap-1 text-sm text-nowrap">
-        <b>{{ totalItems() }}</b>
-        {{ totalItemsLabel() }} |
-        <b>{{ _lastPageNumber() }}</b>
-        {{ pagesLabel() }}
-      </div>
-
-      <nav hlmPagination>
-        <ul hlmPaginationContent>
-          @if (showEdges() && !_isFirstPageActive()) {
-            <li hlmPaginationItem (click)="goToPrevious()">
-              <hlm-pagination-previous
-                [aria-label]="previousAriaLabel()"
-                [text]="previousLabel()"
-              />
-            </li>
-          }
-
-          @for (page of _pages(); track page) {
-            <li hlmPaginationItem>
-              @if (page === '...') {
-                <hlm-pagination-ellipsis />
-              } @else {
-                <a
-                  hlmPaginationLink
-                  [isActive]="currentPage() === page"
-                  (click)="currentPage.set(page)"
-                >
-                  {{ page }}
-                </a>
-              }
-            </li>
-          }
-
-          @if (showEdges() && !_isLastPageActive()) {
-            <li hlmPaginationItem (click)="goToNext()">
-              <hlm-pagination-next [aria-label]="nextAriaLabel()" [text]="nextLabel()" />
-            </li>
-          }
-        </ul>
-      </nav>
-
-      <!-- Show Page Size selector -->
-      <hlm-select [(value)]="itemsPerPage" class="ml-auto">
-        <hlm-select-trigger class="w-fit">
-          <hlm-select-value />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (pageSize of _pageSizesWithCurrent(); track pageSize) {
-              <hlm-select-item [value]="pageSize">{{ pageSize }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-    </div>
-  `,
+  templateUrl: './hlm-numbered-pagination.html',
 })
 export class HlmNumberedPagination {
   private readonly _config = injectHlmPaginationConfig();

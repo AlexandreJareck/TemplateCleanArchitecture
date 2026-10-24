@@ -1,0 +1,11 @@
+@if (showScroll()) {
+  <hlm-select-scroll-up />
+}
+
+<div brnSelectList [class]="_computedListboxClasses()">
+  <ng-content />
+</div>
+
+@if (showScroll()) {
+  <hlm-select-scroll-down />
+}

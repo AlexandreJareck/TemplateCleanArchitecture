@@ -34,20 +34,7 @@ type HlmDialogContentContext = {
     'data-slot': 'dialog-content',
     '[attr.data-state]': 'state()',
   },
-  template: `
-    @if (component) {
-      <ng-container [ngComponentOutlet]="component" />
-    } @else {
-      <ng-content />
-    }
-
-    @if (showCloseButton()) {
-      <button hlmBtn variant="ghost" size="icon-sm" class="absolute end-4 top-4" hlmDialogClose>
-        <span class="sr-only">{{ closeLabel() }}</span>
-        <ng-icon name="lucideX" />
-      </button>
-    }
-  `,
+  templateUrl: './hlm-dialog-content.html',
 })
 export class HlmDialogContent {
   private readonly _dialogRef = inject(BrnDialogRef);
