@@ -60,21 +60,24 @@ Idempotency key for every consumer = (consumer name, `eventId`) in the Inbox. Th
 | `procurement.approval.step-assigned` | Approvals | approvalInstanceId, level, assigneeUserId or assigneeRole, dueAt | Notifications (approver email) | approvalInstanceId + level + assignment sequence | 31 |
 | `procurement.approval.reminder-due` | Approvals (timer activity) | approvalInstanceId, level | Notifications | approvalInstanceId + level + reminder n | 31 |
 | `procurement.approval.step-escalated` | Approvals (timer activity) | approvalInstanceId, level, escalationCount | Notifications | approvalInstanceId + level + escalation n | 31 |
-| `procurement.approval.completed` | Approvals / Final approval | approvalInstanceId, awardId, requisitionId | Purchasing (create PO draft, PUR-001), Notifications | approvalInstanceId | 31 |
+| `procurement.approval.completed` | Approvals / Final approval | approvalInstanceId, awardId, requisitionId | Purchasing (create PO draft, PUR-001, consumer `procurement-purchasing-v1` since Phase 32), Notifications | approvalInstanceId | 31 |
 | `procurement.approval.rejected` | Approvals / Reject | approvalInstanceId, level, requisitionId | Notifications | approvalInstanceId | 31 |
 | `procurement.approval.expired` | Approvals / Expire | approvalInstanceId, requisitionId | Notifications | approvalInstanceId | 31 |
 | `procurement.approval.invalidated` | Approvals / Invalidate | approvalInstanceId, cause | WorkflowFunctions (terminate orchestration), Notifications | approvalInstanceId + cause | 31 |
 | `procurement.approval.cancelled` | Approvals / Cancel | approvalInstanceId, cause | WorkflowFunctions, Notifications | approvalInstanceId | 31 |
 | `procurement.supplier.status-changed` | Suppliers / Change status | supplierId, previousStatus, newStatus | Approvals (APR-012 invalidation), Sourcing warnings | supplierId + status-change sequence | 25 (event), 28 (outbox), 31 (consumer) |
-| `procurement.purchase-order.drafted` | Purchasing / Create draft | purchaseOrderId, awardId | Notifications (buyer) | awardId | 32 |
-| `procurement.purchase-order.issued` | Purchasing / Issue | purchaseOrderId, number, supplierId, total | Reporting (PO PDF), Notifications (supplier email) | purchaseOrderId | 32 |
-| `procurement.purchase-order.cancelled` | Purchasing / Cancel | purchaseOrderId, reasonCode | Notifications | purchaseOrderId | 32 |
-| `procurement.purchase-order.completed` | Purchasing / Recompute | purchaseOrderId, shortClosed | Requisitions (close), Notifications | purchaseOrderId + completion sequence | 32 |
-| `procurement.purchase-order.reopened` | Purchasing / Recompute | purchaseOrderId | Requisitions | purchaseOrderId + completion sequence | 32 |
+| `procurement.purchase-order.drafted` | Purchasing / Create draft (Worker consumer of `approval.completed`, D32-1) | purchaseOrderId, awardId, requisitionId, buyerId | Projections | awardId | 32 |
+| `procurement.purchase-order.issued` | Purchasing / Issue | purchaseOrderId, number, supplierId, requisitionId, total | Projections (the PO PDF job is created in the issue transaction, D32-4) | purchaseOrderId | 32 |
+| `procurement.purchase-order.notification-requested` | Purchasing / Document ready or notification retry (D32-5) | purchaseOrderId, supplierId, documentFileId, attempt | Purchasing consumer (supplier notification through the local adapter) | purchaseOrderId + attempt | 32 |
+| `procurement.purchase-order.cancelled` | Purchasing / Cancel | purchaseOrderId, requisitionId, reasonCode (`DraftCancelled`/`IssuedCancelled`) | Projections | purchaseOrderId | 32 |
+| `procurement.purchase-order.completed` | Purchasing / Recompute or short close | purchaseOrderId, requisitionId, shortClosed, completionSequence | Projections (the requisition closes in the same transaction) | purchaseOrderId + completion sequence | 32 |
+| `procurement.purchase-order.reopened` | Purchasing / Recompute after a correction | purchaseOrderId, requisitionId, completionSequence | Projections (the requisition reopens in the same transaction) | purchaseOrderId + completion sequence | 32 |
 | `procurement.receipt.posted` | Receiving / Post | receiptId, purchaseOrderId, lineCount, hasDiscrepancy | Purchasing recompute (same transaction; event for projections), Notifications | receiptId | 32 |
-| `procurement.receipt.corrected` | Receiving / Correct | receiptId, correctionId | Projections | correctionId | 32 |
+| `procurement.receipt.discrepancy-recorded` | Receiving / Post with a rejected quantity (D32-8) | receiptId, purchaseOrderId, lineNumbers | Projections | receiptId | 32 |
+| `procurement.receipt.corrected` | Receiving / Correct | receiptId, correctionId, purchaseOrderId, poLineNumber, acceptedDelta | Projections | correctionId | 32 |
+| `procurement.budget.reservation-uncommitted` | Budgeting / Draft order cancel (PUR-008, D32-7) | reservationId, requisitionId, amount | Projections | reservationId + change sequence | 32 |
 | `procurement.report.requested` | Reporting / Request | reportJobId, reportType, requestedBy | Projections (the Worker claims jobs from the job table, D30-1) | reportJobId | 30 |
-| `procurement.report.ready` / `procurement.report.failed` | Worker report handler | reportJobId, reportType, requestedBy, failureCode? | Notifications (in-app, requester only, D30-11), projections | reportJobId | 30 |
+| `procurement.report.ready` / `procurement.report.failed` | Worker report handler | reportJobId, reportType, requestedBy, failureCode? | Notifications (in-app, requester only, D30-11; not for `PurchaseOrderPdf`, D32-4), Purchasing (order document outcome, Phase 32), projections | reportJobId | 30 |
 
 Notification consumers produce `NotificationRequested` commands to a local adapter (fake until Phase 33, Mailpit in Phase 33); templates are versioned and localized; delivery records are idempotent per (event, recipient, template). Phase 29 implements this for sourcing: the Worker consumer `procurement-notification-v1` on queue `procurement.notifications.v1` (bound to `procurement.rfq.published`, `procurement.rfq.deadline-extended` and `procurement.rfq.reminder-requested`) records one `MessagingNotificationDeliveries` row per invited supplier and template (`sourcing.rfq-invitation.v1`, `sourcing.rfq-deadline-extended.v1`, `sourcing.rfq-reminder.v1`) in the Inbox transaction (D29-8).
 
