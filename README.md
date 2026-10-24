@@ -79,6 +79,7 @@ Quando `webapi`, `worker`, `workflow-functions` e as dependências estiverem sau
 - aplicação web: [http://localhost:4200](http://localhost:4200)
 - Swagger: [http://localhost:8080/swagger](http://localhost:8080/swagger)
 - prontidão da API: [http://localhost:8080/health/ready](http://localhost:8080/health/ready)
+- monitor visual dos workflows: [http://localhost:7072](http://localhost:7072)
 
 Todos os serviços são publicados somente em `127.0.0.1`, portanto ficam acessíveis na máquina local sem exposição para a rede.
 
@@ -90,6 +91,7 @@ Todos os serviços são publicados somente em `127.0.0.1`, portanto ficam acess�
 | `templatecleanarch-webapi` | ASP.NET Core API e Swagger | `http://localhost:8080` |
 | `templatecleanarch-worker` | Outbox, consumidores e relatórios | `http://localhost:8082/health/ready` |
 | `templatecleanarch-workflow` | Azure Functions de aprovação | `http://localhost:7071/api/health/live` |
+| `templatecleanarch-workflow-monitor` | Durable Functions Monitor | `http://localhost:7072` |
 | `templatecleanarch-postgres` | bancos da aplicação e Identity | `localhost:5432` |
 | `templatecleanarch-rabbitmq` | broker e Management UI | `amqp://localhost:5672` / `http://localhost:15672` |
 | `templatecleanarch-redis` | cache Redis | `localhost:6379` |
@@ -99,7 +101,7 @@ Todos os serviços são publicados somente em `127.0.0.1`, portanto ficam acess�
 | `templatecleanarch-files` | Azurite Blob para arquivos/relatórios | `http://localhost:10000` |
 | `templatecleanarch-workflow-storage` | Azurite do Durable Task | Blob `11000`, Queue `11001`, Table `11002` |
 
-RabbitMQ usa `RABBITMQ_DEFAULT_USER`/`RABBITMQ_DEFAULT_PASS`; PostgreSQL, Redis e os armazenamentos usam as respectivas credenciais do `.env`. Redis Insight solicita a aceitação da licença na primeira abertura.
+RabbitMQ usa `RABBITMQ_DEFAULT_USER`/`RABBITMQ_DEFAULT_PASS`; PostgreSQL, Redis e os armazenamentos usam as respectivas credenciais do `.env`. Redis Insight solicita a aceitação da licença na primeira abertura. O Durable Functions Monitor é uma ferramenta administrativa local: ele acessa somente o hub `TemplateApprovals`, permite inspecionar e também controlar instâncias, e não deve ser publicado fora de `127.0.0.1`.
 
 ## Massa de dados acadêmica
 
@@ -169,10 +171,14 @@ Use a requisição de operação cloud para testar um valor superior a R$ 100 mi
 
 ### 5. Aprovação durável
 
-1. Entre como `demo.manager` e decida o nível 1.
-2. Entre como `demo.department-head` e decida o nível 2.
-3. Para a requisição acima de R$ 100 mil, entre como `demo.finance` e decida o nível 3.
-4. Acompanhe o diagnóstico como `demo.procurement` e observe o histórico após reiniciar `templatecleanarch-workflow`; o estado durável deve permanecer.
+1. Abra o [Durable Functions Monitor](http://localhost:7072) e selecione o hub `TemplateApprovals`.
+2. Entre como `demo.manager`, decida o nível 1 e atualize o monitor para observar a instância e sua linha do tempo.
+3. Entre como `demo.department-head` e decida o nível 2.
+4. Para a requisição acima de R$ 100 mil, entre como `demo.finance` e decida o nível 3.
+5. Acompanhe o diagnóstico funcional como `demo.procurement` e compare-o com a visão técnica do monitor.
+6. Reinicie `templatecleanarch-workflow`; o histórico e o estado durável devem permanecer no Azurite dedicado.
+
+O painel é diferente do Azure Monitor/Application Insights: no laboratório ele oferece uma visão operacional direta do Durable Task armazenado no Azurite. Logs e métricas gerais da aplicação continuam em console, Elasticsearch e Kibana.
 
 ### 6. Relatórios, mensageria e observabilidade
 
@@ -218,6 +224,7 @@ Isso apaga bancos, filas, índices, caches, arquivos e histórico de workflows l
 - **Porta ocupada:** altere somente a porta correspondente no `.env` e execute `docker compose up -d` novamente.
 - **API ainda indisponível:** use `docker compose logs webapi` e confirme se PostgreSQL e Elasticsearch estão saudáveis.
 - **Workflow indisponível:** confira `workflow-functions` e `workflow-storage`; a chave interna deve ser idêntica nos serviços.
+- **Monitor de workflows vazio:** confirme que existe uma aprovação iniciada, selecione `TemplateApprovals` e confira `workflow-monitor` e `workflow-storage` com `docker compose ps`.
 - **Relatório não conclui:** confira `worker`, `rabbitmq` e `azurite` e depois `/health/ready` do Worker.
 - **Login falha após trocar a senha no `.env`:** usuários existentes não têm senha sobrescrita pelo seed. Reinicie os volumes ou altere a senha pela API.
 - **Máquina sem memória:** feche outros workloads e aumente a memória do Docker Desktop; Elasticsearch e os builds são os maiores consumidores.

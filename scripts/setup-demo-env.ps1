@@ -65,12 +65,13 @@ $lines = @(
     'WEBAPI_HTTP_PORT=8080'
     'WORKER_HEALTH_PORT=8082'
     'WORKFLOW_HTTP_PORT=7071'
+    'WORKFLOW_MONITOR_PORT=7072'
     'AZURITE_BLOB_PORT=10000'
     'WORKFLOW_BLOB_PORT=11000'
     'WORKFLOW_QUEUE_PORT=11001'
     'WORKFLOW_TABLE_PORT=11002'
 )
 
-Set-Content -LiteralPath $environmentPath -Value $lines -Encoding utf8NoBOM
+[System.IO.File]::WriteAllLines($environmentPath, $lines, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "Created $environmentPath with local random secrets."
 Write-Host 'The demo password is stored in DEMO_USER_PASSWORD inside .env; the script does not print it.'

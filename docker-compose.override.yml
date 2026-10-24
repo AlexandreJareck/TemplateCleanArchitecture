@@ -18,6 +18,11 @@ services:
     ports:
       - "127.0.0.1:${WORKFLOW_HTTP_PORT}:80"
 
+  workflow-monitor:
+    # Administrative UI with local authentication disabled: never bind this port beyond loopback.
+    ports:
+      - "127.0.0.1:${WORKFLOW_MONITOR_PORT}:80"
+
   workflow-storage:
     ports:
       - "127.0.0.1:${WORKFLOW_BLOB_PORT}:10000"

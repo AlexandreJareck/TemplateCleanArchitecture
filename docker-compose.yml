@@ -115,6 +115,22 @@ services:
       retries: 12
       start_period: 30s
 
+  workflow-monitor:
+    # Local administrative UI for the TemplateApprovals Durable Task hub. DFM_NONCE's documented standalone value
+    # disables DfMon authentication, so the override publishes this service on loopback only. Never expose it publicly.
+    image: scaletone/durablefunctionsmonitor:6.8@sha256:0559c7b031aacb67ff2ab1688bae0ad7e18ecb963e6de5f3d635e854049bcd6e
+    container_name: templatecleanarch-workflow-monitor
+    restart: unless-stopped
+    depends_on:
+      workflow-storage:
+        condition: service_healthy
+    environment:
+      - AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=${AZURITE_ACCOUNT_NAME};AccountKey=${AZURITE_ACCOUNT_KEY};BlobEndpoint=http://workflow-storage:10000/${AZURITE_ACCOUNT_NAME};QueueEndpoint=http://workflow-storage:10001/${AZURITE_ACCOUNT_NAME};TableEndpoint=http://workflow-storage:10002/${AZURITE_ACCOUNT_NAME};
+      - DFM_HUB_NAME=TemplateApprovals
+      - DFM_NONCE=i_sure_know_what_i_am_doing
+    networks:
+      - nw
+
   workflow-storage:
     # Phase 31 (SP-3): a second Azurite 3.37.0 with blob, queue and table services for the Durable Functions Azure Storage
     # provider, on its own workflow-storage-data volume, so orchestration state never shares a store with report outputs.
