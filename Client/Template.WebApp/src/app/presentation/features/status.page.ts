@@ -6,11 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   selector: 'app-status-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, TranslocoPipe],
-  template: `<main class="status">
-    <h1>{{ key + '.title' | transloco }}</h1>
-    <p>{{ key + '.body' | transloco }}</p>
-    <a routerLink="/">{{ 'common.backHome' | transloco }}</a>
-  </main>`,
+  templateUrl: './status.page.html',
   styles: [
     `
       .status {

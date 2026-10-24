@@ -1,0 +1,31 @@
+<main class="auth-page">
+  <form class="auth-card" novalidate (submit)="submit($event)">
+    <p class="eyebrow">Procurement Hub</p>
+    <h1>{{ 'auth.signIn' | transloco }}</h1>
+    @if (expired) {
+      <p class="session-message" role="status">{{ 'status.expired.body' | transloco }}</p>
+    }
+    <label for="userName">{{ 'auth.userName' | transloco }}</label>
+    <input id="userName" hlmInput autocomplete="username" [formField]="loginForm.userName" />
+    <label for="password">{{ 'auth.password' | transloco }}</label>
+    <input
+      id="password"
+      hlmInput
+      type="password"
+      autocomplete="current-password"
+      [formField]="loginForm.password"
+    />
+    @if (session.error(); as error) {
+      <div class="feedback" role="alert">
+        <strong>{{ 'auth.failed' | transloco }}</strong
+        ><span>{{ error.code }}</span>
+        @if (error.traceId) {
+          <small>Trace: {{ error.traceId }}</small>
+        }
+      </div>
+    }
+    <button hlmBtn type="submit" [disabled]="loginForm().invalid() || session.busy()">
+      {{ (session.busy() ? 'common.loading' : 'auth.enter') | transloco }}
+    </button>
+  </form>
+</main>

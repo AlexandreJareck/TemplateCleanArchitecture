@@ -1,0 +1,127 @@
+<header class="page-title">
+  <p>
+    {{ 'shell.breadcrumbHome' | transloco }} /
+    {{ (receiving() ? 'nav.receiving' : 'nav.purchaseOrders') | transloco }}
+  </p>
+  <h1>
+    {{ (receiving() ? 'purchasing.receivingQueue' : 'purchasing.ordersTitle') | transloco }}
+  </h1>
+</header>
+<app-problem-feedback [error]="error()" (reload)="load()" />
+
+<section class="panel" aria-labelledby="orders-title">
+  <h2 id="orders-title">
+    {{ (receiving() ? 'purchasing.awaitingReceipt' : 'purchasing.queue') | transloco }}
+  </h2>
+  <form class="toolbar" (submit)="$event.preventDefault(); load()">
+    @if (!receiving()) {
+      <label for="orderStatus"
+        >{{ 'fields.status' | transloco }}
+        <select
+          id="orderStatus"
+          class="select"
+          [value]="status()"
+          (change)="changeStatus($any($event.target).value)"
+        >
+          @for (option of filters; track option) {
+            <option [value]="option">
+              {{ 'purchasing.filters.' + (option || 'all') | transloco }}
+            </option>
+          }
+        </select>
+      </label>
+    }
+    <label for="orderSearch"
+      >{{ 'common.search' | transloco }}
+      <input
+        id="orderSearch"
+        hlmInput
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+      />
+    </label>
+    <button hlmBtn variant="outline" size="sm" type="submit">
+      {{ 'common.search' | transloco }}
+    </button>
+  </form>
+  @if (items().items.length === 0) {
+    <p class="empty">{{ 'purchasing.empty' | transloco }}</p>
+  } @else {
+    <div
+      class="table-scroll"
+      role="region"
+      tabindex="0"
+      [attr.aria-label]="'purchasing.ordersTable' | transloco"
+    >
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>{{ 'purchasing.number' | transloco }}</th>
+            <th>{{ 'purchasing.requisition' | transloco }}</th>
+            <th>{{ 'purchasing.supplier' | transloco }}</th>
+            <th>{{ 'fields.status' | transloco }}</th>
+            @if (!receiving()) {
+              <th>{{ 'purchasing.total' | transloco }}</th>
+              <th>{{ 'purchasing.document' | transloco }}</th>
+            } @else {
+              <th>{{ 'purchasing.promisedBy' | transloco }}</th>
+            }
+            <th>{{ 'common.actions' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items().items; track item.id) {
+            <tr [attr.data-order]="item.id">
+              <td [attr.data-label]="'purchasing.number' | transloco">
+                {{ item.number ?? ('purchasing.draftNumber' | transloco) }}
+              </td>
+              <td [attr.data-label]="'purchasing.requisition' | transloco">
+                {{ item.requisitionNumber }}
+              </td>
+              <td [attr.data-label]="'purchasing.supplier' | transloco">
+                {{ item.supplierName }}
+              </td>
+              <td [attr.data-label]="'fields.status' | transloco">
+                <span class="status-badge" [attr.data-status]="item.status">{{
+                  'purchasing.statuses.' + item.status | transloco
+                }}</span>
+              </td>
+              @if (!receiving()) {
+                <td [attr.data-label]="'purchasing.total' | transloco">
+                  {{ item.total | money }}
+                </td>
+                <td [attr.data-label]="'purchasing.document' | transloco">
+                  {{ 'purchasing.documentStatuses.' + item.documentStatus | transloco }}
+                  @if (item.documentStatus === 'Failed' || item.notificationStatus === 'Failed') {
+                    <span class="warning">{{ 'purchasing.attention' | transloco }}</span>
+                  }
+                </td>
+              } @else {
+                <td [attr.data-label]="'purchasing.promisedBy' | transloco">
+                  {{ item.earliestPromisedDate ?? '—' }}
+                </td>
+              }
+              <td class="actions">
+                @if (receiving()) {
+                  <a
+                    hlmBtn
+                    size="sm"
+                    [routerLink]="['/receiving/orders', item.id, 'receipts', 'new']"
+                    >{{ 'purchasing.receive' | transloco }}</a
+                  >
+                }
+                <a
+                  hlmBtn
+                  size="sm"
+                  variant="outline"
+                  [routerLink]="['/purchasing/orders', item.id]"
+                  >{{ 'purchasing.open' | transloco }}</a
+                >
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
