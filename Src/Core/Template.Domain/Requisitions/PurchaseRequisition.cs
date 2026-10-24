@@ -95,6 +95,9 @@ public sealed class PurchaseRequisition : VersionedAggregateRoot
     /// <summary>Award amount in the requisition currency (CALC-007).</summary>
     public decimal? AwardAmount { get; private set; }
 
+    /// <summary>Purchase order created from the approved award (Phase 32, PUR-001); kept for history after it ends.</summary>
+    public Guid? PurchaseOrderId { get; private set; }
+
     public IReadOnlyCollection<RequisitionLine> Lines => lines;
     public IReadOnlyCollection<RequisitionAttachment> Attachments => attachments;
     public IReadOnlyCollection<RequisitionStateChange> StateChanges => stateChanges;
@@ -518,6 +521,84 @@ public sealed class PurchaseRequisition : VersionedAggregateRoot
         AwardAmount = null;
         Transition(RequisitionStatus.InSourcing, actorId, nowUtc, reason, reasonCode, correlationId, eventType);
         return true;
+    }
+
+    /// <summary>
+    /// PUR-003 (Phase 32): <c>Approved → Ordered</c> when the purchase order of the approved award is issued, in the
+    /// issue commit. Idempotent for the same order.
+    /// </summary>
+    public (bool Changed, DomainError? Error) MarkOrdered(Guid purchaseOrderId, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureId(purchaseOrderId, nameof(purchaseOrderId));
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        if (Status == RequisitionStatus.Ordered && PurchaseOrderId == purchaseOrderId)
+            return (false, null);
+        if (Status != RequisitionStatus.Approved)
+            return (false, DomainError.InvalidTransition(Status.ToString(), "Only an Approved requisition is ordered.", "PUR-003"));
+
+        PurchaseOrderId = purchaseOrderId;
+        Transition(RequisitionStatus.Ordered, actorId, nowUtc, null, null, correlationId, "procurement.purchase-order.issued");
+        return (true, null);
+    }
+
+    /// <summary>PUR-001 (Phase 32): records the draft purchase order of the approved award; the state stays <c>Approved</c>.</summary>
+    public void LinkPurchaseOrder(Guid purchaseOrderId, DateTime nowUtc)
+    {
+        MasterDataRules.EnsureId(purchaseOrderId, nameof(purchaseOrderId));
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        if (PurchaseOrderId == purchaseOrderId)
+            return;
+        PurchaseOrderId = purchaseOrderId;
+        Touch(nowUtc);
+    }
+
+    /// <summary>
+    /// PUR-009 (Phase 32): <c>Ordered → Closed</c> when the purchase order completes (fully received or short-closed) and
+    /// <c>Closed → Ordered</c> when a receipt correction reopens it. Returns <c>false</c> when already in that state.
+    /// </summary>
+    public bool FollowOrderCompletion(bool completed, string? reasonCode, DateTime nowUtc, string correlationId, string eventType)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        var (from, to) = completed ? (RequisitionStatus.Ordered, RequisitionStatus.Closed) : (RequisitionStatus.Closed, RequisitionStatus.Ordered);
+        if (Status != from)
+            return false;
+        Transition(to, null, nowUtc, null, reasonCode, correlationId, eventType);
+        return true;
+    }
+
+    /// <summary>
+    /// PUR-008 draft cancel (Phase 32): <c>Approved → InSourcing</c> for re-award; the award snapshot is cleared and the
+    /// use case returns the reservation to <c>Reserved</c>. Idempotent per award.
+    /// </summary>
+    public bool ReturnToSourcingFromOrder(Guid awardId, string? reason, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        if (Status != RequisitionStatus.Approved || AwardId != awardId)
+            return false;
+
+        AwardId = null;
+        AwardedSupplierId = null;
+        AwardedSupplierName = null;
+        AwardAmount = null;
+        Transition(RequisitionStatus.InSourcing, actorId, nowUtc, reason, "OrderCancelled", correlationId, "procurement.purchase-order.cancelled");
+        return true;
+    }
+
+    /// <summary>
+    /// PUR-008 issued cancel (Phase 32): <c>Ordered → Cancelled</c>; returns the allocation whose commitment the use case
+    /// releases (<c>OrderCancelled</c>) in the same commit. Idempotent: <c>Changed = false</c> once cancelled.
+    /// </summary>
+    public (Guid? AllocationId, bool Changed) CancelForOrder(string reason, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        if (Status != RequisitionStatus.Ordered)
+            return (null, false);
+
+        var allocationId = DetachReservation();
+        Transition(RequisitionStatus.Cancelled, actorId, nowUtc, reason, "OrderCancelled", correlationId,
+            new RequisitionCancelled(nowUtc, Id, Revision, actorId));
+        return (allocationId, true);
     }
 
     private static (string? Currency, string? Purpose, DomainError? Error) ValidateHeader(

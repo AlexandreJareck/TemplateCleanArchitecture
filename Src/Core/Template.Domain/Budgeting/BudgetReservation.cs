@@ -30,7 +30,13 @@ public enum BudgetReservationOperation
     Released,
 
     /// <summary>BUD-009 (Phase 29): amount changed to the award amount in requisition currency.</summary>
-    Adjusted
+    Adjusted,
+
+    /// <summary>PUR-008 (Phase 32): a draft purchase-order cancel returns the commitment to <c>Reserved</c> for a new award.</summary>
+    Uncommitted,
+
+    /// <summary>PUR-010 (Phase 32): the unreceived part of a commitment is released on short close (CALC-008).</summary>
+    PartiallyReleased
 }
 
 /// <summary>
@@ -95,6 +101,19 @@ public sealed class BudgetReservation
     {
         Amount = amount;
         LastAwardId = awardId;
+        UpdatedAtUtc = nowUtc;
+    }
+
+    internal void MarkReserved(DateTime nowUtc)
+    {
+        Status = BudgetReservationStatus.Reserved;
+        UpdatedAtUtc = nowUtc;
+    }
+
+    /// <summary>PUR-010: the committed amount shrinks by the released part; the reservation stays <c>Committed</c>.</summary>
+    internal void Reduce(decimal releasedAmount, DateTime nowUtc)
+    {
+        Amount -= releasedAmount;
         UpdatedAtUtc = nowUtc;
     }
 

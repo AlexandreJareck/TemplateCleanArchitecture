@@ -623,6 +623,40 @@ public sealed class RequestForQuotation : VersionedAggregateRoot
     }
 
     /// <summary>
+    /// PUR-008 draft purchase-order cancel (Phase 32): <c>Awarded → Closed</c> with the approved award
+    /// <c>Withdrawn</c>, so the buyer can award again from the frozen comparison. Idempotent per award.
+    /// </summary>
+    public bool WithdrawApprovedAward(Guid awardId, string? reason, Guid? actorId, DateTime nowUtc, string correlationId)
+    {
+        MasterDataRules.EnsureUtc(nowUtc, nameof(nowUtc));
+        var award = awards.FirstOrDefault(candidate => candidate.Id == awardId);
+        if (award is not { Status: AwardStatus.Approved } || Status != RfqStatus.Awarded)
+            return false;
+
+        award.End(AwardStatus.Withdrawn, nowUtc);
+        var from = Status;
+        Status = RfqStatus.Closed;
+        Append(ActionAwardEnded, from, Status, actorId, nowUtc, reason ?? "OrderCancelled", correlationId, "procurement.purchase-order.cancelled", awardId);
+        Touch(nowUtc);
+        return true;
+    }
+
+    /// <summary>
+    /// CALC-007 rates of an award (Phase 32, CALC-008): quote currency → base and requisition currency → base from the
+    /// comparison snapshots, 1 for the base currency. The purchase order copies them so a short close converts with the
+    /// same rates as the award.
+    /// </summary>
+    public (decimal QuoteToBase, decimal RequisitionToBase) AwardRates(Guid awardId)
+    {
+        var award = awards.FirstOrDefault(candidate => candidate.Id == awardId)
+            ?? throw new ArgumentException("The award does not belong to this RFQ.", nameof(awardId));
+        var rates = ComparisonRates();
+        var quoteRate = award.Currency == BaseCurrency ? 1m : rates[award.Currency].Rate;
+        var requisitionRate = RequisitionCurrency == BaseCurrency ? 1m : rates[RequisitionCurrency].Rate;
+        return (quoteRate, requisitionRate);
+    }
+
+    /// <summary>
     /// SRC-020: buyer cancellation with reason from Draft, Published or Closed. Returns whether the requisition was in
     /// sourcing (Published/Closed), so the use case returns it to <c>Submitted</c> in the same commit.
     /// </summary>
