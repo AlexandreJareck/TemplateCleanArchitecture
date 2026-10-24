@@ -183,7 +183,7 @@ internal static class RowLocks
     public const string ForUpdate = "FOR UPDATE";
     public const string ForShare = "FOR SHARE";
 
-    private static readonly HashSet<string> Tables = new(StringComparer.Ordinal) { "BudgetFiscalPeriods", "BudgetAllocations" };
+    private static readonly HashSet<string> Tables = new(StringComparer.Ordinal) { "BudgetFiscalPeriods", "BudgetAllocations", "PurchasingOrders" };
 
     public static async Task LockAsync(ApplicationDbContext context, string table, Guid id, string mode, CancellationToken cancellationToken)
     {

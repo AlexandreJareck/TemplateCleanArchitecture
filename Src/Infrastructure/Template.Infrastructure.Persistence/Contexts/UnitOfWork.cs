@@ -39,7 +39,11 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         "IX_SourcingAwards_RfqId_Pending",
         "IX_SourcingRfqs_RequisitionId_RoundNumber",
         "IX_ApprovalHistory_InstanceId_Sequence",
-        "IX_ApprovalSteps_InstanceId_Level"
+        "IX_ApprovalSteps_InstanceId_Level",
+        // Phase 32: order history and line guards, receipt correction sequence.
+        "IX_PurchasingOrderHistory_PurchaseOrderId_Sequence",
+        "IX_PurchasingOrderLines_PurchaseOrderId_LineNumber",
+        "IX_ReceivingReceiptCorrections_ReceiptId_Sequence"
     };
 
     /// <summary>
@@ -61,7 +65,10 @@ public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork
         IRequestForQuotationRepository.ActiveRfqUniqueKey,
         Template.Application.Interfaces.Reporting.IReportJobRepository.ActiveUniqueKey,
         Template.Application.Interfaces.Approvals.IApprovalInstanceRepository.AwardUniqueKey,
-        Template.Application.Interfaces.Approvals.IApprovalPolicyRepository.VersionUniqueKey
+        Template.Application.Interfaces.Approvals.IApprovalPolicyRepository.VersionUniqueKey,
+        // Phase 32: one order per award (PUR-001) and unique issued numbers (PUR-005).
+        Template.Application.Interfaces.Purchasing.IPurchaseOrderRepository.AwardUniqueKey,
+        Template.Application.Interfaces.Purchasing.IPurchaseOrderRepository.NumberUniqueKey
     };
 
     private IDbContextTransaction? transaction;

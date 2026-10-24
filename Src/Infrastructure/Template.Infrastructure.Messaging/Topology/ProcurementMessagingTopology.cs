@@ -20,6 +20,11 @@ public static class ProcurementMessagingTopology
     public const string ApprovalConsumer = ProcurementConsumers.Approval;
     public const string ApprovalQueue = "procurement.approvals.v1";
     public const string ApprovalDeadLetterQueue = "procurement.approvals.v1.dead-letter";
+
+    // Phase 32 (PUR-001, PUR-007): draft creation, document outcomes and supplier notifications of purchase orders.
+    public const string PurchasingConsumer = ProcurementConsumers.Purchasing;
+    public const string PurchasingQueue = "procurement.purchasing.v1";
+    public const string PurchasingDeadLetterQueue = "procurement.purchasing.v1.dead-letter";
     public const string ContractType = "procurement.integration-event.v1";
 
     /// <summary>Consumers hosted by the Worker: queue and Inbox consumer name.</summary>
@@ -27,7 +32,8 @@ public static class ProcurementMessagingTopology
     [
         (ProjectionQueue, ProjectionConsumer),
         (NotificationQueue, NotificationConsumer),
-        (ApprovalQueue, ApprovalConsumer)
+        (ApprovalQueue, ApprovalConsumer),
+        (PurchasingQueue, PurchasingConsumer)
     ];
 
     public static async Task DeclareAsync(IChannel channel, CancellationToken cancellationToken)
@@ -50,5 +56,11 @@ public static class ProcurementMessagingTopology
             await channel.QueueBindAsync(ApprovalQueue, Exchange, eventType, cancellationToken: cancellationToken);
         await channel.QueueDeclareAsync(ApprovalDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
         await channel.QueueBindAsync(ApprovalDeadLetterQueue, DeadLetterExchange, ApprovalQueue, cancellationToken: cancellationToken);
+
+        await channel.QueueDeclareAsync(PurchasingQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
+        foreach (var eventType in ProcurementConsumers.PurchasingEventTypes.Order(StringComparer.Ordinal))
+            await channel.QueueBindAsync(PurchasingQueue, Exchange, eventType, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(PurchasingDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(PurchasingDeadLetterQueue, DeadLetterExchange, PurchasingQueue, cancellationToken: cancellationToken);
     }
 }
