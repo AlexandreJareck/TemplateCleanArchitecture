@@ -19,6 +19,10 @@ services:
       # Phase 30: report outputs go to the private Azurite container; the account key comes from the git-ignored .env.
       - FileStorageSettings__Enabled=true
       - ConnectionStrings__BlobStorage=DefaultEndpointsProtocol=http;AccountName=${AZURITE_ACCOUNT_NAME};AccountKey=${AZURITE_ACCOUNT_KEY};BlobEndpoint=http://azurite:10000/${AZURITE_ACCOUNT_NAME};
+      # Phase 31 (ADR-0003 §5): approval orchestration client; the internal key comes from the git-ignored .env.
+      - ApprovalWorkflowSettings__Enabled=true
+      - ApprovalWorkflowSettings__BaseUrl=http://workflow-functions/api/
+      - ApprovalWorkflowSettings__Key=${APPROVAL_WORKFLOW_KEY}
     networks:
       - nw
     healthcheck:
@@ -58,8 +62,59 @@ services:
       # Phase 30: report downloads stream from the private Azurite container (optional dependency, readiness Degraded).
       - FileStorageSettings__Enabled=true
       - ConnectionStrings__BlobStorage=DefaultEndpointsProtocol=http;AccountName=${AZURITE_ACCOUNT_NAME};AccountKey=${AZURITE_ACCOUNT_KEY};BlobEndpoint=http://azurite:10000/${AZURITE_ACCOUNT_NAME};
+      # Phase 31 (ADR-0003 §5): approval orchestration client; the internal key comes from the git-ignored .env.
+      - ApprovalWorkflowSettings__Enabled=true
+      - ApprovalWorkflowSettings__BaseUrl=http://workflow-functions/api/
+      - ApprovalWorkflowSettings__Key=${APPROVAL_WORKFLOW_KEY}
     networks:
       - nw
+
+  workflow-functions:
+    # Phase 31 (ADR-0003): the approval orchestration host (Azure Functions 4.x, .NET isolated, net10.0). It publishes no
+    # port and has no fixed container name; the WebApi and the Worker reach it on the private network with the internal
+    # key. It never migrates the databases. Durable history lives in the workflow-storage task hub, business truth in db.
+    build:
+      context: .
+      dockerfile: Src/Functions/Template.WorkflowFunctions/Dockerfile
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      workflow-storage:
+        condition: service_healthy
+    environment:
+      - AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=${AZURITE_ACCOUNT_NAME};AccountKey=${AZURITE_ACCOUNT_KEY};BlobEndpoint=http://workflow-storage:10000/${AZURITE_ACCOUNT_NAME};QueueEndpoint=http://workflow-storage:10001/${AZURITE_ACCOUNT_NAME};TableEndpoint=http://workflow-storage:10002/${AZURITE_ACCOUNT_NAME};
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB_NAME};SearchPath=public
+      - ConnectionStrings__IdentityConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_IDENTITY_DB_NAME};SearchPath=public
+      - ApprovalWorkflowSettings__Key=${APPROVAL_WORKFLOW_KEY}
+    networks:
+      - nw
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/api/health/live > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  workflow-storage:
+    # Phase 31 (SP-3): a second Azurite 3.37.0 with blob, queue and table services for the Durable Functions Azure Storage
+    # provider, on its own workflow-storage-data volume, so orchestration state never shares a store with report outputs.
+    # Same synthetic account variables as azurite; nothing publishes its ports.
+    image: mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1da1a2d537e08f3e6764dd1f5ae00cf0346bcaf625b968ec3f0971fd5
+    restart: always
+    command: ["azurite", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--tableHost", "0.0.0.0", "--location", "/data", "--skipApiVersionCheck"]
+    environment:
+      AZURITE_ACCOUNTS: ${AZURITE_ACCOUNT_NAME}:${AZURITE_ACCOUNT_KEY}
+    volumes:
+      - workflow-storage-data:/data
+    networks:
+      - nw
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 10000 && nc -z 127.0.0.1 10001 && nc -z 127.0.0.1 10002"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   azurite:
     # Phase 30 (D23-7, ADR-0004): Azurite 3.37.0 blob service only, on its own azurite-data volume, with one account
@@ -253,6 +308,8 @@ volumes:
   redis-insight-data:
   # Phase 30: Azurite blob data (report outputs); report metadata lives in PostgreSQL.
   azurite-data:
+  # Phase 31: Durable Functions task hub (orchestration history, queues, leases); business state lives in PostgreSQL.
+  workflow-storage-data:
 
 configs:
   rabbitmq-plugins:

@@ -55,6 +55,8 @@ Invoke-Step '00-git-status' { git status --short }
 Invoke-Step '01-restore' { & $DotNetPath restore TemplateCleanArchitecture.App.slnf --verbosity minimal --disable-parallel }
 Invoke-Step '02-build-webapi' { & $DotNetPath build Src\Presentation\Template.WebApi\Template.WebApi.csproj --no-restore --verbosity minimal --maxcpucount:1 /p:UseSharedCompilation=false }
 Invoke-Step '02b-build-worker' { & $DotNetPath build Src\Workers\Template.Worker\Template.Worker.csproj --no-restore --verbosity minimal --maxcpucount:1 /p:UseSharedCompilation=false }
+# Phase 31: the WorkflowFunctions host (Azure Functions 4.x isolated worker, net10.0).
+Invoke-Step '02c-build-workflow-functions' { & $DotNetPath build Src\Functions\Template.WorkflowFunctions\Template.WorkflowFunctions.csproj --no-restore --verbosity minimal --maxcpucount:1 /p:UseSharedCompilation=false }
 Invoke-Step '03-test-architecture' { & $DotNetPath test Tests\Template.Architecture.Tests\Template.Architecture.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '04-test-unit' { & $DotNetPath test Tests\Template.Unit.Tests\Template.Unit.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '05-test-integration' { & $DotNetPath test Tests\Template.Integration.Tests\Template.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
@@ -64,6 +66,9 @@ Invoke-Step '06c-test-elasticsearch' { & $DotNetPath test Tests\Template.Elastic
 Invoke-Step '06f-test-redis' { & $DotNetPath test Tests\Template.Redis.Integration.Tests\Template.Redis.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 # Phase 30: blob storage adapter against a disposable Azurite 3.37.0 pinned by digest (requires Docker).
 Invoke-Step '06q-test-worker' { & $DotNetPath test Tests\Template.Worker.Tests\Template.Worker.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
+# Phase 31: deterministic orchestration tests, then the real Functions host on Azurite and PostgreSQL (requires Docker).
+Invoke-Step '06r-test-workflow-functions' { & $DotNetPath test Tests\Template.WorkflowFunctions.Tests\Template.WorkflowFunctions.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
+Invoke-Step '06s-test-workflow-emulator' { & $DotNetPath test Tests\Template.WorkflowFunctions.Integration.Tests\Template.WorkflowFunctions.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 Invoke-Step '06p-test-azurite' { & $DotNetPath test Tests\Template.Azurite.Integration.Tests\Template.Azurite.Integration.Tests.csproj --no-restore --verbosity minimal --maxcpucount:1 }
 if ($ElasticRehearsalWebApi8xPath -and $ElasticRehearsalWebApi9xPath) {
     Invoke-Step '06d-elastic-upgrade-rehearsal' { & (Join-Path $PSScriptRoot 'elastic-upgrade-rehearsal.ps1') -WebApi8xPath $ElasticRehearsalWebApi8xPath -WebApi9xPath $ElasticRehearsalWebApi9xPath -DotNetPath $DotNetPath }
@@ -99,7 +104,8 @@ Invoke-Step '07b-coverage' {
     & (Join-Path $PSScriptRoot 'test-tooling-evidence.ps1') -Label 'coverage-gate' -DotNetPath $DotNetPath -Coverage -Projects @(
         'Tests\Template.Unit.Tests\Template.Unit.Tests.csproj',
         'Tests\Template.Integration.Tests\Template.Integration.Tests.csproj',
-        'Tests\Template.Functional.Tests\Template.Functional.Tests.csproj')
+        'Tests\Template.Functional.Tests\Template.Functional.Tests.csproj',
+        'Tests\Template.WorkflowFunctions.Tests\Template.WorkflowFunctions.Tests.csproj')
     $collected = $LASTEXITCODE
     & (Join-Path $PSScriptRoot 'coverage-report.ps1') -InputDirectory (Join-Path $logDirectory 'test-tooling\coverage-gate')
     if ($collected -ne 0) { $global:LASTEXITCODE = $collected }
