@@ -20,6 +20,7 @@ COPY ["Src/Infrastructure/Template.Infrastructure.Resources/Template.Infrastruct
 COPY ["Src/Infrastructure/Template.Infrastructure.Caching/Template.Infrastructure.Caching.csproj", "Src/Infrastructure/Template.Infrastructure.Caching/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Messaging/Template.Infrastructure.Messaging.csproj", "Src/Infrastructure/Template.Infrastructure.Messaging/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Search/Template.Infrastructure.Search.csproj", "Src/Infrastructure/Template.Infrastructure.Search/"]
+COPY ["Src/Infrastructure/Template.Infrastructure.Workflow/Template.Infrastructure.Workflow.csproj", "Src/Infrastructure/Template.Infrastructure.Workflow/"]
 COPY ["Tests/Template.Functional.Tests/Template.Functional.Tests.csproj", "Tests/Template.Functional.Tests/"]
 COPY ["Tests/Template.Integration.Tests/Template.Integration.Tests.csproj", "Tests/Template.Integration.Tests/"]
 COPY ["Tests/Template.Unit.Tests/Template.Unit.Tests.csproj", "Tests/Template.Unit.Tests/"]
