@@ -66,6 +66,8 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      - Cors__AllowedOrigins__0=http://localhost:${WEBAPP_PORT:-4200}
+      - Cors__AllowedOrigins__1=http://127.0.0.1:${WEBAPP_PORT:-4200}
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB_NAME};SearchPath=public
       - ConnectionStrings__IdentityConnection=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_IDENTITY_DB_NAME};SearchPath=public
       - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD}
