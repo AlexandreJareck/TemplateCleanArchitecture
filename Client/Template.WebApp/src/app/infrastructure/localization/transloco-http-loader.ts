@@ -7,6 +7,11 @@ export class TranslocoHttpLoader implements TranslocoLoader {
   private readonly http = inject(HttpClient);
 
   getTranslation(language: string) {
-    return this.http.get<Translation>(`/i18n/${language}.json`);
+    return this.http.get<Translation>(`/i18n/${language}.json`, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      },
+    });
   }
 }
