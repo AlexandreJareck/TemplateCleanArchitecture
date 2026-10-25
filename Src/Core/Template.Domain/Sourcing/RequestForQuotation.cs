@@ -325,6 +325,7 @@ public sealed class RequestForQuotation : VersionedAggregateRoot
     public (QuoteRevision? Revision, DomainError? Error) EnterQuote(
         Guid supplierId, QuoteInput input, DateOnly deadlineLocalDate, Guid? actorId, DateTime nowUtc, string correlationId)
     {
+        input = WithinClockSkew(input, nowUtc);
         if (CheckQuoteWindow(input, nowUtc) is { } windowError)
             return (null, windowError);
         var invitation = ActiveInvitations.FirstOrDefault(candidate => candidate.SupplierId == supplierId);
@@ -351,6 +352,7 @@ public sealed class RequestForQuotation : VersionedAggregateRoot
     public (QuoteRevision? Revision, DomainError? Error) ReviseQuote(
         Guid quoteId, QuoteInput input, DateOnly deadlineLocalDate, Guid? actorId, DateTime nowUtc, string correlationId)
     {
+        input = WithinClockSkew(input, nowUtc);
         if (CheckQuoteWindow(input, nowUtc) is { } windowError)
             return (null, windowError);
         var quote = quotes.FirstOrDefault(candidate => candidate.Id == quoteId);
@@ -702,6 +704,18 @@ public sealed class RequestForQuotation : VersionedAggregateRoot
         exchangeRates.Where(rate => rate.Purpose == ExchangeRatePurpose.Comparison)
             .GroupBy(rate => rate.FromCurrency)
             .ToDictionary(group => group.Key, group => group.OrderBy(rate => rate.Source == ExchangeRateSource.Manual ? 1 : 0).Last(), StringComparer.Ordinal);
+
+    /// <summary>
+    /// D33-11: a received instant at most <see cref="ClockSkewTolerance"/> ahead of the server clock (a client clock that
+    /// runs slightly fast) is recorded as the server's now, so a revision is never stored in the future. Anything later
+    /// stays a validation error.
+    /// </summary>
+    public static readonly TimeSpan ClockSkewTolerance = TimeSpan.FromMinutes(2);
+
+    private static QuoteInput WithinClockSkew(QuoteInput input, DateTime nowUtc) =>
+        input.ReceivedAtUtc.Kind == DateTimeKind.Utc && input.ReceivedAtUtc > nowUtc && input.ReceivedAtUtc <= nowUtc + ClockSkewTolerance
+            ? input with { ReceivedAtUtc = nowUtc }
+            : input;
 
     private DomainError? CheckQuoteWindow(QuoteInput input, DateTime nowUtc)
     {

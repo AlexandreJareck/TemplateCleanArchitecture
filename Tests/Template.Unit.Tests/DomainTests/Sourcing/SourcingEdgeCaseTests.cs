@@ -68,6 +68,26 @@ public sealed class SourcingEdgeCaseTests
         rfq.CancelForRequisition("RequisitionWithdrawn", null, Now, Correlation).ShouldBeFalse();
     }
 
+    /// <summary>
+    /// T-SRC-008-c (D33-11): a received instant slightly ahead of the server clock (client clock skew) is recorded as
+    /// the server's now; beyond the tolerance it stays a validation error. Found by the Phase 33 real-stack journey.
+    /// </summary>
+    [Fact]
+    public void T_SRC_008_c_ReceivedInstant_WithinClockSkew_IsRecordedAsNow_AndBeyondItIsRejected()
+    {
+        var (rfq, suppliers) = Published(3);
+        var at = Now.AddHours(1);
+
+        var skewed = rfq.EnterQuote(suppliers[0].SupplierId, Quote(receivedAt: at.AddSeconds(30)), DeadlineDate, Actor, at, Correlation).Revision!;
+        skewed.ReceivedAtUtc.ShouldBe(at);
+
+        var revised = rfq.ReviseQuote(skewed.QuoteId, Quote(receivedAt: at.Add(RequestForQuotation.ClockSkewTolerance)), DeadlineDate, Actor, at, Correlation).Revision!;
+        revised.ReceivedAtUtc.ShouldBe(at);
+
+        rfq.EnterQuote(suppliers[1].SupplierId, Quote(receivedAt: at.Add(RequestForQuotation.ClockSkewTolerance).AddTicks(1)), DeadlineDate, Actor, at, Correlation)
+            .Error!.Field.ShouldBe("receivedAt");
+    }
+
     [Fact]
     public void QuoteValidation_CoversEveryInputGuard_AndAttachmentsAreStoredAsMetadata()
     {
