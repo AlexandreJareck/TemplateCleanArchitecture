@@ -138,7 +138,7 @@ public sealed class SourcingHandlerEdgeCaseTests
         doubles.ActAsSystem();
         doubles.Clock.UtcNow = ProcurementTestDoubles.Now.AddDays(10 + RequisitionPolicy.V1.ExpiryGraceDays + 1);
 
-        (await doubles.Transitions().Handle(new ExpireDueRequisitionsCommand(), default)).Value.ShouldBe(1);
+        (await doubles.Expiry().Handle(new ExpireDueRequisitionsCommand(), default)).Value.ShouldBe(1);
         rfq.Status.ShouldBe(RfqStatus.Cancelled);
         rfq.CancellationReasonCode.ShouldBe("RequisitionExpired");
         doubles.Outbox.Events.Select(envelope => envelope.EventType).ShouldContain("procurement.rfq.cancelled");

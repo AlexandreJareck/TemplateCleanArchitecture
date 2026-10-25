@@ -223,8 +223,8 @@ public sealed class ProcurementEdgeCaseTests
         (await transitions.Handle(new WithdrawRequisitionCommand(draft.Id, draft.Version), default)).Error!.Code.ShouldBe(ProblemCodes.InvalidTransition);
         (await transitions.Handle(new CancelRequisitionCommand(draft.Id, draft.Version, Reason), default)).Value.Status.ShouldBe("Cancelled"); // Draft: nothing reserved
         (await transitions.Handle(new CopyRequisitionCommand(Guid.NewGuid()), default)).Error!.Category.ShouldBe(ErrorCategory.NotFound);
-        (await transitions.Handle(new ExpireRequisitionCommand(Guid.NewGuid()), default)).Error!.Category.ShouldBe(ErrorCategory.NotFound);
-        (await transitions.Handle(new ExpireRequisitionCommand(draft.Id), default)).Error!.Code.ShouldBe(ProblemCodes.InvalidTransition);
+        (await doubles.Expiry().Handle(new ExpireRequisitionCommand(Guid.NewGuid()), default)).Error!.Category.ShouldBe(ErrorCategory.NotFound);
+        (await doubles.Expiry().Handle(new ExpireRequisitionCommand(draft.Id), default)).Error!.Code.ShouldBe(ProblemCodes.InvalidTransition);
 
         var other = new ProcurementTestDoubles.Actor();
         doubles.Permissions.Grant(other.Id, SeededRoles.PermissionsByRole[SeededRoles.ProcurementManager]);

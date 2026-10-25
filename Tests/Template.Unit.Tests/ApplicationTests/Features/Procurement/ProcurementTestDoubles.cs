@@ -102,6 +102,8 @@ internal sealed partial class ProcurementTestDoubles
         return new(Requisitions, Numbers, References, CostCenters, new RequisitionAccess(writer, Scope), writer);
     }
 
+    public RequisitionExpiryHandlers Expiry() => new(Requisitions, Allocations, Rfqs, NewWriter());
+
     public RequisitionTransitionHandlers Transitions()
     {
         var writer = NewWriter();
