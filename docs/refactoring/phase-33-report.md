@@ -157,8 +157,7 @@ Cleanup of these resources requires explicit authorization.
 
 ## Remaining work
 
-1. Scheduled RFQ reminders need an owner decision on when a reminder is due (D33-10).
-2. Run the `real-services` workflow on GitHub once (manual dispatch) to have hosted evidence of the Testcontainers tier, now including the performance suite.
+1. Run the `real-services` workflow on GitHub once (manual dispatch) to have hosted evidence of the Testcontainers tier, now including the performance suite.
 
 ## Known limitations
 
