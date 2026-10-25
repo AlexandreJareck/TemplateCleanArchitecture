@@ -1,8 +1,16 @@
 .page-title {
   margin-bottom: var(--space-6);
 }
+.page-title p:first-child {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
 .page-title h1 {
-  font-size: 2rem;
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   margin: 0.25rem 0;
 }
 .toolbar,
@@ -15,6 +23,11 @@
 }
 .toolbar {
   margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
 }
 .toolbar input {
   max-width: 24rem;
@@ -39,12 +52,25 @@
   border-radius: var(--radius-lg);
   background: var(--card);
   margin-top: var(--space-4);
+  box-shadow: var(--shadow-sm);
 }
 .table-scroll {
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+.table-scroll thead th {
+  background: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.table-scroll tbody tr {
+  transition: background var(--transition-fast);
 }
 .pager {
   justify-content: flex-end;

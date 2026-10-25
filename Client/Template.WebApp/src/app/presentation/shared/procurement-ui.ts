@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   output,
@@ -54,6 +55,32 @@ export class ProblemFeedback {
 }
 
 /** Localized status badge for requisitions, periods, allocations and reservations. */
+type StatusTone = 'success' | 'info' | 'warning' | 'danger' | 'neutral';
+
+const STATUS_TONES: Readonly<Record<string, StatusTone>> = {
+  Active: 'success',
+  Approved: 'success',
+  Awarded: 'success',
+  Committed: 'success',
+  Complete: 'success',
+  Current: 'success',
+  Ordered: 'success',
+  Ready: 'success',
+  InSourcing: 'info',
+  Open: 'info',
+  Planned: 'info',
+  Published: 'info',
+  Reserved: 'info',
+  Running: 'info',
+  Submitted: 'info',
+  AwardPending: 'warning',
+  Incomplete: 'warning',
+  Pending: 'warning',
+  PendingApproval: 'warning',
+  Failed: 'danger',
+  Rejected: 'danger',
+};
+
 @Component({
   selector: 'app-status-badge',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,29 +89,44 @@ export class ProblemFeedback {
   styles: [
     `
       .status-badge {
-        display: inline-block;
-        padding: 0.125rem 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.125rem 0.625rem;
         border-radius: 999px;
-        border: 1px solid var(--border);
-        font-size: 0.875rem;
-        background: var(--muted);
-      }
-      [data-status='Submitted'],
-      [data-status='Open'],
-      [data-status='Reserved'],
-      [data-status='Active'] {
-        border-color: var(--primary);
-      }
-      [data-status='Cancelled'],
-      [data-status='Rejected'],
-      [data-status='Expired'],
-      [data-status='Released'],
-      [data-status='Closed'] {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        white-space: nowrap;
+        background: var(--neutral-soft);
         color: var(--muted-foreground);
+      }
+      .status-badge::before {
+        content: '';
+        width: 0.4375rem;
+        height: 0.4375rem;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      [data-tone='success'] {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+      [data-tone='info'] {
+        background: var(--info-soft);
+        color: var(--info);
+      }
+      [data-tone='warning'] {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      [data-tone='danger'] {
+        background: var(--danger-soft);
+        color: var(--destructive);
       }
     `,
   ],
 })
 export class StatusBadge {
   readonly status = input.required<string>();
+  protected readonly tone = computed(() => STATUS_TONES[this.status()] ?? 'neutral');
 }
