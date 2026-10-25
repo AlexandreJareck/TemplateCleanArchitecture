@@ -1,31 +1,66 @@
 <main class="auth-page">
-  <form class="auth-card" novalidate (submit)="submit($event)">
-    <p class="eyebrow">Procurement Hub</p>
-    <h1>{{ 'auth.signIn' | transloco }}</h1>
-    @if (expired) {
-      <p class="session-message" role="status">{{ 'status.expired.body' | transloco }}</p>
-    }
-    <label for="userName">{{ 'auth.userName' | transloco }}</label>
-    <input id="userName" hlmInput autocomplete="username" [formField]="loginForm.userName" />
-    <label for="password">{{ 'auth.password' | transloco }}</label>
-    <input
-      id="password"
-      hlmInput
-      type="password"
-      autocomplete="current-password"
-      [formField]="loginForm.password"
-    />
-    @if (session.error(); as error) {
-      <div class="feedback" role="alert">
-        <strong>{{ 'auth.failed' | transloco }}</strong
-        ><span>{{ error.code }}</span>
-        @if (error.traceId) {
-          <small>Trace: {{ error.traceId }}</small>
-        }
+  <section class="auth-brand" aria-hidden="true">
+    <div class="brand-mark">
+      <span class="brand-logo">PH</span>
+      <span>Procurement Hub</span>
+    </div>
+    <div class="brand-copy">
+      <h2>{{ 'auth.tagline' | transloco }}</h2>
+      <ul>
+        <li>{{ 'auth.pointRequisitions' | transloco }}</li>
+        <li>{{ 'auth.pointSourcing' | transloco }}</li>
+        <li>{{ 'auth.pointApprovals' | transloco }}</li>
+      </ul>
+    </div>
+    <p class="brand-footer">{{ 'auth.academic' | transloco }}</p>
+  </section>
+
+  <section class="auth-panel">
+    <form class="auth-card" novalidate (submit)="submit($event)">
+      <header class="auth-header">
+        <span class="brand-logo compact">PH</span>
+        <h1>{{ 'auth.signIn' | transloco }}</h1>
+        <p>{{ 'auth.subtitle' | transloco }}</p>
+      </header>
+
+      @if (expired) {
+        <p class="notice" role="status">{{ 'status.expired.body' | transloco }}</p>
+      }
+
+      <div class="field">
+        <label for="userName">{{ 'auth.userName' | transloco }}</label>
+        <input id="userName" hlmInput autocomplete="username" [formField]="loginForm.userName" />
       </div>
-    }
-    <button hlmBtn type="submit" [disabled]="loginForm().invalid() || session.busy()">
-      {{ (session.busy() ? 'common.loading' : 'auth.enter') | transloco }}
-    </button>
-  </form>
+
+      <div class="field">
+        <label for="password">{{ 'auth.password' | transloco }}</label>
+        <input
+          id="password"
+          hlmInput
+          type="password"
+          autocomplete="current-password"
+          [formField]="loginForm.password"
+        />
+      </div>
+
+      @if (session.error(); as error) {
+        <div class="feedback" role="alert">
+          <strong>{{ 'auth.failed' | transloco }}</strong>
+          <span>{{ error.code }}</span>
+          @if (error.traceId) {
+            <small>Trace: {{ error.traceId }}</small>
+          }
+        </div>
+      }
+
+      <button
+        hlmBtn
+        class="submit"
+        type="submit"
+        [disabled]="loginForm().invalid() || session.busy()"
+      >
+        {{ (session.busy() ? 'common.loading' : 'auth.enter') | transloco }}
+      </button>
+    </form>
+  </section>
 </main>
