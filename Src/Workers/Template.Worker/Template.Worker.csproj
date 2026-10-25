@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Template.Application\Template.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Files\Template.Infrastructure.Files.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Integrations\Template.Infrastructure.Integrations.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj" />

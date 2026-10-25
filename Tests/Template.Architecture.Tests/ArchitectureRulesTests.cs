@@ -180,6 +180,8 @@ public sealed class ArchitectureRulesTests
             @"..\..\Core\Template.Application\Template.Application.csproj",
             // Phase 30: blob storage and the PDF/XLSX renderers run only in the Worker.
             @"..\..\Infrastructure\Template.Infrastructure.Files\Template.Infrastructure.Files.csproj",
+            // Phase 33: the scheduled RFQ close computes comparisons through the PTAX resolver (disabled providers).
+            @"..\..\Infrastructure\Template.Infrastructure.Integrations\Template.Infrastructure.Integrations.csproj",
             @"..\..\Infrastructure\Template.Infrastructure.Messaging\Template.Infrastructure.Messaging.csproj",
             @"..\..\Infrastructure\Template.Infrastructure.Persistence\Template.Infrastructure.Persistence.csproj",
             @"..\..\Infrastructure\Template.Infrastructure.Reporting\Template.Infrastructure.Reporting.csproj",

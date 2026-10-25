@@ -118,4 +118,8 @@ public static class LogEvents
     public static readonly EventId PurchaseOrderNotificationFailed = new(11402, nameof(PurchaseOrderNotificationFailed));
     public static readonly EventId PurchasingEventDuplicate = new(11403, nameof(PurchasingEventDuplicate));
     public static readonly EventId PurchasingEventSkipped = new(11404, nameof(PurchasingEventSkipped));
+
+    // Phase 33: scheduled sweeps (counts and exception types only).
+    public static readonly EventId ScheduledSweepCompleted = new(11500, nameof(ScheduledSweepCompleted));
+    public static readonly EventId ScheduledSweepFailed = new(11501, nameof(ScheduledSweepFailed));
 }
