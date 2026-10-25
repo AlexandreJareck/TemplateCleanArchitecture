@@ -1,5 +1,5 @@
 # Phase 33 expensive tier: suites against disposable real services (Testcontainers on the runner's Docker, images
-# pinned by digest in the tests) plus the WorkflowFunctions host image. Weekly and on demand; never on every PR.
+# pinned by digest in the tests), the WorkflowFunctions host image and the NFR volume performance budgets. Weekly and on demand; never on every PR.
 # Read-only token, no secret, cloud or deployment credential.
 name: real-services
 
@@ -34,6 +34,7 @@ jobs:
           - Elasticsearch.Integration
           - Azurite.Integration
           - WorkflowFunctions.Integration
+          - Performance
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
