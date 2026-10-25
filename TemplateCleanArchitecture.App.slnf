@@ -27,6 +27,7 @@
       "Tests\\Template.Redis.Integration.Tests\\Template.Redis.Integration.Tests.csproj",
       "Tests\\Template.Unit.Tests\\Template.Unit.Tests.csproj",
       "Tests\\Template.Worker.Tests\\Template.Worker.Tests.csproj",
+      "Tests\\Template.Performance.Tests\\Template.Performance.Tests.csproj",
       "Tests\\Template.WorkflowFunctions.Tests\\Template.WorkflowFunctions.Tests.csproj",
       "Tests\\Template.WorkflowFunctions.Integration.Tests\\Template.WorkflowFunctions.Integration.Tests.csproj"
     ]
