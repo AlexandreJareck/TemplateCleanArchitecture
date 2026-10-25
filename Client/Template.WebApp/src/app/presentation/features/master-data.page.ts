@@ -15,11 +15,22 @@ import { HlmSkeleton } from '@presentation/shared-ui/skeleton';
 import { MASTER_DATA_PORT } from '../state/ports';
 import { SessionFacade } from '../state/session.facade';
 import { ActionConfirmation } from '../shared/action-confirmation';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 @Component({
   selector: 'app-master-data-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormField, TranslocoPipe, HlmButton, HlmInput, HlmSkeleton, ActionConfirmation],
+  imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
+    FormField,
+    TranslocoPipe,
+    HlmButton,
+    HlmInput,
+    HlmSkeleton,
+    ActionConfirmation,
+  ],
   templateUrl: './master-data.page.html',
   styleUrl: './data-pages.css',
 })

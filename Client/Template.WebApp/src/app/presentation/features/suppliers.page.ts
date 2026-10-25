@@ -16,11 +16,12 @@ import { HlmInput } from '@presentation/shared-ui/input';
 import { MASTER_DATA_PORT } from '../state/ports';
 import { SessionFacade } from '../state/session.facade';
 import { ActionConfirmation } from '../shared/action-confirmation';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 @Component({
   selector: 'app-suppliers-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormField, TranslocoPipe, HlmButton, HlmInput, ActionConfirmation],
+  imports: [...HlmTableImports, FormField, TranslocoPipe, HlmButton, HlmInput, ActionConfirmation],
   templateUrl: './suppliers.page.html',
   styleUrl: './data-pages.css',
 })

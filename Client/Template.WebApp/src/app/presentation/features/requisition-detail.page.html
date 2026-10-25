@@ -92,30 +92,30 @@
       tabindex="0"
       [attr.aria-label]="'requisition.linesTable' | transloco"
     >
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>{{ 'requisition.description' | transloco }}</th>
-            <th>{{ 'requisition.quantity' | transloco }}</th>
-            <th>{{ 'requisition.unitPrice' | transloco }}</th>
-            <th>{{ 'requisition.lineTotal' | transloco }}</th>
+      <table hlmTable>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>#</th>
+            <th hlmTh>{{ 'requisition.description' | transloco }}</th>
+            <th hlmTh>{{ 'requisition.quantity' | transloco }}</th>
+            <th hlmTh>{{ 'requisition.unitPrice' | transloco }}</th>
+            <th hlmTh>{{ 'requisition.lineTotal' | transloco }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hlmTBody>
           @for (line of current.lines; track line.lineNumber) {
-            <tr>
-              <td data-label="#">{{ line.lineNumber }}</td>
-              <td [attr.data-label]="'requisition.description' | transloco">
+            <tr hlmTr>
+              <td hlmTd data-label="#">{{ line.lineNumber }}</td>
+              <td hlmTd [attr.data-label]="'requisition.description' | transloco">
                 {{ line.description }}
               </td>
-              <td [attr.data-label]="'requisition.quantity' | transloco">
+              <td hlmTd [attr.data-label]="'requisition.quantity' | transloco">
                 {{ line.quantity }} {{ line.unitCode }}
               </td>
-              <td [attr.data-label]="'requisition.unitPrice' | transloco">
+              <td hlmTd [attr.data-label]="'requisition.unitPrice' | transloco">
                 {{ line.estimatedUnitPrice | money }}
               </td>
-              <td [attr.data-label]="'requisition.lineTotal' | transloco">
+              <td hlmTd [attr.data-label]="'requisition.lineTotal' | transloco">
                 {{ line.lineTotal | money }}
               </td>
             </tr>

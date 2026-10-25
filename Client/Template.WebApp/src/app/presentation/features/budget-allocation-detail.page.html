@@ -79,34 +79,34 @@
         tabindex="0"
         [attr.aria-label]="'budget.reservationsTable' | transloco"
       >
-        <table>
-          <thead>
-            <tr>
-              <th>{{ 'budget.requisition' | transloco }}</th>
-              <th>{{ 'requisition.revision' | transloco }}</th>
-              <th>{{ 'budget.amount' | transloco }}</th>
-              <th>{{ 'fields.status' | transloco }}</th>
-              <th>{{ 'budget.releaseReason' | transloco }}</th>
+        <table hlmTable>
+          <thead hlmTHead>
+            <tr hlmTr>
+              <th hlmTh>{{ 'budget.requisition' | transloco }}</th>
+              <th hlmTh>{{ 'requisition.revision' | transloco }}</th>
+              <th hlmTh>{{ 'budget.amount' | transloco }}</th>
+              <th hlmTh>{{ 'fields.status' | transloco }}</th>
+              <th hlmTh>{{ 'budget.releaseReason' | transloco }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody hlmTBody>
             @for (reservation of reservations().items; track reservation.id) {
-              <tr>
-                <td [attr.data-label]="'budget.requisition' | transloco">
+              <tr hlmTr>
+                <td hlmTd [attr.data-label]="'budget.requisition' | transloco">
                   <a [routerLink]="['/requisitions', reservation.requisitionId]">{{
                     reservation.requisitionId.slice(0, 8)
                   }}</a>
                 </td>
-                <td [attr.data-label]="'requisition.revision' | transloco">
+                <td hlmTd [attr.data-label]="'requisition.revision' | transloco">
                   {{ reservation.requisitionRevision }}
                 </td>
-                <td [attr.data-label]="'budget.amount' | transloco">
+                <td hlmTd [attr.data-label]="'budget.amount' | transloco">
                   {{ reservation.amount | money }}
                 </td>
-                <td [attr.data-label]="'fields.status' | transloco">
+                <td hlmTd [attr.data-label]="'fields.status' | transloco">
                   <app-status-badge [status]="reservation.status" />
                 </td>
-                <td [attr.data-label]="'budget.releaseReason' | transloco">
+                <td hlmTd [attr.data-label]="'budget.releaseReason' | transloco">
                   {{ reservation.releaseReason ?? '—' }}
                 </td>
               </tr>

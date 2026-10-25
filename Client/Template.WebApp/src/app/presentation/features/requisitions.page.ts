@@ -13,6 +13,8 @@ import { HlmInput } from '@presentation/shared-ui/input';
 import { PermissionDirective } from '../security/permission.directive';
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { REQUISITION_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 const STATUSES = ['', 'Draft', 'Submitted', 'Cancelled', 'Expired', 'Rejected'] as const;
 
@@ -21,6 +23,8 @@ const STATUSES = ['', 'Draft', 'Submitted', 'Cancelled', 'Expired', 'Rejected'] 
   selector: 'app-requisitions-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
     RouterLink,
     TranslocoPipe,
     HlmButton,

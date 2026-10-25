@@ -92,26 +92,26 @@
       tabindex="0"
       [attr.aria-label]="'requisition.linesTable' | transloco"
     >
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>{{ 'requisition.description' | transloco }}</th>
-            <th>{{ 'requisition.quantity' | transloco }}</th>
-            <th>{{ 'requisition.unitPrice' | transloco }}</th>
+      <table hlmTable class="responsive-table">
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>#</th>
+            <th hlmTh>{{ 'requisition.description' | transloco }}</th>
+            <th hlmTh>{{ 'requisition.quantity' | transloco }}</th>
+            <th hlmTh>{{ 'requisition.unitPrice' | transloco }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hlmTBody>
           @for (line of current.lines; track line.lineNumber) {
-            <tr>
-              <td data-label="#">{{ line.lineNumber }}</td>
-              <td [attr.data-label]="'requisition.description' | transloco">
+            <tr hlmTr>
+              <td hlmTd data-label="#">{{ line.lineNumber }}</td>
+              <td hlmTd [attr.data-label]="'requisition.description' | transloco">
                 {{ line.description }}
               </td>
-              <td [attr.data-label]="'requisition.quantity' | transloco">
+              <td hlmTd [attr.data-label]="'requisition.quantity' | transloco">
                 {{ line.quantity }} {{ line.unitCode }}
               </td>
-              <td [attr.data-label]="'requisition.unitPrice' | transloco">
+              <td hlmTd [attr.data-label]="'requisition.unitPrice' | transloco">
                 {{ line.estimatedUnitPrice | money }}
               </td>
             </tr>
@@ -148,17 +148,17 @@
     @if (can('invite')) {
       <div class="toolbar">
         <label for="inviteSupplier">{{ 'sourcing.supplier' | transloco }}</label>
-        <select
-          id="inviteSupplier"
-          class="select"
+        <hlm-native-select
+          class="w-full"
+          selectId="inviteSupplier"
           [value]="inviteSupplier()"
-          (change)="inviteSupplier.set($any($event.target).value)"
+          (valueChange)="inviteSupplier.set($any($event))"
         >
-          <option value="">—</option>
+          <option hlmNativeSelectOption value="">—</option>
           @for (supplier of eligibleSuppliers(); track supplier.id) {
-            <option [value]="supplier.id">{{ supplier.legalName }}</option>
+            <option hlmNativeSelectOption [value]="supplier.id">{{ supplier.legalName }}</option>
           }
-        </select>
+        </hlm-native-select>
         <button hlmBtn type="button" [disabled]="!inviteSupplier()" (click)="invite()">
           {{ 'sourcing.invite' | transloco }}
         </button>
@@ -311,19 +311,19 @@
           <div class="form-grid">
             @if (!form.quoteId) {
               <label for="quoteSupplier">{{ 'sourcing.supplier' | transloco }}</label>
-              <select
-                id="quoteSupplier"
-                class="select"
+              <hlm-native-select
+                class="w-full"
+                selectId="quoteSupplier"
                 [value]="form.supplierId"
-                (change)="patch({ supplierId: $any($event.target).value })"
+                (valueChange)="patch({ supplierId: $any($event) })"
               >
-                <option value="">—</option>
+                <option hlmNativeSelectOption value="">—</option>
                 @for (invitation of pendingSuppliers(); track invitation.supplierId) {
-                  <option [value]="invitation.supplierId">
+                  <option hlmNativeSelectOption [value]="invitation.supplierId">
                     {{ invitation.supplierLegalName }}
                   </option>
                 }
-              </select>
+              </hlm-native-select>
             }
             <label for="quoteCurrency">{{ 'sourcing.currency' | transloco }}</label>
             <input
@@ -402,16 +402,18 @@
               (input)="patch({ paymentTerms: $any($event.target).value })"
             />
             <label for="source">{{ 'sourcing.source' | transloco }}</label>
-            <select
-              id="source"
-              class="select"
+            <hlm-native-select
+              class="w-full"
+              selectId="source"
               [value]="form.source"
-              (change)="patch({ source: $any($event.target).value })"
+              (valueChange)="patch({ source: $any($event) })"
             >
               @for (source of sources; track source) {
-                <option [value]="source">{{ 'sourcing.sources.' + source | transloco }}</option>
+                <option hlmNativeSelectOption [value]="source">
+                  {{ 'sourcing.sources.' + source | transloco }}
+                </option>
               }
-            </select>
+            </hlm-native-select>
             <label for="receivedAt">{{ 'sourcing.received' | transloco }}</label>
             <input
               id="receivedAt"
@@ -465,48 +467,53 @@
         tabindex="0"
         [attr.aria-label]="'sourcing.comparison' | transloco"
       >
-        <table class="responsive-table" data-testid="comparison-table">
-          <thead>
-            <tr>
-              <th>{{ 'sourcing.rank' | transloco }}</th>
-              <th>{{ 'sourcing.supplier' | transloco }}</th>
-              <th>{{ 'sourcing.rawTotal' | transloco }}</th>
-              <th>{{ 'sourcing.rate' | transloco }}</th>
-              <th>{{ 'sourcing.normalizedTotal' | transloco }}</th>
-              <th>{{ 'sourcing.deliveryDays' | transloco }}</th>
-              <th>{{ 'sourcing.coverage' | transloco }}</th>
-              <th>{{ 'sourcing.validity' | transloco }}</th>
-              <th>{{ 'common.actions' | transloco }}</th>
+        <table hlmTable class="responsive-table" data-testid="comparison-table">
+          <thead hlmTHead>
+            <tr hlmTr>
+              <th hlmTh>{{ 'sourcing.rank' | transloco }}</th>
+              <th hlmTh>{{ 'sourcing.supplier' | transloco }}</th>
+              <th hlmTh>{{ 'sourcing.rawTotal' | transloco }}</th>
+              <th hlmTh>{{ 'sourcing.rate' | transloco }}</th>
+              <th hlmTh>{{ 'sourcing.normalizedTotal' | transloco }}</th>
+              <th hlmTh>{{ 'sourcing.deliveryDays' | transloco }}</th>
+              <th hlmTh>{{ 'sourcing.coverage' | transloco }}</th>
+              <th hlmTh>{{ 'sourcing.validity' | transloco }}</th>
+              <th hlmTh>{{ 'common.actions' | transloco }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody hlmTBody>
             @for (entry of entries(); track entry.quoteRevisionId) {
               <tr
+                hlmTr
                 [class.recommended]="
                   entry.quoteRevisionId === comparison.recommendedQuoteRevisionId
                 "
               >
-                <td [attr.data-label]="'sourcing.rank' | transloco">{{ entry.rank ?? '—' }}</td>
-                <td [attr.data-label]="'sourcing.supplier' | transloco">
+                <td hlmTd [attr.data-label]="'sourcing.rank' | transloco">
+                  {{ entry.rank ?? '—' }}
+                </td>
+                <td hlmTd [attr.data-label]="'sourcing.supplier' | transloco">
                   {{ entry.supplierLegalName }} · rev. {{ entry.revisionNumber }}
                   @if (entry.quoteRevisionId === comparison.recommendedQuoteRevisionId) {
                     <strong> · {{ 'sourcing.recommended' | transloco }}</strong>
                   }
                 </td>
-                <td [attr.data-label]="'sourcing.rawTotal' | transloco">
+                <td hlmTd [attr.data-label]="'sourcing.rawTotal' | transloco">
                   {{ entry.rawTotal | money }}
                 </td>
-                <td [attr.data-label]="'sourcing.rate' | transloco">{{ entry.rate ?? '—' }}</td>
-                <td [attr.data-label]="'sourcing.normalizedTotal' | transloco">
+                <td hlmTd [attr.data-label]="'sourcing.rate' | transloco">
+                  {{ entry.rate ?? '—' }}
+                </td>
+                <td hlmTd [attr.data-label]="'sourcing.normalizedTotal' | transloco">
                   {{ entry.normalizedTotal | money }}
                 </td>
-                <td [attr.data-label]="'sourcing.deliveryDays' | transloco">
+                <td hlmTd [attr.data-label]="'sourcing.deliveryDays' | transloco">
                   {{ entry.deliveryDays }}
                 </td>
-                <td [attr.data-label]="'sourcing.coverage' | transloco">
+                <td hlmTd [attr.data-label]="'sourcing.coverage' | transloco">
                   {{ entry.coveredLines }}/{{ entry.totalLines }}
                 </td>
-                <td [attr.data-label]="'sourcing.validity' | transloco">
+                <td hlmTd [attr.data-label]="'sourcing.validity' | transloco">
                   @if (entry.isValid) {
                     {{ 'sourcing.valid' | transloco }}
                   } @else {
@@ -515,7 +522,7 @@
                     }
                   }
                 </td>
-                <td>
+                <td hlmTd>
                   @if (can('award') && entry.rank) {
                     <button hlmBtn size="sm" type="button" (click)="askAward(entry)">
                       {{ 'sourcing.select' | transloco }}
@@ -537,16 +544,16 @@
           <p class="hint">{{ 'sourcing.manualRateHelp' | transloco }}</p>
           <div class="form-grid">
             <label for="rateCurrency">{{ 'sourcing.currency' | transloco }}</label>
-            <select
-              id="rateCurrency"
-              class="select"
+            <hlm-native-select
+              class="w-full"
+              selectId="rateCurrency"
               [value]="rateCurrency()"
-              (change)="rateCurrency.set($any($event.target).value)"
+              (valueChange)="rateCurrency.set($any($event))"
             >
               @for (currency of comparison.missingRateCurrencies; track currency) {
-                <option [value]="currency">{{ currency }}</option>
+                <option hlmNativeSelectOption [value]="currency">{{ currency }}</option>
               }
-            </select>
+            </hlm-native-select>
             <label for="rateValue">{{ 'sourcing.rate' | transloco }}</label>
             <input
               id="rateValue"

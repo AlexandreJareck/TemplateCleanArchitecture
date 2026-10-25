@@ -52,38 +52,38 @@
       tabindex="0"
       [attr.aria-label]="'purchasing.receiptLinesTable' | transloco"
     >
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>{{ 'purchasing.description' | transloco }}</th>
-            <th>{{ 'purchasing.received' | transloco }}</th>
-            <th>{{ 'purchasing.accepted' | transloco }}</th>
-            <th>{{ 'purchasing.rejected' | transloco }}</th>
-            <th>{{ 'purchasing.correctedAccepted' | transloco }}</th>
-            <th>{{ 'purchasing.discrepancy' | transloco }}</th>
+      <table hlmTable class="responsive-table">
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>#</th>
+            <th hlmTh>{{ 'purchasing.description' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.received' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.accepted' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.rejected' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.correctedAccepted' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.discrepancy' | transloco }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hlmTBody>
           @for (line of current.lines; track line.poLineNumber) {
-            <tr [attr.data-line]="line.poLineNumber">
-              <td data-label="#">{{ line.poLineNumber }}</td>
-              <td [attr.data-label]="'purchasing.description' | transloco">
+            <tr hlmTr [attr.data-line]="line.poLineNumber">
+              <td hlmTd data-label="#">{{ line.poLineNumber }}</td>
+              <td hlmTd [attr.data-label]="'purchasing.description' | transloco">
                 {{ line.description }} ({{ line.unitCode }})
               </td>
-              <td [attr.data-label]="'purchasing.received' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.received' | transloco">
                 {{ line.receivedQuantity }}
               </td>
-              <td [attr.data-label]="'purchasing.accepted' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.accepted' | transloco">
                 {{ line.acceptedQuantity }}
               </td>
-              <td [attr.data-label]="'purchasing.rejected' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.rejected' | transloco">
                 {{ line.rejectedQuantity }}
               </td>
-              <td [attr.data-label]="'purchasing.correctedAccepted' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.correctedAccepted' | transloco">
                 {{ line.correctedAcceptedQuantity }}
               </td>
-              <td [attr.data-label]="'purchasing.discrepancy' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.discrepancy' | transloco">
                 @if (line.discrepancyType) {
                   <span class="warning">{{
                     'purchasing.discrepancyTypes.' + line.discrepancyType | transloco
@@ -123,18 +123,18 @@
       <form class="form-grid" (submit)="$event.preventDefault(); correct()" novalidate>
         <label for="correctionLine"
           >{{ 'purchasing.correctionLine' | transloco }}
-          <select
-            id="correctionLine"
-            class="select"
-            [value]="line()"
-            (change)="line.set(+$any($event.target).value)"
+          <hlm-native-select
+            class="w-full"
+            selectId="correctionLine"
+            [value]="line().toString()"
+            (valueChange)="line.set(+$any($event))"
           >
             @for (item of current.lines; track item.poLineNumber) {
-              <option [value]="item.poLineNumber">
+              <option hlmNativeSelectOption [value]="item.poLineNumber">
                 {{ item.poLineNumber }} · {{ item.description }}
               </option>
             }
-          </select>
+          </hlm-native-select>
         </label>
         <label for="correctionDelta"
           >{{ 'purchasing.correctionDelta' | transloco }}
@@ -149,8 +149,8 @@
         <label for="correctionReason"
           >{{ 'common.reason' | transloco }}
           <textarea
+            hlmTextarea
             id="correctionReason"
-            class="textarea"
             rows="3"
             [attr.maxlength]="reasonMax"
             [attr.aria-invalid]="showReasonError() ? 'true' : null"

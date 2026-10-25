@@ -46,16 +46,6 @@
   border-radius: var(--radius-lg);
   background: var(--card);
 }
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-th,
-td {
-  text-align: left;
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--border);
-}
 .pager {
   justify-content: flex-end;
   margin: var(--space-4) 0;
@@ -123,6 +113,7 @@ td {
   td {
     border: 0;
     padding: var(--space-2);
+    white-space: normal;
   }
   td::before {
     content: attr(data-label);
@@ -131,27 +122,6 @@ td {
   }
 }
 /* Phase 27 procurement screens. */
-.select {
-  height: 2.25rem;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--card);
-  color: var(--foreground);
-}
-.textarea {
-  width: 100%;
-  min-height: 4.5rem;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--card);
-  color: var(--foreground);
-  font: inherit;
-}
-.textarea[aria-invalid='true'] {
-  border-color: var(--destructive);
-}
 .sr-only {
   position: absolute;
   width: 1px;

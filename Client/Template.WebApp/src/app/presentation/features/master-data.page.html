@@ -40,24 +40,24 @@
   </div>
 } @else {
   <div class="table-scroll" role="region" tabindex="0" [attr.aria-label]="titleKey | transloco">
-    <table>
-      <thead>
-        <tr>
-          <th>{{ 'fields.code' | transloco }}</th>
-          <th>{{ 'fields.name' | transloco }}</th>
-          <th>{{ 'fields.status' | transloco }}</th>
-          <th>{{ 'common.actions' | transloco }}</th>
+    <table hlmTable>
+      <thead hlmTHead>
+        <tr hlmTr>
+          <th hlmTh>{{ 'fields.code' | transloco }}</th>
+          <th hlmTh>{{ 'fields.name' | transloco }}</th>
+          <th hlmTh>{{ 'fields.status' | transloco }}</th>
+          <th hlmTh>{{ 'common.actions' | transloco }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody hlmTBody>
         @for (item of page().items; track item.id) {
-          <tr>
-            <td data-label="Código">{{ item.code }}</td>
-            <td data-label="Nome">{{ item.name }}</td>
-            <td data-label="Status">
+          <tr hlmTr>
+            <td hlmTd data-label="Código">{{ item.code }}</td>
+            <td hlmTd data-label="Nome">{{ item.name }}</td>
+            <td hlmTd data-label="Status">
               {{ (item.active ? 'common.active' : 'common.inactive') | transloco }}
             </td>
-            <td>
+            <td hlmTd>
               <button
                 hlmBtn
                 size="sm"
@@ -117,10 +117,10 @@
       }
       @if (kind === 'catalog-items') {
         <label for="kind">{{ 'fields.kind' | transloco }}</label>
-        <select id="kind" [formField]="itemForm.kind">
-          <option value="Good">{{ 'fields.good' | transloco }}</option>
-          <option value="Service">{{ 'fields.service' | transloco }}</option>
-        </select>
+        <hlm-native-select class="w-full" selectId="kind" [formField]="itemForm.kind">
+          <option hlmNativeSelectOption value="Good">{{ 'fields.good' | transloco }}</option>
+          <option hlmNativeSelectOption value="Service">{{ 'fields.service' | transloco }}</option>
+        </hlm-native-select>
         <label for="secondary">{{ 'fields.secondaryRelatedId' | transloco }}</label
         ><input id="secondary" hlmInput [formField]="itemForm.secondaryRelatedId" />
       }
