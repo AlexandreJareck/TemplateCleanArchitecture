@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Template.Application;
 using Template.Application.Interfaces;
 using Template.Infrastructure.Files;
+using Template.Infrastructure.Integrations;
 using Template.Infrastructure.Messaging;
 using Template.Infrastructure.Persistence;
 using Template.Infrastructure.Reporting;
@@ -24,7 +25,9 @@ var builder = WebApplication.CreateBuilder(args);
 var useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 builder.Services.AddApplicationLayer();
 builder.Services.AddSingleton<IAuthenticatedUserService, WorkerAuthenticatedUser>();
-builder.Services.AddScoped<IRequestContext, WorkerRequestContext>();
+builder.Services.AddScoped<WorkerRequestContext>();
+builder.Services.AddScoped<IRequestContext>(provider => provider.GetRequiredService<WorkerRequestContext>());
+builder.Services.AddScoped<IInboundCorrelation>(provider => provider.GetRequiredService<WorkerRequestContext>());
 builder.Services.AddSingleton<Template.Application.Interfaces.Access.IPermissionReader, WorkerPermissions>();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration, useInMemoryDatabase);
 builder.Services.AddProcurementMessagingInfrastructure(builder.Configuration, useBroker: true);
@@ -49,6 +52,16 @@ builder.Services.AddOptions<ApprovalReconciliationSettings>()
     .Bind(builder.Configuration.GetSection(ApprovalReconciliationSettings.SectionName))
     .ValidateOnStart();
 builder.Services.AddHostedService<ApprovalReconciliationService>();
+// Phase 33 (D33-1): recurring RFQ close at the deadline (SRC-012) and requisition expiry (REQ-009). Closing computes
+// the comparison through the PTAX resolver, so the Worker composes the enrichment ports like the WebApi (disabled
+// providers in every committed profile).
+builder.Services.AddIntegrationsInfrastructure(builder.Configuration, useExternalProviders: !builder.Environment.IsEnvironment("Test"));
+builder.Services.AddSingleton<IValidateOptions<ScheduledSweepSettings>, ScheduledSweepSettingsValidator>();
+builder.Services.AddOptions<ScheduledSweepSettings>()
+    .Bind(builder.Configuration.GetSection(ScheduledSweepSettings.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<ScheduledSweepService>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<ScheduledSweepService>());
 // An in-flight report attempt hands its job back on shutdown; allow it to finish that bounded step.
 builder.Services.Configure<HostOptions>(host => host.ShutdownTimeout = TimeSpan.FromSeconds(45));
 

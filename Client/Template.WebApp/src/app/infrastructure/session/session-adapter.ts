@@ -6,15 +6,31 @@ import { CurrentAccountService } from '../api/generated/current-account/current-
 import type { CurrentUserDto } from '../api/generated/models/currentUserDto';
 import { mapProblem } from '../http/problem-mapper';
 import { AccessTokenStore } from './access-token-store';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   firstValueFrom,
   fromEvent,
+  retry,
   shareReplay,
   takeUntil,
+  throwError,
+  timer,
   type Observable,
   finalize,
   tap,
 } from 'rxjs';
+
+/** SEC-004: the server answers this while another refresh of the same family is in flight; retry once. */
+const REFRESH_IN_PROGRESS = 'auth.refresh-in-progress';
+const REFRESH_RETRY_DELAY_MS = 500;
+
+function isRefreshInProgress(error: unknown) {
+  return (
+    error instanceof HttpErrorResponse &&
+    error.status === 409 &&
+    (error.error as { code?: string } | null)?.code === REFRESH_IN_PROGRESS
+  );
+}
 
 @Injectable({ providedIn: 'root' })
 export class SessionAdapter implements SessionPort {
@@ -63,6 +79,13 @@ export class SessionAdapter implements SessionPort {
   refresh(): Observable<unknown> {
     if (!this.refreshInFlight) {
       this.refreshInFlight = this.sessions.postApiV2AuthSessionsRefresh().pipe(
+        // A refresh started by a page that was reloaded meanwhile may still hold the family lock: retry once with
+        // the current cookie (the server accepts it inside its reuse grace window) instead of ending the session.
+        retry({
+          count: 1,
+          delay: (error: unknown) =>
+            isRefreshInProgress(error) ? timer(REFRESH_RETRY_DELAY_MS) : throwError(() => error),
+        }),
         tap((response) => this.tokens.set(response.accessToken ?? undefined)),
         finalize(() => {
           this.refreshInFlight = undefined;

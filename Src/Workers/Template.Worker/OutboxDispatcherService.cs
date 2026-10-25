@@ -54,18 +54,24 @@ public sealed class OutboxDispatcherService(
 
     private async Task DispatchAsync(OutboxLease lease, OutboxDispatchSettings settings, CancellationToken cancellationToken)
     {
+        var eventType = new KeyValuePair<string, object?>("event_type", lease.Envelope.EventType);
+        using var logScope = logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = lease.Envelope.CorrelationId });
         try
         {
             await publisher.PublishAsync(lease.Envelope, cancellationToken);
             await using var scope = scopes.CreateAsyncScope();
             await scope.ServiceProvider.GetRequiredService<IOutboxStore>().MarkDispatchedAsync(
                 lease.Envelope.EventId, owner, timeProvider.GetUtcNow().UtcDateTime, cancellationToken);
+            WorkerMetrics.OutboxDispatched.Add(1, eventType);
+            WorkerMetrics.OutboxDispatchLatency.Record(
+                Math.Max(0, (timeProvider.GetUtcNow().UtcDateTime - lease.Envelope.OccurredAtUtc).TotalSeconds), eventType);
             logger.LogInformation(LogEvents.OutboxEventDispatched,
                 "Outbox event {EventId} of type {EventType} was confirmed", lease.Envelope.EventId, lease.Envelope.EventType);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch (Exception exception)
         {
+            WorkerMetrics.OutboxDispatchFailures.Add(1, eventType);
             var now = timeProvider.GetUtcNow().UtcDateTime;
             var nextAttemptAtUtc = OutboxDispatchPolicy.NextAttemptAtUtc(
                 now, lease.AttemptCount, settings.FirstRetryDelay, settings.MaxRetryDelay);

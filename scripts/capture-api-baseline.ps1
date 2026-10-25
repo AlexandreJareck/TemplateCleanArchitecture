@@ -3,6 +3,8 @@ param(
     [int]$Port = 5097,
     [string]$OutputDirectory = ''
 )
+# Phase 33: CI and other machines use the dotnet on PATH when the pinned local SDK path does not exist.
+if (-not (Test-Path -LiteralPath $DotNetPath)) { $DotNetPath = (Get-Command dotnet -ErrorAction Stop).Source }
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot

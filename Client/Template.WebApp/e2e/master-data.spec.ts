@@ -235,6 +235,57 @@ test('supplier detail/status and enrichment failure remain actionable', async ({
   await expect(page.getByText('enrichment.unavailable')).toBeVisible();
 });
 
+test('keyboard only: sign in, skip to content, open a page from the menu and use the drawer', async ({
+  page,
+}) => {
+  // Phase 33 keyboard smoke of the critical shell flows (WCAG 2.1.1, 2.4.1, 2.4.3); no mouse event is used.
+  await installApiFixture(page);
+  await page.goto('/login');
+  await expect(page.getByLabel('Usuário')).toBeEditable();
+  await page.getByLabel('Usuário').focus();
+  await page.keyboard.type('admin');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Senha')).toBeFocused();
+  await page.keyboard.type('secret');
+  await expect(page.getByRole('button', { name: 'Acessar' })).toBeEnabled();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Painel' })).toBeVisible();
+  // Every navigation moves focus to the main content (WCAG 2.4.3).
+  await expect(page.locator('#main-content')).toBeFocused();
+
+  // The skip link is the first focusable element of the page and Enter on it moves focus to the content.
+  const firstFocusable = await page.evaluate(() =>
+    document
+      .querySelector<HTMLElement>('a[href], button, input, select, textarea')
+      ?.textContent?.trim(),
+  );
+  expect(firstFocusable).toBe('Ir para o conteúdo');
+  const skip = page.getByRole('link', { name: 'Ir para o conteúdo' });
+  await skip.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main-content')).toBeFocused();
+
+  const categories = page
+    .getByRole('navigation', { name: 'Principal' })
+    .getByRole('link', { name: 'Categorias' });
+  await categories.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Categorias', level: 1 })).toBeVisible();
+
+  const create = page.getByRole('button', { name: 'Cadastrar' });
+  await create.focus();
+  await page.keyboard.press('Enter');
+  const drawer = page.getByRole('dialog', { name: 'Cadastrar' });
+  await expect(drawer).toBeVisible();
+  for (let index = 0; index < 8; index++) {
+    await page.keyboard.press('Tab');
+    expect(await drawer.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  }
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+  await expect(create).toBeFocused();
+});
+
 test('catalog empty, filter and create journey uses the isolated HTTP fixture', async ({
   page,
 }) => {

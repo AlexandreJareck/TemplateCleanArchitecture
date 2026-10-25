@@ -9,3 +9,14 @@ public interface IRequestContext
 {
     string CorrelationId { get; }
 }
+
+/// <summary>
+/// Lets a background host continue the correlation of the work that caused it (Phase 33): a consumer adopts the
+/// validated correlation ID of the integration event before its effect runs, so logs and audit records of the effect
+/// share the originating request's ID. Hosts without inbound correlation (WebApi) do not register it.
+/// </summary>
+public interface IInboundCorrelation
+{
+    /// <summary>Adopts <paramref name="correlationId"/> for the current scope; call before any work reads it.</summary>
+    void Adopt(string correlationId);
+}

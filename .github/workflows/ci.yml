@@ -1,0 +1,126 @@
+# Phase 33 fast gate for every pull request and push to main. Read-only token, actions pinned by commit SHA,
+# no secret, cloud or deployment credential. Real-service suites run in real-services.yml.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  backend:
+    name: backend (build, tests, coverage)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore TemplateCleanArchitecture.App.slnf --disable-parallel
+      - name: Build (WebApi, Worker, WorkflowFunctions)
+        run: |
+          dotnet build Src/Presentation/Template.WebApi/Template.WebApi.csproj --no-restore --maxcpucount:1 -p:UseSharedCompilation=false
+          dotnet build Src/Workers/Template.Worker/Template.Worker.csproj --no-restore --maxcpucount:1 -p:UseSharedCompilation=false
+          dotnet build Src/Functions/Template.WorkflowFunctions/Template.WorkflowFunctions.csproj --no-restore --maxcpucount:1 -p:UseSharedCompilation=false
+      - name: Build tests
+        run: dotnet build TemplateCleanArchitecture.App.slnf --no-restore --maxcpucount:1 -p:UseSharedCompilation=false
+      - name: Install Chromium for the report renderer tests
+        run: pwsh Tests/Template.Integration.Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+      - name: Architecture tests
+        run: dotnet test Tests/Template.Architecture.Tests/Template.Architecture.Tests.csproj --no-build --maxcpucount:1
+      # The functional suite includes OpenApiContractTests (OpenAPI v1/v2 equal docs/refactoring/baseline-phase-32).
+      - name: Unit, integration, functional, Worker and WorkflowFunctions tests with coverage
+        run: |
+          for project in Unit Integration Functional WorkflowFunctions; do
+            dotnet test "Tests/Template.$project.Tests/Template.$project.Tests.csproj" --no-build --maxcpucount:1 \
+              --collect "XPlat Code Coverage" --results-directory artifacts/coverage
+          done
+          dotnet test Tests/Template.Worker.Tests/Template.Worker.Tests.csproj --no-build --maxcpucount:1
+      - name: Coverage ratchet
+        run: pwsh scripts/coverage-report.ps1 -InputDirectory artifacts/coverage
+      - name: Vulnerable and deprecated packages
+        run: |
+          dotnet list TemplateCleanArchitecture.App.slnf package --vulnerable --include-transitive | tee artifacts/vulnerable.txt
+          if grep -qE "\b(High|Critical)\b" artifacts/vulnerable.txt; then echo "::error::High or critical vulnerable package"; exit 1; fi
+          dotnet list TemplateCleanArchitecture.App.slnf package --deprecated --include-transitive
+      - name: License inventory
+        run: pwsh scripts/license-inventory.ps1 -Label ci
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: backend-evidence
+          path: |
+            artifacts/coverage/**/coverage.cobertura.xml
+            artifacts/vulnerable.txt
+          retention-days: 14
+
+  frontend:
+    name: frontend (lint, tests, build, e2e)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: Client/Template.WebApp
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.0
+      - name: Enable the pinned pnpm (packageManager)
+        run: corepack enable
+      - name: Install (lockfile must match)
+        run: pnpm install --frozen-lockfile
+      - name: Validate (format, lint, types, unit, architecture, mutations, API drift, build)
+        run: pnpm validate
+      - name: Dependency audits
+        run: |
+          pnpm audit:licenses
+          pnpm audit:security
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end and accessibility (Playwright + axe)
+        run: pnpm e2e --workers=2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-traces
+          path: Client/Template.WebApp/test-results/
+          retention-days: 7
+
+  repository:
+    name: repository (secrets, compose, whitespace)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Secret and configuration scan
+        run: pwsh scripts/secret-scan.ps1
+      - name: Compose configuration with placeholders only
+        run: docker compose --env-file .env.example config -q
+      - name: Whitespace errors in the change
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git diff --check "$BASE_SHA" HEAD

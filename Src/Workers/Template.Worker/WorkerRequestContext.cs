@@ -3,9 +3,17 @@ using Template.Application.Interfaces.Access;
 
 namespace Template.Worker;
 
-public sealed class WorkerRequestContext : IRequestContext
+/// <summary>
+/// One correlation ID per scope (one sweep, report attempt or consumed message), so every log entry and audit record
+/// written by that unit of work shares it (it previously changed on every read). A consumed event adopts the
+/// originating request's correlation through <see cref="IInboundCorrelation"/>.
+/// </summary>
+public sealed class WorkerRequestContext : IRequestContext, IInboundCorrelation
 {
-    public string CorrelationId => Guid.NewGuid().ToString("N");
+    public string CorrelationId { get; private set; } = Template.Application.Logging.CorrelationId.New();
+
+    public void Adopt(string correlationId) =>
+        CorrelationId = Template.Application.Logging.CorrelationId.Normalize(correlationId, CorrelationId);
 }
 
 public sealed class WorkerAuthenticatedUser : IAuthenticatedUserService

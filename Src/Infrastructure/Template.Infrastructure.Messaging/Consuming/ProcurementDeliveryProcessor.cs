@@ -73,6 +73,10 @@ public sealed class ProcurementDeliveryProcessor(
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
+                // Phase 33: the effect continues the originating request's correlation (validated, never echoed raw).
+                var correlationId = CorrelationId.Normalize(envelope.CorrelationId, CorrelationId.New());
+                scope.ServiceProvider.GetService<Template.Application.Interfaces.IInboundCorrelation>()?.Adopt(correlationId);
+                using var logScope = logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId });
                 var handler = scope.ServiceProvider.GetRequiredService<IProcurementIntegrationEventHandler>();
                 var result = await handler.HandleAsync(delivery.Consumer, envelope, stoppingToken);
                 logger.LogInformation(result == InboxApplyResult.Applied ? LogEvents.InboxEffectApplied : LogEvents.InboxDuplicateSkipped,

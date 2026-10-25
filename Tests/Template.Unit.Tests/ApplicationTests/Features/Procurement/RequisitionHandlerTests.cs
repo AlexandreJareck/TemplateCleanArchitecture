@@ -316,10 +316,10 @@ public sealed class RequisitionHandlerTests
         doubles.ActAsSystem();
 
         doubles.Clock.UtcNow = ProcurementTestDoubles.Now.AddDays(40);
-        (await doubles.Transitions().Handle(new ExpireDueRequisitionsCommand(), default)).Value.ShouldBe(0);
+        (await doubles.Expiry().Handle(new ExpireDueRequisitionsCommand(), default)).Value.ShouldBe(0);
         doubles.Clock.UtcNow = ProcurementTestDoubles.Now.AddDays(42);
-        (await doubles.Transitions().Handle(new ExpireDueRequisitionsCommand(), default)).Value.ShouldBe(1);
-        (await doubles.Transitions().Handle(new ExpireRequisitionCommand(draft.Id), default)).Value.ShouldBeFalse(); // already expired: no-op
+        (await doubles.Expiry().Handle(new ExpireDueRequisitionsCommand(), default)).Value.ShouldBe(1);
+        (await doubles.Expiry().Handle(new ExpireRequisitionCommand(draft.Id), default)).Value.ShouldBeFalse(); // already expired: no-op
 
         draft.Status.ShouldBe(RequisitionStatus.Expired);
         doubles.Allocation.Reservations.Single().ReleaseReason.ShouldBe(BudgetReleaseReason.Expired);

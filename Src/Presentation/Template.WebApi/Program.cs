@@ -25,6 +25,8 @@ using Template.WebApi.Infrastructure.Http;
 using Template.WebApi.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+// NFR-SEC-4: 1 MB request bodies (chunked included); RequestBodyLimitMiddleware answers declared oversize bodies.
+builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = Template.WebApi.Infrastructure.Http.RequestBodyLimitMiddleware.MaxBodyBytes);
 var isTestEnvironment = builder.Environment.IsEnvironment("Test");
 
 Log.Logger = isTestEnvironment
@@ -96,6 +98,7 @@ app.UseCustomLocalization();
 app.UseConfiguredCors();
 // Before routing and authentication, so a failure anywhere in the pipeline maps to Problem Details and is logged once.
 app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseMiddleware<Template.WebApi.Infrastructure.Http.RequestBodyLimitMiddleware>();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

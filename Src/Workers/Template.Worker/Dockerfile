@@ -11,6 +11,7 @@ COPY ["Src/Workers/Template.Worker/Template.Worker.csproj", "Src/Workers/Templat
 COPY ["Src/Core/Template.Application/Template.Application.csproj", "Src/Core/Template.Application/"]
 COPY ["Src/Core/Template.Domain/Template.Domain.csproj", "Src/Core/Template.Domain/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Files/Template.Infrastructure.Files.csproj", "Src/Infrastructure/Template.Infrastructure.Files/"]
+COPY ["Src/Infrastructure/Template.Infrastructure.Integrations/Template.Infrastructure.Integrations.csproj", "Src/Infrastructure/Template.Infrastructure.Integrations/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Messaging/Template.Infrastructure.Messaging.csproj", "Src/Infrastructure/Template.Infrastructure.Messaging/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Persistence/Template.Infrastructure.Persistence.csproj", "Src/Infrastructure/Template.Infrastructure.Persistence/"]
 COPY ["Src/Infrastructure/Template.Infrastructure.Reporting/Template.Infrastructure.Reporting.csproj", "Src/Infrastructure/Template.Infrastructure.Reporting/"]

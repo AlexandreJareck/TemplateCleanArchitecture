@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +7,7 @@ using Shouldly;
 using Template.Application.Interfaces.Files;
 using Template.Application.Interfaces.Reporting;
 using Template.Application.Services.Reporting;
+using Template.Infrastructure.Persistence;
 
 namespace Template.Worker.Tests;
 
@@ -49,6 +51,44 @@ public sealed class WorkerCompositionTests : IClassFixture<WorkerCompositionTest
             .ShouldBe(Template.Application.Interfaces.Messaging.InboxApplyResult.Applied);
         (await handler.HandleAsync(Template.Application.Messaging.Procurement.ProcurementConsumers.Purchasing, envelope, CancellationToken.None))
             .ShouldBe(Template.Application.Interfaces.Messaging.InboxApplyResult.Duplicate);
+    }
+
+    /// <summary>Phase 33 (D33-1): both scheduled sweeps resolve their use cases and run without a failure.</summary>
+    [Fact]
+    public async Task ScheduledSweeps_ResolveAndRun_WithoutFailures()
+    {
+        var failures = 0L;
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == WorkerMetrics.MeterName && instrument.Name == "worker.sweep_failures")
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((_, value, _, _) => Interlocked.Add(ref failures, value));
+        listener.Start();
+        // The WebApi owns seeding (organization settings); the Worker only migrates.
+        await using (var seed = factory.Services.CreateAsyncScope())
+            await seed.ServiceProvider.InitializeApplicationDatabaseAsync(applyMigrations: false, seedDefaultData: true);
+
+        await factory.Services.GetRequiredService<ScheduledSweepService>().RunOnceAsync(10, CancellationToken.None);
+
+        Interlocked.Read(ref failures).ShouldBe(0);
+    }
+
+    /// <summary>Phase 33: a consumer scope keeps one correlation ID and adopts only a safe inbound one.</summary>
+    [Fact]
+    public async Task RequestContext_IsStablePerScope_AndAdoptsOnlySafeInboundCorrelation()
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<Template.Application.Interfaces.IRequestContext>();
+        var first = context.CorrelationId;
+        context.CorrelationId.ShouldBe(first);
+
+        var inbound = scope.ServiceProvider.GetRequiredService<Template.Application.Interfaces.IInboundCorrelation>();
+        inbound.Adopt("0HNPI2F1R3GUN:00000001");
+        context.CorrelationId.ShouldBe("0HNPI2F1R3GUN:00000001");
+        inbound.Adopt("<script>alert(1)</script>");
+        context.CorrelationId.ShouldBe("0HNPI2F1R3GUN:00000001");
     }
 
     public sealed class WorkerFactory : WebApplicationFactory<Program>
