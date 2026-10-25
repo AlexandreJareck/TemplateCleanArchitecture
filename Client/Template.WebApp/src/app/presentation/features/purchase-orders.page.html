@@ -17,18 +17,18 @@
     @if (!receiving()) {
       <label for="orderStatus"
         >{{ 'fields.status' | transloco }}
-        <select
-          id="orderStatus"
-          class="select"
+        <hlm-native-select
+          class="w-full"
+          selectId="orderStatus"
           [value]="status()"
-          (change)="changeStatus($any($event.target).value)"
+          (valueChange)="changeStatus($any($event))"
         >
           @for (option of filters; track option) {
-            <option [value]="option">
+            <option hlmNativeSelectOption [value]="option">
               {{ 'purchasing.filters.' + (option || 'all') | transloco }}
             </option>
           }
-        </select>
+        </hlm-native-select>
       </label>
     }
     <label for="orderSearch"
@@ -53,55 +53,55 @@
       tabindex="0"
       [attr.aria-label]="'purchasing.ordersTable' | transloco"
     >
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>{{ 'purchasing.number' | transloco }}</th>
-            <th>{{ 'purchasing.requisition' | transloco }}</th>
-            <th>{{ 'purchasing.supplier' | transloco }}</th>
-            <th>{{ 'fields.status' | transloco }}</th>
+      <table hlmTable class="responsive-table">
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>{{ 'purchasing.number' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.requisition' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.supplier' | transloco }}</th>
+            <th hlmTh>{{ 'fields.status' | transloco }}</th>
             @if (!receiving()) {
-              <th>{{ 'purchasing.total' | transloco }}</th>
-              <th>{{ 'purchasing.document' | transloco }}</th>
+              <th hlmTh>{{ 'purchasing.total' | transloco }}</th>
+              <th hlmTh>{{ 'purchasing.document' | transloco }}</th>
             } @else {
-              <th>{{ 'purchasing.promisedBy' | transloco }}</th>
+              <th hlmTh>{{ 'purchasing.promisedBy' | transloco }}</th>
             }
-            <th>{{ 'common.actions' | transloco }}</th>
+            <th hlmTh>{{ 'common.actions' | transloco }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hlmTBody>
           @for (item of items().items; track item.id) {
-            <tr [attr.data-order]="item.id">
-              <td [attr.data-label]="'purchasing.number' | transloco">
+            <tr hlmTr [attr.data-order]="item.id">
+              <td hlmTd [attr.data-label]="'purchasing.number' | transloco">
                 {{ item.number ?? ('purchasing.draftNumber' | transloco) }}
               </td>
-              <td [attr.data-label]="'purchasing.requisition' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.requisition' | transloco">
                 {{ item.requisitionNumber }}
               </td>
-              <td [attr.data-label]="'purchasing.supplier' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.supplier' | transloco">
                 {{ item.supplierName }}
               </td>
-              <td [attr.data-label]="'fields.status' | transloco">
+              <td hlmTd [attr.data-label]="'fields.status' | transloco">
                 <span class="status-badge" [attr.data-status]="item.status">{{
                   'purchasing.statuses.' + item.status | transloco
                 }}</span>
               </td>
               @if (!receiving()) {
-                <td [attr.data-label]="'purchasing.total' | transloco">
+                <td hlmTd [attr.data-label]="'purchasing.total' | transloco">
                   {{ item.total | money }}
                 </td>
-                <td [attr.data-label]="'purchasing.document' | transloco">
+                <td hlmTd [attr.data-label]="'purchasing.document' | transloco">
                   {{ 'purchasing.documentStatuses.' + item.documentStatus | transloco }}
                   @if (item.documentStatus === 'Failed' || item.notificationStatus === 'Failed') {
                     <span class="warning">{{ 'purchasing.attention' | transloco }}</span>
                   }
                 </td>
               } @else {
-                <td [attr.data-label]="'purchasing.promisedBy' | transloco">
+                <td hlmTd [attr.data-label]="'purchasing.promisedBy' | transloco">
                   {{ item.earliestPromisedDate ?? '—' }}
                 </td>
               }
-              <td class="actions">
+              <td hlmTd class="actions">
                 @if (receiving()) {
                   <a
                     hlmBtn

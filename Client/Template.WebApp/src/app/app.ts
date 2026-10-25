@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ThemeFacade } from './presentation/state/theme.facade';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -8,4 +9,7 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
-export class App {}
+export class App {
+  // Applies the saved light/dark preference before any page renders.
+  protected readonly theme = inject(ThemeFacade);
+}

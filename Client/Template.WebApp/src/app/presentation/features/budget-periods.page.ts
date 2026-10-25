@@ -10,12 +10,14 @@ import { ActionConfirmation, type ActionConfirmationRequest } from '../shared/ac
 import { ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
 import { BUDGET_PORT } from '../state/ports';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 /** Fiscal periods (BUD-001, BUD-011): list for `budget.read`; create/open/close for `budget.periods.manage`. */
 @Component({
   selector: 'app-budget-periods-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ...HlmTableImports,
     FormField,
     TranslocoPipe,
     HlmButton,

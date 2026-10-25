@@ -15,6 +15,9 @@ import { HlmInput } from '@presentation/shared-ui/input';
 import { ActionConfirmation, type ActionConfirmationRequest } from '../shared/action-confirmation';
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { MASTER_DATA_PORT, REQUISITION_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
+import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
 
 const CURRENCIES = ['BRL', 'USD', 'EUR'] as const;
 const MEDIA_TYPES = [
@@ -38,6 +41,9 @@ type PendingAction = 'submit' | 'discard' | undefined;
   selector: 'app-requisition-editor-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ...HlmTextareaImports,
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
     FormField,
     RouterLink,
     TranslocoPipe,

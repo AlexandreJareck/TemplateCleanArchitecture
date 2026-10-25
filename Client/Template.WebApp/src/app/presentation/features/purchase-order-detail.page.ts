@@ -15,6 +15,8 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { MoneyPipe, ProblemFeedback } from '../shared/procurement-ui';
 import { PURCHASING_PORT } from '../state/ports';
+import { HlmTableImports } from '@presentation/shared-ui/table';
+import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
 
 type Confirmation = 'issue' | 'cancel' | 'short-close';
 
@@ -27,7 +29,16 @@ type Confirmation = 'issue' | 'cancel' | 'short-close';
 @Component({
   selector: 'app-purchase-order-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe, RouterLink, HlmButton, HlmInput, MoneyPipe, ProblemFeedback],
+  imports: [
+    ...HlmTextareaImports,
+    ...HlmTableImports,
+    TranslocoPipe,
+    RouterLink,
+    HlmButton,
+    HlmInput,
+    MoneyPipe,
+    ProblemFeedback,
+  ],
   templateUrl: './purchase-order-detail.page.html',
   styleUrl: './data-pages.css',
 })

@@ -1,84 +1,75 @@
 <a class="skip-link" href="#main-content">{{ 'shell.skip' | transloco }}</a>
-<header>
-  <button class="menu" type="button" (click)="open.update((v) => !v)" aria-label="Menu">☰</button
-  ><a routerLink="/" class="brand">Procurement Hub</a
-  ><span class="user">{{ session.user()?.displayName }}</span
-  ><button hlmBtn variant="ghost" type="button" (click)="logout(true)">
-    {{ 'auth.logoutAll' | transloco }}</button
-  ><button hlmBtn variant="outline" type="button" (click)="logout()">
-    {{ 'auth.logout' | transloco }}
-  </button>
-</header>
 <div class="layout">
-  <nav [class.open]="open()" aria-label="Principal">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{
-      'nav.dashboard' | transloco
-    }}</a>
-    <a
-      *appPermission="'organization.read'"
-      routerLink="/organization/departments"
-      routerLinkActive="active"
-      >{{ 'nav.departments' | transloco }}</a
-    >
-    <a
-      *appPermission="'organization.read'"
-      routerLink="/organization/cost-centers"
-      routerLinkActive="active"
-      >{{ 'nav.costCenters' | transloco }}</a
-    >
-    <a *appPermission="'suppliers.read'" routerLink="/suppliers" routerLinkActive="active">{{
-      'nav.suppliers' | transloco
-    }}</a>
-    <a *appPermission="'catalog.read'" routerLink="/catalog/categories" routerLinkActive="active">{{
-      'nav.categories' | transloco
-    }}</a>
-    <a *appPermission="'catalog.read'" routerLink="/catalog/units" routerLinkActive="active">{{
-      'nav.units' | transloco
-    }}</a>
-    <a *appPermission="'catalog.read'" routerLink="/catalog/items" routerLinkActive="active">{{
-      'nav.items' | transloco
-    }}</a>
-    <a
-      *appPermission="'requisitions.create'"
-      routerLink="/requisitions/mine"
-      routerLinkActive="active"
-      >{{ 'nav.myRequisitions' | transloco }}</a
-    >
-    @if (session.can('requisitions.read-team') || session.can('requisitions.read-all')) {
-      <a routerLink="/requisitions/team" routerLinkActive="active">{{
-        'nav.teamRequisitions' | transloco
-      }}</a>
-    }
-    @if (session.can('sourcing.rfqs.manage') || session.can('sourcing.quotes.read')) {
-      <a routerLink="/sourcing" routerLinkActive="active">{{ 'nav.sourcing' | transloco }}</a>
-    }
-    <a
-      *appPermission="'approvals.decide'"
-      routerLink="/approvals/inbox"
-      routerLinkActive="active"
-      >{{ 'nav.approvals' | transloco }}</a
-    >
-    <a
-      *appPermission="'purchasing.orders.read'"
-      routerLink="/purchasing/orders"
-      routerLinkActive="active"
-      >{{ 'nav.purchaseOrders' | transloco }}</a
-    >
-    <a
-      *appPermission="'receiving.receipts.create'"
-      routerLink="/receiving/queue"
-      routerLinkActive="active"
-      >{{ 'nav.receiving' | transloco }}</a
-    >
-    <a *appPermission="'reports.request'" routerLink="/reports" routerLinkActive="active">{{
-      'nav.reports' | transloco
-    }}</a>
-    <a *appPermission="'budget.read'" routerLink="/budget/periods" routerLinkActive="active">{{
-      'nav.budgetPeriods' | transloco
-    }}</a>
-    <a *appPermission="'budget.read'" routerLink="/budget/allocations" routerLinkActive="active">{{
-      'nav.budgetAllocations' | transloco
-    }}</a>
-  </nav>
-  <main id="main-content" tabindex="-1"><router-outlet /></main>
+  <aside class="sidebar" [class.open]="open()">
+    <div class="sidebar-brand">
+      <a routerLink="/" class="brand-link"><app-brand-logo [showTagline]="true" /></a>
+      <button
+        class="icon-button close"
+        type="button"
+        (click)="open.set(false)"
+        [attr.aria-label]="'shell.closeMenu' | transloco"
+      >
+        <ng-icon name="lucideX" aria-hidden="true" />
+      </button>
+    </div>
+    <nav aria-label="Principal">
+      @for (group of groups(); track group.labelKey) {
+        <p class="group-label">{{ group.labelKey | transloco }}</p>
+        @for (item of group.items; track item.link) {
+          <a
+            [routerLink]="item.link"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+            ><ng-icon [name]="item.icon" aria-hidden="true" /><span>{{
+              item.labelKey | transloco
+            }}</span></a
+          >
+        }
+      }
+    </nav>
+    <p class="sidebar-footer">{{ 'auth.academic' | transloco }}</p>
+  </aside>
+  @if (open()) {
+    <button
+      class="scrim"
+      type="button"
+      tabindex="-1"
+      (click)="open.set(false)"
+      [attr.aria-label]="'shell.closeMenu' | transloco"
+    ></button>
+  }
+  <div class="content">
+    <header class="topbar">
+      <button
+        class="icon-button menu"
+        type="button"
+        (click)="open.update((v) => !v)"
+        aria-label="Menu"
+      >
+        <ng-icon name="lucideMenu" aria-hidden="true" />
+      </button>
+      <a routerLink="/" class="mobile-brand"><app-brand-logo [size]="30" /></a>
+      <span class="spacer"></span>
+      <button
+        class="icon-button"
+        type="button"
+        (click)="theme.cycle()"
+        [attr.aria-label]="'shell.theme.' + theme.preference() | transloco"
+        [attr.title]="'shell.theme.' + theme.preference() | transloco"
+      >
+        <ng-icon [name]="themeIcon()" aria-hidden="true" />
+      </button>
+      <div class="user">
+        <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="user-name">{{ session.user()?.displayName }}</span>
+      </div>
+      <button hlmBtn variant="ghost" type="button" class="logout-all" (click)="logout(true)">
+        {{ 'auth.logoutAll' | transloco }}
+      </button>
+      <button hlmBtn variant="outline" type="button" (click)="logout()">
+        <ng-icon name="lucideLogOut" aria-hidden="true" />{{ 'auth.logout' | transloco }}
+      </button>
+    </header>
+    <main id="main-content" tabindex="-1"><router-outlet /></main>
+  </div>
 </div>

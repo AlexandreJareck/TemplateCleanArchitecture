@@ -13,6 +13,7 @@ import { ActionConfirmation, type ActionConfirmationRequest } from '../shared/ac
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
 import { REQUISITION_PORT } from '../state/ports';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 type PendingAction = 'withdraw' | 'cancel' | undefined;
 
@@ -24,6 +25,7 @@ type PendingAction = 'withdraw' | 'cancel' | undefined;
   selector: 'app-requisition-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ...HlmTableImports,
     RouterLink,
     TranslocoPipe,
     HlmButton,
