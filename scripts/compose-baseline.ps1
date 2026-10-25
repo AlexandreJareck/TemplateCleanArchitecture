@@ -142,9 +142,10 @@ function New-JwtSigningKey { $bytes = New-Object byte[] 48; [Security.Cryptograp
 $redisPassword = New-Secret
 $jwtSigningKey = New-JwtSigningKey
 $envLines = Get-Content .env.example | ForEach-Object {
-    # Phase 33: the demo seed (DEMO_DATA_ENABLED=true in .env.example) needs a password that meets the Identity policy
-    # (upper case and a symbol), like scripts/setup-demo-env.ps1 generates.
+    # Phase 33: the baseline asserts its own deterministic scenario (users, fiscal period, budget), so the demo seed that
+    # .env.example enables is turned off; the demo password still meets the Identity policy in case it is re-enabled.
     if ($_ -match '^(\w+)=CHANGE_ME$') { "$($Matches[1])=$(if ($Matches[1] -eq 'REDIS_PASSWORD') { $redisPassword } elseif ($Matches[1] -eq 'JwtSettings__Key') { $jwtSigningKey } elseif ($Matches[1] -eq 'DEMO_USER_PASSWORD') { "Demo!9$(New-Secret)" } else { New-Secret })" }
+    elseif ($_ -match '^DEMO_DATA_ENABLED=') { 'DEMO_DATA_ENABLED=false' }
     elseif ($_ -match '^APPDATA=') { 'APPDATA=/nonexistent' }
     elseif ($_ -match '^(\w+)_PORT=') { $null }
     else { $_ }
