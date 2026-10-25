@@ -259,3 +259,31 @@ test('forbidden navigation is separated from an expired session', async ({ page 
   await page.goto('/catalog/items');
   await expect(page.getByRole('heading', { name: 'Acesso negado' })).toBeVisible();
 });
+
+test.describe('dark theme', () => {
+  test.use({ colorScheme: 'dark' });
+
+  test('login, dashboard and a list have no accessibility violations in dark mode', async ({
+    page,
+  }) => {
+    await installApiFixture(page);
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/login\?reason=expired/);
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+    await page.getByLabel('Usuário').fill('admin');
+    await page.getByLabel('Senha').fill('secret');
+    await page.getByRole('button', { name: 'Acessar' }).click();
+    await expect(page.getByRole('heading', { name: 'Painel' })).toBeVisible();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+    await page
+      .getByRole('navigation', { name: 'Principal' })
+      .getByRole('link', { name: 'Fornecedores' })
+      .click();
+    await expect(page.getByRole('heading', { name: 'Fornecedores', level: 1 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Detalhes' }).first()).toBeVisible();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  });
+});

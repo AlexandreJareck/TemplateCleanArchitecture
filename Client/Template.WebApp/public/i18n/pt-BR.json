@@ -59,7 +59,13 @@
   },
   "shell": {
     "skip": "Ir para o conteúdo",
-    "breadcrumbHome": "Início"
+    "breadcrumbHome": "Início",
+    "closeMenu": "Fechar menu",
+    "theme": {
+      "light": "Tema claro (clique para escuro)",
+      "dark": "Tema escuro (clique para seguir o sistema)",
+      "system": "Tema do sistema (clique para claro)"
+    }
   },
   "nav": {
     "dashboard": "Painel",
@@ -81,7 +87,16 @@
   },
   "dashboard": {
     "title": "Painel",
-    "welcome": "Olá, {{name}}. Acesse os módulos disponíveis para suas permissões."
+    "welcome": "Olá, {{name}}. Acesse os módulos disponíveis para suas permissões.",
+    "shortcuts": "Atalhos",
+    "cards": {
+      "newRequisition": "Abra um pedido de compra com reserva de orçamento.",
+      "myRequisitions": "Acompanhe rascunhos, submissões e aprovações.",
+      "budgetAllocations": "Veja total, reservado, comprometido e disponível.",
+      "suppliers": "Fornecedores, contatos, endereços e categorias.",
+      "items": "Itens de catálogo, unidades e categorias.",
+      "departments": "Estrutura organizacional e responsáveis."
+    }
   },
   "common": {
     "loading": "Carregando…",
@@ -754,5 +769,12 @@
     "openOrder": "Abrir o pedido de compra",
     "linesTable": "Tabela de itens do pedido",
     "receiptLinesTable": "Tabela de itens recebidos"
+  },
+  "navGroups": {
+    "overview": "Visão geral",
+    "procurement": "Compras",
+    "budget": "Orçamento",
+    "masterData": "Cadastros",
+    "insights": "Análises"
   }
 }

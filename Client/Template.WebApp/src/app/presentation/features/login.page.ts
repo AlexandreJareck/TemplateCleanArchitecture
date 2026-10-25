@@ -2,14 +2,18 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { form, FormField, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideFileText, lucideScale, lucideShieldCheck } from '@ng-icons/lucide';
 import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
+import { BrandLogo } from '../shared/brand-logo';
 import { SessionFacade } from '../state/session.facade';
 
 @Component({
   selector: 'app-login-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormField, TranslocoPipe, HlmButton, HlmInput],
+  imports: [FormField, TranslocoPipe, HlmButton, HlmInput, NgIcon, BrandLogo],
+  providers: [provideIcons({ lucideFileText, lucideScale, lucideShieldCheck })],
   templateUrl: './login.page.html',
   styles: [
     `
@@ -49,21 +53,6 @@ import { SessionFacade } from '../state/session.facade';
       .auth-header p {
         margin: 0;
         color: var(--muted-foreground);
-      }
-      .brand-logo {
-        display: inline-grid;
-        place-items: center;
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: var(--radius-md);
-        background: var(--primary-foreground);
-        color: var(--primary);
-        font-weight: 800;
-        font-size: 0.875rem;
-      }
-      .brand-logo.compact {
-        background: var(--primary);
-        color: var(--primary-foreground);
       }
       .field {
         display: grid;
@@ -108,16 +97,12 @@ import { SessionFacade } from '../state/session.facade';
           flex-direction: column;
           justify-content: space-between;
           padding: var(--space-8);
-          color: var(--primary-foreground);
+          color: var(--on-brand);
           background:
             radial-gradient(circle at 20% 15%, var(--brand-glow), transparent 55%),
-            linear-gradient(160deg, var(--primary), var(--brand-gradient-to));
+            linear-gradient(160deg, var(--brand-hero-from), var(--brand-gradient-to));
         }
         .brand-mark {
-          display: flex;
-          align-items: center;
-          gap: var(--space-3);
-          font-weight: 700;
           font-size: 1.125rem;
         }
         .brand-copy h2 {
@@ -140,12 +125,14 @@ import { SessionFacade } from '../state/session.facade';
           gap: var(--space-3);
           opacity: 0.92;
         }
-        .brand-copy li::before {
-          content: '';
-          width: 0.5rem;
-          height: 0.5rem;
-          border-radius: 50%;
-          background: currentColor;
+        .brand-copy li ng-icon {
+          display: inline-grid;
+          place-items: center;
+          width: 2rem;
+          height: 2rem;
+          border-radius: var(--radius-md);
+          background: color-mix(in oklch, var(--on-brand) 14%, transparent);
+          font-size: 1.05rem;
         }
         .brand-footer {
           margin: 0;
