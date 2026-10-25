@@ -1,6 +1,7 @@
 dist/
 node_modules/
 playwright-report/
+playwright-report-real/
 test-results/
 pnpm-lock.yaml
 src/app/infrastructure/api/generated/

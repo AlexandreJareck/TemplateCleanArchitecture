@@ -171,6 +171,41 @@ public sealed class RequisitionBudgetPostgreSqlTests(PostgreSqlFixture fixture, 
         (await context.Set<AuditRecord>().CountAsync(record => record.Action == BudgetMoney.ReservationCreated && reservationIds.Contains(record.ResourceId))).ShouldBe(2);
     }
 
+    /// <summary>
+    /// NFR-PERF-4 (Phase 33): 50 parallel submissions against one allocation complete within 5 s with zero
+    /// over-reservation (BUD-006 row lock). The allocation fits exactly 10 of them.
+    /// </summary>
+    [Fact]
+    public async Task T_NFR_PERF_4_FiftyParallelSubmissions_CompleteWithinFiveSeconds_WithoutOverReservation()
+    {
+        var allocation = await OpenBudgetAsync(1000m);
+        var drafts = new List<RequisitionView>();
+        for (var index = 0; index < 50; index++)
+            drafts.Add(await SubmittableDraftAsync("100"));
+        using var barrier = new Barrier(drafts.Count);
+        var clock = new System.Diagnostics.Stopwatch();
+
+        var submissions = drafts.Select(draft => Task.Run(async () =>
+        {
+            await using var scope = provider.CreateAsyncScope();
+            var handlers = scope.ServiceProvider.GetRequiredService<RequisitionTransitionHandlers>();
+            barrier.SignalAndWait(TimeSpan.FromSeconds(60));
+            lock (clock) { if (!clock.IsRunning) clock.Start(); }
+            return await handlers.Handle(new SubmitRequisitionCommand(draft.Id, long.Parse(draft.Version, System.Globalization.CultureInfo.InvariantCulture)), CancellationToken.None);
+        })).ToArray();
+        var results = await Task.WhenAll(submissions);
+        clock.Stop();
+
+        clock.Elapsed.ShouldBeLessThanOrEqualTo(TimeSpan.FromSeconds(5));
+        results.Count(result => result.IsSuccess).ShouldBe(10);
+        results.Where(result => !result.IsSuccess).ShouldAllBe(result => result.Error!.Code == ProblemCodes.BudgetInsufficient);
+        await using var context = fixture.CreateContext();
+        var stored = await context.Set<BudgetAllocation>().AsNoTracking().SingleAsync(item => item.Id == allocation);
+        (stored.ReservedAmount, stored.AvailableAmount).ShouldBe((1000m, 0m));
+        (await context.Set<BudgetReservation>().CountAsync(reservation => reservation.AllocationId == allocation && reservation.Status == BudgetReservationStatus.Reserved))
+            .ShouldBe(10);
+    }
+
     [Fact]
     public async Task T_REQ_005_a_FailedSubmission_RollsBack_AndLeavesTheDraftUnchanged()
     {

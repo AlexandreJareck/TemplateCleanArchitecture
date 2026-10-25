@@ -14,6 +14,7 @@ public sealed class PermissionMatrixFunctionalTests(CustomWebApplicationFactory<
 {
     public static TheoryData<string> Roles => new(SeededRoles.All);
 
+    /// <summary>AUD-004: the global audit query requires <c>audit.read</c>, per the seeded permission matrix.</summary>
     [Theory]
     [MemberData(nameof(Roles))]
     public async Task AuditRecords_FollowsTheAuditReadColumn(string role)

@@ -163,8 +163,8 @@ public sealed class PurchaseOrder : VersionedAggregateRoot
         $"PO-{year.ToString("D4", NumberFormatInfo.InvariantInfo)}-{sequence.ToString("D6", NumberFormatInfo.InvariantInfo)}";
 
     /// <summary>
-    /// PUR-001/002: the <c>Draft</c> of one approved award. CALC-006 requires the snapshot total to equal the award total
-    /// exactly; a mismatch means corrupted source data and throws.
+    /// PUR-001/002: the <c>Draft</c> of one approved award. Totals follow PUR-004 (CALC-002 line arithmetic, CALC-006
+    /// snapshot): the snapshot total must equal the award total exactly; a mismatch means corrupted source data and throws.
     /// </summary>
     public static PurchaseOrder CreateDraft(Guid id, PurchaseOrderDraftInput input, DateTime nowUtc, string correlationId)
     {

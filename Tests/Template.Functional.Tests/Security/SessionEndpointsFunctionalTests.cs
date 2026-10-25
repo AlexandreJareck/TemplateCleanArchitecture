@@ -81,6 +81,7 @@ public sealed class SessionEndpointsFunctionalTests(CustomWebApplicationFactory<
         problem.GetProperty("errors").EnumerateObject().Select(error => error.Name).ShouldBe(["UserName", "Password"], ignoreOrder: true);
     }
 
+    /// <summary>SEC-005-b: a foreign <c>Origin</c> is rejected with <c>auth.csrf-invalid</c>.</summary>
     [Fact]
     public async Task Login_FromForeignOrigin_Is403_AndNoSessionStarts()
     {

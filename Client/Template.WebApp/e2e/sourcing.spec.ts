@@ -449,6 +449,7 @@ test('buyer starts an RFQ from the queue, invites, publishes, records quotes aft
   const table = page.getByTestId('comparison-table');
   await expect(table).toBeVisible();
   const rows = table.locator('tbody tr');
+  // SRC-015 / CALC-005: the UI shows the server ranking; rank 1 is the recommendation.
   await expect(rows.first()).toContainText('Alfa Comércio Ltda');
   await expect(rows.first()).toContainText('Recomendada');
   await expect(rows.nth(1)).toContainText('Beta Distribuidora SA');

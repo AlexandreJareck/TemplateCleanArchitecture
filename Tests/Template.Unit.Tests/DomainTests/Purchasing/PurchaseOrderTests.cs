@@ -50,6 +50,7 @@ public sealed class PurchaseOrderTests
         return order;
     }
 
+    /// <summary>Also PUR-004: the order totals follow CALC-002/006 exactly.</summary>
     [Fact]
     public void T_PUR_001_a_T_CALC_006_a_DraftCopiesTheAwardedRevision_AndItsTotalExactly()
     {
