@@ -44,7 +44,7 @@ function Test-Excluded([string]$RelativePath) {
 }
 
 # The TRX logger copies each attachment below <user>_<machine>_<time>\In\; those duplicates are skipped.
-$reports = @(Get-ChildItem -Path $InputDirectory -Recurse -Filter 'coverage.cobertura.xml' | Where-Object { $_.FullName -notmatch '\\In\\' })
+$reports = @(Get-ChildItem -Path $InputDirectory -Recurse -Filter 'coverage.cobertura.xml' | Where-Object { $_.FullName -notmatch '[\\/]In[\\/]' })
 if ($reports.Count -eq 0) { Write-Host "No coverage.cobertura.xml below $InputDirectory"; exit 1 }
 
 # module -> @{ lines = file|line -> hits; branches = file|line -> @(covered,total); methods = key -> covered; files = set }

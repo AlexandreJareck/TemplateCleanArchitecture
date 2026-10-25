@@ -1,0 +1,58 @@
+# Phase 33 expensive tier: suites against disposable real services (Testcontainers on the runner's Docker, images
+# pinned by digest in the tests) plus the WorkflowFunctions host image. Weekly and on demand; never on every PR.
+# Read-only token, no secret, cloud or deployment credential.
+name: real-services
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: real-services-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  suite:
+    name: ${{ matrix.suite }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - PostgreSql.Integration
+          - RabbitMq.Integration
+          - Redis.Integration
+          - Elasticsearch.Integration
+          - Azurite.Integration
+          - WorkflowFunctions.Integration
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: Elasticsearch needs vm.max_map_count
+        if: matrix.suite == 'Elasticsearch.Integration'
+        run: sudo sysctl -w vm.max_map_count=262144
+      - name: Restore and build
+        run: |
+          dotnet restore "Tests/Template.${{ matrix.suite }}.Tests/Template.${{ matrix.suite }}.Tests.csproj"
+          dotnet build "Tests/Template.${{ matrix.suite }}.Tests/Template.${{ matrix.suite }}.Tests.csproj" --no-restore --maxcpucount:1 -p:UseSharedCompilation=false
+      - name: Test
+        run: dotnet test "Tests/Template.${{ matrix.suite }}.Tests/Template.${{ matrix.suite }}.Tests.csproj" --no-build --maxcpucount:1 --logger "trx;LogFileName=${{ matrix.suite }}.trx" --results-directory artifacts/real-services
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: real-services-${{ matrix.suite }}
+          path: artifacts/real-services/*.trx
+          retention-days: 14

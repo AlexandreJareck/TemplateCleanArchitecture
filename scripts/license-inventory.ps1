@@ -34,6 +34,8 @@ param(
         'System.Reactive.Compatibility/4.4.1' = @{ License = 'MIT'; Url = 'http://go.microsoft.com/fwlink/?LinkID=261272' }
     }
 )
+# Phase 33: CI and other machines use the dotnet on PATH when the pinned local SDK path does not exist.
+if (-not (Test-Path -LiteralPath $DotNetPath)) { $DotNetPath = (Get-Command dotnet -ErrorAction Stop).Source }
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
