@@ -209,6 +209,9 @@ test('login, permission-aware shell, refresh race, conflict, logout and accessib
   await page.getByRole('button', { name: 'Salvar' }).click();
   await expect(page.getByText('concurrency.version_mismatch')).toBeVisible();
   await expect(page.getByText('trace-conflict')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Editar' })).toBeFocused();
 
   await page.getByRole('button', { name: 'Encerrar todas' }).click();
   await expect(page).toHaveURL(/\/login$/);
@@ -242,6 +245,10 @@ test('catalog empty, filter and create journey uses the isolated HTTP fixture', 
     .getByRole('link', { name: 'Itens de catálogo' })
     .click();
   await expect(page.getByRole('heading', { name: 'Nenhum resultado' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cadastrar' }).click();
+  const drawer = page.getByRole('dialog', { name: 'Cadastrar' });
+  await expect(drawer).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByLabel('Código').fill('ITEM');
   await page.getByLabel('Nome').fill('Item');
   await page.getByLabel('ID relacionado').fill('c1');
@@ -250,6 +257,8 @@ test('catalog empty, filter and create journey uses the isolated HTTP fixture', 
   await expect(page.getByText('validation')).toBeVisible();
   await expect(page.getByText('description: Descrição inválida')).toBeVisible();
   await page.getByRole('button', { name: 'Salvar' }).click();
+  await expect(drawer).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Cadastrar' })).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Itens de catálogo' })).toBeVisible();
 });
 

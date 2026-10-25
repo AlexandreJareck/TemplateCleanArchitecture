@@ -13,23 +13,33 @@
   /><button hlmBtn type="button" variant="outline" (click)="load()">
     {{ 'common.refresh' | transloco }}
   </button>
+  @if (canManage) {
+    <button hlmBtn type="button" class="toolbar-primary" (click)="create()">
+      <ng-icon name="lucidePlus" aria-hidden="true" />{{ 'common.create' | transloco }}
+    </button>
+  }
 </div>
-@if (error(); as problem) {
-  <div class="feedback" role="alert">
-    <strong>{{ problem.code }}</strong
-    ><span>{{ problem.detail }}</span>
-    @if (problem.traceId) {
-      <small>Trace: {{ problem.traceId }}</small>
-    }
-    @if (problem.kind === 'version-mismatch') {
-      <button hlmBtn type="button" variant="outline" (click)="load()">
-        {{ 'common.reload' | transloco }}
-      </button>
-    }
-    @for (entry of fieldErrors(problem); track entry[0]) {
-      <span>{{ entry[0] }}: {{ entry[1].join(', ') }}</span>
-    }
-  </div>
+<ng-template #problemFeedback>
+  @if (error(); as problem) {
+    <div class="feedback" role="alert">
+      <strong>{{ problem.code }}</strong
+      ><span>{{ problem.detail }}</span>
+      @if (problem.traceId) {
+        <small>Trace: {{ problem.traceId }}</small>
+      }
+      @if (problem.kind === 'version-mismatch') {
+        <button hlmBtn type="button" variant="outline" (click)="load()">
+          {{ 'common.reload' | transloco }}
+        </button>
+      }
+      @for (entry of fieldErrors(problem); track entry[0]) {
+        <span>{{ entry[0] }}: {{ entry[1].join(', ') }}</span>
+      }
+    </div>
+  }
+</ng-template>
+@if (!drawerOpen()) {
+  <ng-container [ngTemplateOutlet]="problemFeedback" />
 }
 @if (loading()) {
   <div aria-busy="true" role="status"><div hlmSkeleton class="loading"></div></div>
@@ -99,9 +109,14 @@
   </button>
 </nav>
 @if (canManage) {
-  <section class="editor">
-    <h2>{{ selected() ? ('common.edit' | transloco) : ('common.create' | transloco) }}</h2>
-    <form novalidate (submit)="save($event)">
+  <app-form-drawer
+    [open]="drawerOpen()"
+    [title]="(selected() ? 'common.edit' : 'common.create') | transloco"
+    [description]="titleKey | transloco"
+    (closed)="cancel()"
+  >
+    <ng-container [ngTemplateOutlet]="problemFeedback" />
+    <form class="drawer-form" novalidate (submit)="save($event)">
       <label for="code">{{ 'fields.code' | transloco }}</label
       ><input id="code" hlmInput [formField]="itemForm.code" [readOnly]="!!selected()" /><label
         for="name"
@@ -132,14 +147,12 @@
         <button hlmBtn type="submit" [disabled]="itemForm().invalid() || saving()">
           {{ 'common.save' | transloco }}
         </button>
-        @if (selected()) {
-          <button hlmBtn variant="outline" type="button" (click)="cancel()">
-            {{ 'common.cancel' | transloco }}
-          </button>
-        }
+        <button hlmBtn variant="outline" type="button" (click)="cancel()">
+          {{ 'common.cancel' | transloco }}
+        </button>
       </div>
     </form>
-  </section>
+  </app-form-drawer>
 }
 <app-action-confirmation
   [request]="
