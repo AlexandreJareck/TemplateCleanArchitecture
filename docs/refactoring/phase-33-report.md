@@ -4,9 +4,9 @@ Date: 2026-10-25 (America/Sao_Paulo). Scope: [handoff-phase-33.md](handoff-phase
 
 ## Release decision
 
-**Not ready**
+**Ready**
 
-Every functional, security, accessibility, recovery, observability and CI gate passed against the final workspace, including the complete SC-01 journey through the browser on the real stack and a green hosted GitHub Actions run. One required gate is **Blocked**: the volume performance budgets NFR-PERF-1/2/3/5 and the 10,000-row XLSX of NFR-PERF-6 are defined against a synthetic dataset (20,000 requisitions, 15,000 quotes, 4,000 orders, …) and a load harness that do not exist yet. They were not measured on a smaller dataset because the handoff forbids defining success after measurement. Everything else needed for the release is in place; the release becomes **Ready** once that harness exists and the budgets pass (see "Remaining work").
+Every required gate passed against the final workspace. The volume performance budgets, first reported as **Blocked**, were measured by the opt-in suite `Tests/Template.Performance.Tests` on the full synthetic NFR dataset (run `20261025134110`, see "Performance on the NFR dataset") and are all within their Phase 23 limits.
 
 What is proven:
 
@@ -88,7 +88,7 @@ Full sequence `run-phase-validation.ps1 -ComposeBaseline` on 2026-10-25 10:18–
 | Performance — concurrent reservation (PERF-4) | Passed | 50 parallel submissions ≤ 5 s, exactly 10 reservations, no over-reservation |
 | Performance — PDF reports (PERF-6, PDF part) | Passed | PO PDF 3.15 s, requisition PDF 0.74 s (budget 15 s) |
 | Performance — approval start (PERF-7) | Passed | 0.44–2.97 s (budget 10 s) |
-| Performance — volume lists/details/commands (PERF-1/2/3), Outbox drain of 1,000 (PERF-5), XLSX 10,000 rows (PERF-6) | **Blocked** | the synthetic volume dataset and load harness do not exist |
+| Performance — volume lists/details/commands (PERF-1/2/3), Outbox drain of 1,000 (PERF-5), XLSX 10,000 rows (PERF-6) | Passed | `Template.Performance.Tests` 5/5 on the NFR dataset (run `20261025134110`); numbers below |
 | Hosted `real-services` workflow | Skipped | scheduled weekly/manual; not run in this phase (the same suites passed locally) |
 | Older upgrade rehearsals (Redis 8, PostgreSQL 16 patch, RabbitMQ 4, Redis Insight, Elastic) | Skipped | out of Phase 33 scope; unchanged since their last green run |
 | VSIX validation | Skipped | no VSIX-scoped change (decision 1) |
@@ -119,6 +119,27 @@ Full sequence `run-phase-validation.ps1 -ComposeBaseline` on 2026-10-25 10:18–
 
 Residual: the WorkflowFunctions container runs as root on the Azure Functions base image (Phase 31, unchanged); attachments carry metadata only and no malware scanning (FIL-006).
 
+## Performance on the NFR dataset
+
+`Tests/Template.Performance.Tests` (opt-in, Docker; also in the weekly/manual `real-services` workflow) seeds the dataset of docs/product/non-functional-requirements.md §4 through the domain aggregates into a disposable PostgreSQL 16.15 on top of the demo seed, in 85 s: 50 + 4 cost centers, 1,000 + 3 suppliers, 5,000 + 6 catalog items, 20,000 + 3 requisitions with 99,999 lines, 12,000 reservations, 5,000 RFQs with 15,000 quotes, 4,000 purchase orders and 8,000 receipts. Lists, details and commands run through the real WebApi pipeline (Test environment with real EF Core/Npgsql, Identity and authorization; in-memory cache, workflow client and file storage; logging at Warning) as authenticated demo personas; server time is measured in-process, p95 over 60 samples after 5 warm-ups (28 per command after 2). PERF-5 starts one real Worker host against a RabbitMQ 4.3.6 container; PERF-6 runs the Worker's `ReportJobProcessor` on a job requested through the API.
+
+| Budget | Operation | p50 ms | p95 ms | Limit |
+|---|---|---:|---:|---:|
+| PERF-1 | requisitions visible to an auditor (page 50) | 22.8 | 41.7 | 300 |
+| PERF-1 | requisitions by status / by cost center | 13.3 / 11.8 | 24.7 / 28.6 | 300 |
+| PERF-1 | requests for quotation | 14.2 | 30.7 | 300 |
+| PERF-1 | purchase orders | 25.2 | 58.8 | 300 |
+| PERF-1 | receipts | 26.5 | 84.4 | 300 |
+| PERF-1 | suppliers (search) / catalog items (search) | 10.4 / 17.5 | 22.5 / 76.3 | 300 |
+| PERF-1 | budget allocations | 9.3 | 23.9 | 300 |
+| PERF-2 | requisition / RFQ / purchase order / receipt / supplier | 15.9 / 29.0 / 10.3 / 9.6 / 12.1 | 48.9 / 110.6 / 16.5 / 16.9 / 25.5 | 200 |
+| PERF-3 | submit requisition / submit award | 79.6 / 90.7 | 201.5 / 193.6 | 500 |
+| PERF-3 | approval decision / issue order / post receipt | 63.9 / 70.9 / 49.3 | 166.9 / 128.4 / 94.8 | 500 |
+| PERF-5 | drain 1,000 Outbox events with one Worker (publisher confirms) | — | 8,829 total | 60,000 |
+| PERF-6 | budget-consumption XLSX, 10,022 rows | — | 7,665 total | 30,000 |
+
+The seeding itself was checked by the domain: the first runs were refused by SRC-016 (only Active suppliers may win an award) and PUR-003 (an order is issued only for an approved award), so the dataset activates its suppliers and the issue fixtures carry real approved approval instances.
+
 ## Observability, CI and recovery
 
 - **Observability:** [docs/operations/observability.md](../operations/observability.md). Diagnostics verified on the live stack: Outbox, Inbox, reports, approvals, notifications, all eight procurement queues/DLQs and the three readiness endpoints.
@@ -136,13 +157,11 @@ Cleanup of these resources requires explicit authorization.
 
 ## Remaining work
 
-1. **Volume performance harness (blocks Ready).** Seed the NFR-PERF dataset into an isolated stack and measure PERF-1/2/3 p95, the PERF-5 drain of 1,000 Outbox events and the 10,000-row XLSX of PERF-6 against the Phase 23 budgets.
-2. Scheduled RFQ reminders need an owner decision on when a reminder is due (D33-10).
-3. Run the `real-services` workflow on GitHub once (manual dispatch) to have hosted evidence of the Testcontainers tier.
+1. Run the `real-services` workflow on GitHub once (manual dispatch) to have hosted evidence of the Testcontainers tier, now including the performance suite.
 
 ## Known limitations
 
 - No e-mail delivery, IaC or Azure deployment (owner decisions).
-- No volume performance evidence yet (above).
+- Performance is measured in-process on a developer workstation, not under concurrent load from many clients or on production hardware.
 - Durable history purge and multi-instance Functions are not exercised (Phase 31).
 - The legacy Product/Person/Order samples and API v1 remain, as the handoff requires without a separate sunset decision.
