@@ -572,10 +572,12 @@ public sealed class ArchitectureRulesTests
         // BUD-004..008 / REQ-005: reserve and release run inside the requisition transition use cases (one transaction);
         // Phase 31: the approval outcome commits (BUD-010, APR-013) or releases (APR-009, APR-011) in the same commit as
         // the instance. Phase 32: the purchase-order cancel (PUR-008) and short close (PUR-010) release or return the
-        // commitment in the order's commit. No controller or other use case reserves, commits or releases funds directly.
+        // commitment in the order's commit. Phase 33: the system expiry (REQ-009) is its own requisition transition and
+        // releases in the same commit (D33-2). No controller or other use case reserves, commits or releases funds directly.
         SourceViolations("Src/Core/Template.Application", ReservationMutationMarkers())
             .ShouldBe(["Src/Core/Template.Application/Features/Approvals/ApprovalOutcomes.cs",
                 "Src/Core/Template.Application/Features/Purchasing/PurchaseOrderUseCases.cs",
+                "Src/Core/Template.Application/Features/Requisitions/RequisitionExpiryUseCases.cs",
                 "Src/Core/Template.Application/Features/Requisitions/RequisitionTransitionUseCases.cs"]);
         SourceViolations("Src/Presentation/Template.WebApi/Controllers", ReservationMutationMarkers()).ShouldBeEmpty();
         var budgetController = ReadSource("Src/Presentation/Template.WebApi/Controllers/v2/BudgetAllocationsController.cs");
