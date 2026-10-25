@@ -12,18 +12,28 @@
   /><button hlmBtn variant="outline" type="button" (click)="load()">
     {{ 'common.search' | transloco }}
   </button>
+  @if (canManage) {
+    <button hlmBtn type="button" class="toolbar-primary" (click)="create()">
+      <ng-icon name="lucidePlus" aria-hidden="true" />{{ 'common.create' | transloco }}
+    </button>
+  }
 </div>
-@if (error(); as problem) {
-  <div class="feedback" role="alert">
-    <strong>{{ problem.code }}</strong
-    ><span>{{ problem.detail }}</span>
-    @if (problem.traceId) {
-      <small>Trace: {{ problem.traceId }}</small>
-    }
-    @for (entry of fieldErrors(problem); track entry[0]) {
-      <span>{{ entry[0] }}: {{ entry[1].join(', ') }}</span>
-    }
-  </div>
+<ng-template #problemFeedback>
+  @if (error(); as problem) {
+    <div class="feedback" role="alert">
+      <strong>{{ problem.code }}</strong
+      ><span>{{ problem.detail }}</span>
+      @if (problem.traceId) {
+        <small>Trace: {{ problem.traceId }}</small>
+      }
+      @for (entry of fieldErrors(problem); track entry[0]) {
+        <span>{{ entry[0] }}: {{ entry[1].join(', ') }}</span>
+      }
+    </div>
+  }
+</ng-template>
+@if (!drawerOpen()) {
+  <ng-container [ngTemplateOutlet]="problemFeedback" />
 }
 <nav class="pager" aria-label="Paginação">
   <button hlmBtn variant="outline" type="button" [disabled]="page().page <= 1" (click)="move(-1)">
@@ -48,22 +58,22 @@
   </div>
 } @else {
   <div class="table-scroll" role="region" tabindex="0" aria-label="Fornecedores">
-    <table>
-      <thead>
-        <tr>
-          <th>{{ 'fields.name' | transloco }}</th>
-          <th>CNPJ</th>
-          <th>{{ 'fields.status' | transloco }}</th>
-          <th>{{ 'common.actions' | transloco }}</th>
+    <table hlmTable>
+      <thead hlmTHead>
+        <tr hlmTr>
+          <th hlmTh>{{ 'fields.name' | transloco }}</th>
+          <th hlmTh>CNPJ</th>
+          <th hlmTh>{{ 'fields.status' | transloco }}</th>
+          <th hlmTh>{{ 'common.actions' | transloco }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody hlmTBody>
         @for (item of page().items; track item.id) {
-          <tr>
-            <td>{{ item.legalName }}</td>
-            <td>{{ item.taxId }}</td>
-            <td>{{ item.status }}</td>
-            <td>
+          <tr hlmTr>
+            <td hlmTd>{{ item.legalName }}</td>
+            <td hlmTd>{{ item.taxId }}</td>
+            <td hlmTd>{{ item.status }}</td>
+            <td hlmTd>
               <button hlmBtn size="sm" variant="outline" type="button" (click)="open(item.id)">
                 {{ 'common.details' | transloco }}
               </button>
@@ -75,9 +85,15 @@
   </div>
 }
 @if (canManage) {
-  <section class="editor">
-    <h2>{{ selected() ? ('common.edit' | transloco) : ('common.create' | transloco) }}</h2>
-    <form (submit)="save($event)" novalidate>
+  <app-form-drawer
+    [open]="drawerOpen()"
+    [wide]="true"
+    [title]="selected()?.legalName ?? ('common.create' | transloco)"
+    [description]="'nav.suppliers' | transloco"
+    (closed)="close()"
+  >
+    <ng-container [ngTemplateOutlet]="problemFeedback" />
+    <form class="drawer-form" (submit)="save($event)" novalidate>
       <label for="legalName">{{ 'supplier.legalName' | transloco }}</label
       ><input id="legalName" hlmInput [formField]="supplierForm.legalName" /><label
         for="tradeName"
@@ -154,7 +170,7 @@
         <button hlmBtn type="submit">{{ 'common.save' | transloco }}</button>
       </form>
     }
-  </section>
+  </app-form-drawer>
 }
 <app-action-confirmation
   [request]="

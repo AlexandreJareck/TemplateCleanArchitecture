@@ -1,0 +1,36 @@
+@if (open()) {
+  <button
+    class="backdrop"
+    type="button"
+    tabindex="-1"
+    [attr.aria-label]="'actions.close' | transloco"
+    (click)="close()"
+  ></button>
+  <section
+    class="panel"
+    [class.wide]="wide()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <header>
+      <div>
+        <h2 [id]="titleId">{{ title() }}</h2>
+        @if (description()) {
+          <p>{{ description() }}</p>
+        }
+      </div>
+      <button
+        class="close"
+        type="button"
+        (click)="close()"
+        [attr.aria-label]="'actions.close' | transloco"
+      >
+        <ng-icon name="lucideX" aria-hidden="true" />
+      </button>
+    </header>
+    <div class="body"><ng-content /></div>
+  </section>
+}

@@ -13,18 +13,18 @@
     <form class="form-grid" (submit)="$event.preventDefault(); submit()">
       <label for="reportType"
         >{{ 'reports.type' | transloco }}
-        <select
-          id="reportType"
-          class="select"
+        <hlm-native-select
+          class="w-full"
+          selectId="reportType"
           [value]="type()"
-          (change)="type.set($any($event.target).value)"
+          (valueChange)="type.set($any($event))"
         >
           @for (option of availableTypes(); track option.type) {
-            <option [value]="option.type">
+            <option hlmNativeSelectOption [value]="option.type">
               {{ 'reports.types.' + option.type | transloco }} ({{ option.format }})
             </option>
           }
-        </select>
+        </hlm-native-select>
       </label>
       @switch (type()) {
         @case ('RequisitionPdf') {
@@ -52,17 +52,19 @@
         @case ('BudgetConsumptionXlsx') {
           <label for="fiscalPeriodId"
             >{{ 'reports.fiscalPeriod' | transloco }}
-            <select
-              id="fiscalPeriodId"
-              class="select"
+            <hlm-native-select
+              class="w-full"
+              selectId="fiscalPeriodId"
               [value]="values().fiscalPeriodId ?? ''"
-              (change)="set('fiscalPeriodId', $any($event.target).value)"
+              (valueChange)="set('fiscalPeriodId', $any($event))"
             >
-              <option value="">—</option>
+              <option hlmNativeSelectOption value="">—</option>
               @for (period of periods(); track period.id) {
-                <option [value]="period.id">{{ period.code }} — {{ period.name }}</option>
+                <option hlmNativeSelectOption [value]="period.id">
+                  {{ period.code }} — {{ period.name }}
+                </option>
               }
-            </select>
+            </hlm-native-select>
           </label>
           <label for="currency"
             >{{ 'reports.currency' | transloco }}
@@ -140,30 +142,30 @@
       tabindex="0"
       [attr.aria-label]="'reports.jobsTable' | transloco"
     >
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>{{ 'reports.type' | transloco }}</th>
-            <th>{{ 'reports.requestedAt' | transloco }}</th>
-            <th>{{ 'fields.status' | transloco }}</th>
-            <th>{{ 'reports.progress' | transloco }}</th>
-            <th>{{ 'reports.details' | transloco }}</th>
-            <th>{{ 'common.actions' | transloco }}</th>
+      <table hlmTable class="responsive-table">
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>{{ 'reports.type' | transloco }}</th>
+            <th hlmTh>{{ 'reports.requestedAt' | transloco }}</th>
+            <th hlmTh>{{ 'fields.status' | transloco }}</th>
+            <th hlmTh>{{ 'reports.progress' | transloco }}</th>
+            <th hlmTh>{{ 'reports.details' | transloco }}</th>
+            <th hlmTh>{{ 'common.actions' | transloco }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hlmTBody>
           @for (job of jobs().items; track job.id) {
-            <tr [attr.data-job]="job.id">
-              <td [attr.data-label]="'reports.type' | transloco">
+            <tr hlmTr [attr.data-job]="job.id">
+              <td hlmTd [attr.data-label]="'reports.type' | transloco">
                 {{ 'reports.types.' + job.reportType | transloco }}
               </td>
-              <td [attr.data-label]="'reports.requestedAt' | transloco">
+              <td hlmTd [attr.data-label]="'reports.requestedAt' | transloco">
                 {{ instant(job.requestedAt) }}
               </td>
-              <td [attr.data-label]="'fields.status' | transloco">
+              <td hlmTd [attr.data-label]="'fields.status' | transloco">
                 <app-status-badge [status]="job.status" />
               </td>
-              <td [attr.data-label]="'reports.progress' | transloco">
+              <td hlmTd [attr.data-label]="'reports.progress' | transloco">
                 @if (isActive(job)) {
                   <progress
                     max="100"
@@ -178,7 +180,7 @@
                   {{ job.attempts }}/{{ job.maxAttempts }}
                 }
               </td>
-              <td [attr.data-label]="'reports.details' | transloco">
+              <td hlmTd [attr.data-label]="'reports.details' | transloco">
                 @if (job.status === 'Failed') {
                   <span class="warning">{{ failureKey(job.failureCode) | transloco }}</span>
                   <small> ({{ job.failureCode }})</small>
@@ -191,7 +193,7 @@
                   {{ 'reports.asOf' | transloco }} {{ instant(job.asOf) }}
                 }
               </td>
-              <td class="actions">
+              <td hlmTd class="actions">
                 @if (can(job, 'download')) {
                   <button hlmBtn size="sm" type="button" (click)="download(job)">
                     {{ 'reports.download' | transloco }}

@@ -25,6 +25,8 @@ import { HlmInput } from '@presentation/shared-ui/input';
 import { ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
 import { BUDGET_PORT, REPORT_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 const EMPTY: Page<ReportJob> = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 0 };
 
@@ -55,7 +57,15 @@ const BROWSER_CLOCK: PollingClock = {
 @Component({
   selector: 'app-reports-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe, HlmButton, HlmInput, ProblemFeedback, StatusBadge],
+  imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
+    TranslocoPipe,
+    HlmButton,
+    HlmInput,
+    ProblemFeedback,
+    StatusBadge,
+  ],
   templateUrl: './reports.page.html',
   styleUrl: './data-pages.css',
 })

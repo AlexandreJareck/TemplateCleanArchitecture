@@ -12,6 +12,9 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { ProblemFeedback } from '../shared/procurement-ui';
 import { PURCHASING_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
+import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
 
 /**
  * Receipt detail (Phase 32, `/receiving/receipts/:id`): the posted quantities, discrepancies, corrections and the
@@ -21,7 +24,16 @@ import { PURCHASING_PORT } from '../state/ports';
 @Component({
   selector: 'app-receipt-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe, RouterLink, HlmButton, HlmInput, ProblemFeedback],
+  imports: [
+    ...HlmTextareaImports,
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
+    TranslocoPipe,
+    RouterLink,
+    HlmButton,
+    HlmInput,
+    ProblemFeedback,
+  ],
   templateUrl: './receipt-detail.page.html',
   styleUrl: './data-pages.css',
 })

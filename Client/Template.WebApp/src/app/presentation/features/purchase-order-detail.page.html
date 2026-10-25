@@ -155,49 +155,49 @@
       tabindex="0"
       [attr.aria-label]="'purchasing.linesTable' | transloco"
     >
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>{{ 'purchasing.description' | transloco }}</th>
-            <th>{{ 'purchasing.ordered' | transloco }}</th>
+      <table hlmTable class="responsive-table">
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>#</th>
+            <th hlmTh>{{ 'purchasing.description' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.ordered' | transloco }}</th>
             @if (current.pricesVisible) {
-              <th>{{ 'purchasing.unitPrice' | transloco }}</th>
-              <th>{{ 'purchasing.lineTotal' | transloco }}</th>
+              <th hlmTh>{{ 'purchasing.unitPrice' | transloco }}</th>
+              <th hlmTh>{{ 'purchasing.lineTotal' | transloco }}</th>
             }
-            <th>{{ 'purchasing.accepted' | transloco }}</th>
-            <th>{{ 'purchasing.remaining' | transloco }}</th>
-            <th>{{ 'purchasing.promisedDate' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.accepted' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.remaining' | transloco }}</th>
+            <th hlmTh>{{ 'purchasing.promisedDate' | transloco }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hlmTBody>
           @for (line of current.lines; track line.lineNumber) {
-            <tr [attr.data-line]="line.lineNumber">
-              <td data-label="#">{{ line.lineNumber }}</td>
-              <td [attr.data-label]="'purchasing.description' | transloco">
+            <tr hlmTr [attr.data-line]="line.lineNumber">
+              <td hlmTd data-label="#">{{ line.lineNumber }}</td>
+              <td hlmTd [attr.data-label]="'purchasing.description' | transloco">
                 {{ line.description }}
                 @if (line.shortClosed) {
                   <span class="notice">{{ 'purchasing.shortClosedLine' | transloco }}</span>
                 }
               </td>
-              <td [attr.data-label]="'purchasing.ordered' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.ordered' | transloco">
                 {{ line.quantity }} {{ line.unitCode }}
               </td>
               @if (current.pricesVisible) {
-                <td [attr.data-label]="'purchasing.unitPrice' | transloco">
+                <td hlmTd [attr.data-label]="'purchasing.unitPrice' | transloco">
                   {{ line.unitPrice | money }}
                 </td>
-                <td [attr.data-label]="'purchasing.lineTotal' | transloco">
+                <td hlmTd [attr.data-label]="'purchasing.lineTotal' | transloco">
                   {{ line.lineTotal | money }}
                 </td>
               }
-              <td [attr.data-label]="'purchasing.accepted' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.accepted' | transloco">
                 {{ line.acceptedQuantity }}
               </td>
-              <td [attr.data-label]="'purchasing.remaining' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.remaining' | transloco">
                 {{ line.remainingQuantity }}
               </td>
-              <td [attr.data-label]="'purchasing.promisedDate' | transloco">
+              <td hlmTd [attr.data-label]="'purchasing.promisedDate' | transloco">
                 @if (can('update')) {
                   <label class="sr-only" [attr.for]="'promised-' + line.lineNumber"
                     >{{ 'purchasing.promisedDate' | transloco }} {{ line.lineNumber }}</label
@@ -227,8 +227,8 @@
         <label for="deliveryAddress"
           >{{ 'purchasing.deliveryAddress' | transloco }}
           <textarea
+            hlmTextarea
             id="deliveryAddress"
-            class="textarea"
             rows="2"
             maxlength="500"
             [value]="address()"
@@ -238,8 +238,8 @@
         <label for="orderNotes"
           >{{ 'purchasing.notes' | transloco }}
           <textarea
+            hlmTextarea
             id="orderNotes"
-            class="textarea"
             rows="2"
             maxlength="2000"
             [value]="notes()"
@@ -296,8 +296,8 @@
             <label for="orderReason"
               >{{ 'common.reason' | transloco }}
               <textarea
+                hlmTextarea
                 id="orderReason"
-                class="textarea"
                 rows="3"
                 [attr.maxlength]="reasonMax"
                 [attr.aria-invalid]="showReasonError() ? 'true' : null"

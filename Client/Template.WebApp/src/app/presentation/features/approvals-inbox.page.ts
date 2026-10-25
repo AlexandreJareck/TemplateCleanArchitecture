@@ -11,6 +11,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HlmButton } from '@presentation/shared-ui/button';
 import { MoneyPipe, ProblemFeedback } from '../shared/procurement-ui';
 import { APPROVAL_PORT } from '../state/ports';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 const EMPTY: Page<ApprovalSummary> = {
   items: [],
@@ -28,7 +29,7 @@ const EMPTY: Page<ApprovalSummary> = {
 @Component({
   selector: 'app-approvals-inbox-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe, RouterLink, HlmButton, MoneyPipe, ProblemFeedback],
+  imports: [...HlmTableImports, TranslocoPipe, RouterLink, HlmButton, MoneyPipe, ProblemFeedback],
   templateUrl: './approvals-inbox.page.html',
   styleUrl: './data-pages.css',
 })

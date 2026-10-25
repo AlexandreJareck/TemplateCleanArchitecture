@@ -9,6 +9,8 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
 import { REQUISITION_PORT, SOURCING_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 const RFQ_STATUSES = ['', 'Draft', 'Published', 'Closed', 'AwardPending', 'Cancelled'] as const;
 
@@ -21,7 +23,16 @@ const EMPTY = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 0 }
 @Component({
   selector: 'app-sourcing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslocoPipe, HlmButton, MoneyPipe, ProblemFeedback, StatusBadge],
+  imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
+    RouterLink,
+    TranslocoPipe,
+    HlmButton,
+    MoneyPipe,
+    ProblemFeedback,
+    StatusBadge,
+  ],
   templateUrl: './sourcing.page.html',
   styleUrl: './data-pages.css',
 })

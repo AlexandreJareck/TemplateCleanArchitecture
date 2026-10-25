@@ -20,6 +20,9 @@
       "@presentation/shared-ui/button": ["./src/app/presentation/shared-ui/button/src/index.ts"],
       "@presentation/shared-ui/utils": ["./src/app/presentation/shared-ui/utils/src/index.ts"],
       "@presentation/shared-ui/input": ["./src/app/presentation/shared-ui/input/src/index.ts"],
+      "@presentation/shared-ui/textarea": [
+        "./src/app/presentation/shared-ui/textarea/src/index.ts"
+      ],
       "@presentation/shared-ui/native-select": [
         "./src/app/presentation/shared-ui/native-select/src/index.ts"
       ],

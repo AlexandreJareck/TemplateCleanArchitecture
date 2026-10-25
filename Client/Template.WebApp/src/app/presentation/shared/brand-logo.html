@@ -1,0 +1,48 @@
+<svg
+  [attr.width]="size()"
+  [attr.height]="size()"
+  viewBox="0 0 40 40"
+  aria-hidden="true"
+  focusable="false"
+>
+  <defs>
+    <linearGradient
+      id="ph-brand-gradient"
+      x1="4"
+      y1="2"
+      x2="36"
+      y2="38"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop offset="0" style="stop-color: var(--brand-indigo)" />
+      <stop offset="1" style="stop-color: var(--brand-cyan)" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M20 2.5 35.2 11.25v17.5L20 37.5 4.8 28.75v-17.5L20 2.5Z"
+    fill="url(#ph-brand-gradient)"
+  />
+  <path
+    d="M20 9.5 29.1 14.75v10.5L20 30.5l-9.1-5.25v-10.5L20 9.5Z"
+    fill="none"
+    stroke="white"
+    stroke-opacity="0.35"
+    stroke-width="1.5"
+  />
+  <path
+    d="m14.5 20.5 3.8 3.8 7.2-8"
+    fill="none"
+    stroke="white"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
+@if (showWordmark()) {
+  <span class="wordmark">
+    <span class="name">Procurement Hub</span>
+    @if (showTagline()) {
+      <span class="tagline">Smart procurement</span>
+    }
+  </span>
+}

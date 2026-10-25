@@ -29,30 +29,30 @@
       tabindex="0"
       [attr.aria-label]="'approvals.inboxTable' | transloco"
     >
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>{{ 'approvals.requisition' | transloco }}</th>
-            <th>{{ 'approvals.amount' | transloco }}</th>
-            <th>{{ 'approvals.level' | transloco }}</th>
-            <th>{{ 'approvals.assignee' | transloco }}</th>
-            <th>{{ 'approvals.dueAt' | transloco }}</th>
-            <th>{{ 'common.actions' | transloco }}</th>
+      <table hlmTable class="responsive-table">
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>{{ 'approvals.requisition' | transloco }}</th>
+            <th hlmTh>{{ 'approvals.amount' | transloco }}</th>
+            <th hlmTh>{{ 'approvals.level' | transloco }}</th>
+            <th hlmTh>{{ 'approvals.assignee' | transloco }}</th>
+            <th hlmTh>{{ 'approvals.dueAt' | transloco }}</th>
+            <th hlmTh>{{ 'common.actions' | transloco }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hlmTBody>
           @for (item of items().items; track item.id) {
-            <tr [attr.data-approval]="item.id">
-              <td [attr.data-label]="'approvals.requisition' | transloco">
+            <tr hlmTr [attr.data-approval]="item.id">
+              <td hlmTd [attr.data-label]="'approvals.requisition' | transloco">
                 {{ item.requisitionNumber }}
               </td>
-              <td [attr.data-label]="'approvals.amount' | transloco">
+              <td hlmTd [attr.data-label]="'approvals.amount' | transloco">
                 {{ item.amount | money }}
               </td>
-              <td [attr.data-label]="'approvals.level' | transloco">
+              <td hlmTd [attr.data-label]="'approvals.level' | transloco">
                 {{ item.currentLevel }}/{{ item.finalLevel }}
               </td>
-              <td [attr.data-label]="'approvals.assignee' | transloco">
+              <td hlmTd [attr.data-label]="'approvals.assignee' | transloco">
                 @if (item.assigneeRole) {
                   {{ 'approvals.roleGroup' | transloco: { role: item.assigneeRole } }}
                 } @else {
@@ -62,7 +62,7 @@
                   <span class="notice">{{ 'approvals.escalated' | transloco }}</span>
                 }
               </td>
-              <td [attr.data-label]="'approvals.dueAt' | transloco">
+              <td hlmTd [attr.data-label]="'approvals.dueAt' | transloco">
                 {{ instant(item.dueAt) }}
                 @if (due(item.dueAt); as state) {
                   @if (state === 'overdue' || state === 'due-soon') {
@@ -70,7 +70,7 @@
                   }
                 }
               </td>
-              <td class="actions">
+              <td hlmTd class="actions">
                 <a hlmBtn size="sm" [routerLink]="['/approvals', item.id]">{{
                   'approvals.open' | transloco
                 }}</a>

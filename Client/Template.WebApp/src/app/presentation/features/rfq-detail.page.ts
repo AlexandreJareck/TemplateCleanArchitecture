@@ -19,6 +19,8 @@ import { ActionConfirmation, type ActionConfirmationRequest } from '../shared/ac
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
 import { MASTER_DATA_PORT, SOURCING_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 type Pending = 'cancel' | 'close-early' | 'withdraw-quote' | 'award' | undefined;
 
@@ -51,6 +53,8 @@ const SOURCES: readonly QuoteSource[] = ['Email', 'Phone', 'Document', 'Other'];
   selector: 'app-rfq-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
     RouterLink,
     TranslocoPipe,
     HlmButton,

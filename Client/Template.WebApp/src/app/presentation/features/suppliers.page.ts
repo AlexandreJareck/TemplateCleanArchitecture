@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import type { ApplicationError } from '@application/common/application-error';
@@ -11,16 +12,31 @@ import type {
   SupplierSummary,
 } from '@application/master-data/master-data';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucidePlus } from '@ng-icons/lucide';
 import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { MASTER_DATA_PORT } from '../state/ports';
 import { SessionFacade } from '../state/session.facade';
 import { ActionConfirmation } from '../shared/action-confirmation';
+import { FormDrawer } from '../shared/form-drawer';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 @Component({
   selector: 'app-suppliers-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormField, TranslocoPipe, HlmButton, HlmInput, ActionConfirmation],
+  imports: [
+    ...HlmTableImports,
+    FormField,
+    TranslocoPipe,
+    HlmButton,
+    HlmInput,
+    ActionConfirmation,
+    FormDrawer,
+    NgIcon,
+    NgTemplateOutlet,
+  ],
+  providers: [provideIcons({ lucidePlus })],
   templateUrl: './suppliers.page.html',
   styleUrl: './data-pages.css',
 })
@@ -37,6 +53,7 @@ export class SuppliersPage {
     totalPages: 0,
   });
   readonly selected = signal<SupplierDetail | undefined>(undefined);
+  readonly drawerOpen = signal(false);
   readonly proposal = signal<EnrichmentProposal | undefined>(undefined);
   readonly error = signal<ApplicationError | undefined>(undefined);
   readonly loading = signal(true);
@@ -82,10 +99,23 @@ export class SuppliersPage {
     this.page.update((value) => ({ ...value, page: value.page + delta }));
     void this.load();
   }
+  create() {
+    this.close();
+    this.model.set({ legalName: '', tradeName: '', country: 'BR', taxId: '' });
+    this.drawerOpen.set(true);
+  }
+  close() {
+    this.drawerOpen.set(false);
+    this.selected.set(undefined);
+    this.proposal.set(undefined);
+    this.error.set(undefined);
+  }
   async open(id: string) {
     const result = await this.port.getSupplier(id);
     if (result.ok) {
+      this.error.set(undefined);
       this.selected.set(result.value);
+      this.drawerOpen.set(true);
       this.model.set({
         legalName: result.value.legalName,
         tradeName: result.value.tradeName,
