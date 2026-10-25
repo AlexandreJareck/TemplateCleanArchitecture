@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
@@ -9,12 +10,15 @@ import type {
   Page,
 } from '@application/master-data/master-data';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucidePlus } from '@ng-icons/lucide';
 import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { HlmSkeleton } from '@presentation/shared-ui/skeleton';
 import { MASTER_DATA_PORT } from '../state/ports';
 import { SessionFacade } from '../state/session.facade';
 import { ActionConfirmation } from '../shared/action-confirmation';
+import { FormDrawer } from '../shared/form-drawer';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
 
@@ -30,7 +34,11 @@ import { HlmTableImports } from '@presentation/shared-ui/table';
     HlmInput,
     HlmSkeleton,
     ActionConfirmation,
+    FormDrawer,
+    NgIcon,
+    NgTemplateOutlet,
   ],
+  providers: [provideIcons({ lucidePlus })],
   templateUrl: './master-data.page.html',
   styleUrl: './data-pages.css',
 })
@@ -57,6 +65,7 @@ export class MasterDataPage {
   readonly error = signal<ApplicationError | undefined>(undefined);
   readonly query = signal('');
   readonly selected = signal<MasterDataItem | undefined>(undefined);
+  readonly drawerOpen = signal(false);
   readonly pendingToggle = signal<MasterDataItem | undefined>(undefined);
   readonly model = signal({
     code: '',
@@ -96,8 +105,14 @@ export class MasterDataPage {
     this.page.update((value) => ({ ...value, page: value.page + delta }));
     void this.load();
   }
+  create() {
+    this.cancel();
+    this.drawerOpen.set(true);
+  }
   edit(item: MasterDataItem) {
+    this.error.set(undefined);
     this.selected.set(item);
+    this.drawerOpen.set(true);
     this.model.set({
       code: item.code,
       name: item.name,
@@ -109,6 +124,8 @@ export class MasterDataPage {
     });
   }
   cancel() {
+    this.drawerOpen.set(false);
+    this.error.set(undefined);
     this.selected.set(undefined);
     this.model.set({
       code: '',
