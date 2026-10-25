@@ -1,0 +1,372 @@
+<header class="page-title">
+  <p>
+    {{ 'shell.breadcrumbHome' | transloco }} /
+    <a routerLink="/purchasing/orders">{{ 'nav.purchaseOrders' | transloco }}</a>
+  </p>
+  <h1>
+    {{
+      'purchasing.title'
+        | transloco: { number: order()?.number ?? ('purchasing.draftNumber' | transloco) }
+    }}
+  </h1>
+</header>
+<p class="sr-only" aria-live="polite" role="status">{{ announcement() }}</p>
+@if (stale()) {
+  <div class="feedback" role="alert">
+    <strong>{{ 'purchasing.stale' | transloco }}</strong>
+  </div>
+}
+@if (problemKey(); as key) {
+  <div class="feedback" role="alert">
+    <strong>{{ key | transloco }}</strong>
+    <span>{{ error()?.code }}</span>
+    @if (error()?.fieldErrors; as fields) {
+      @for (entry of fieldList(fields); track entry) {
+        <span>{{ entry }}</span>
+      }
+    }
+  </div>
+} @else {
+  <app-problem-feedback [error]="error()" (reload)="load()" />
+}
+
+@if (order(); as current) {
+  <section class="panel" aria-labelledby="order-summary">
+    <h2 id="order-summary">{{ 'purchasing.summary' | transloco }}</h2>
+    <dl class="summary-grid">
+      <dt>{{ 'fields.status' | transloco }}</dt>
+      <dd>
+        <span class="status-badge" [attr.data-status]="current.status">{{
+          'purchasing.statuses.' + current.status | transloco
+        }}</span>
+        @if (current.shortClosed) {
+          <span class="notice">{{ 'purchasing.shortClosedBadge' | transloco }}</span>
+        }
+      </dd>
+      <dt>{{ 'purchasing.requisition' | transloco }}</dt>
+      <dd>
+        <a [routerLink]="['/requisitions', current.requisitionId]">{{
+          current.requisitionNumber
+        }}</a>
+      </dd>
+      <dt>{{ 'purchasing.rfq' | transloco }}</dt>
+      <dd>{{ current.rfqNumber }}</dd>
+      <dt>{{ 'purchasing.supplier' | transloco }}</dt>
+      <dd>
+        <strong>{{ current.supplier.legalName }}</strong> · {{ current.supplier.taxId }}
+        @if (current.supplier.address) {
+          <br />{{ current.supplier.address }}
+        }
+        @if (current.supplier.contactName) {
+          <br />{{ current.supplier.contactName }} · {{ current.supplier.contactEmail ?? '' }}
+        }
+      </dd>
+      @if (current.buyerName) {
+        <dt>{{ 'purchasing.buyer' | transloco }}</dt>
+        <dd>{{ current.buyerName }}</dd>
+      }
+      <dt>{{ 'purchasing.paymentTerms' | transloco }}</dt>
+      <dd>{{ current.paymentTerms }}</dd>
+      @if (current.pricesVisible) {
+        <dt>{{ 'purchasing.total' | transloco }}</dt>
+        <dd>
+          <strong>{{ current.total | money }}</strong>
+          ({{ 'purchasing.freight' | transloco }} {{ current.freight | money }} ·
+          {{ 'purchasing.discount' | transloco }} {{ current.discount | money }} ·
+          {{ 'purchasing.taxesIncluded' | transloco }} {{ current.taxesIncluded | money }})
+        </dd>
+      }
+      <dt>{{ 'purchasing.deliveryAddress' | transloco }}</dt>
+      <dd>{{ current.deliveryAddress ?? '—' }}</dd>
+      @if (current.issueDate) {
+        <dt>{{ 'purchasing.issuedOn' | transloco }}</dt>
+        <dd>{{ current.issueDate }}</dd>
+      }
+      <dt>{{ 'purchasing.receivingPolicy' | transloco }}</dt>
+      <dd>{{ current.receivingPolicy }}</dd>
+      @if (current.cancellationReason) {
+        <dt>{{ 'purchasing.cancellationReason' | transloco }}</dt>
+        <dd>“{{ current.cancellationReason }}”</dd>
+      }
+    </dl>
+  </section>
+
+  @if (current.status !== 'Draft') {
+    <section class="panel" aria-labelledby="order-dispatch">
+      <h2 id="order-dispatch">{{ 'purchasing.dispatch' | transloco }}</h2>
+      <dl class="summary-grid">
+        <dt>{{ 'purchasing.document' | transloco }}</dt>
+        <dd [attr.data-document]="current.documentStatus">
+          {{ 'purchasing.documentStatuses.' + current.documentStatus | transloco }}
+          @if (current.documentFailureCode) {
+            <span class="warning">{{ current.documentFailureCode }}</span>
+          }
+          @if (current.documentTemplateVersion) {
+            · {{ current.documentTemplateVersion }}
+          }
+          · {{ 'purchasing.attempts' | transloco: { count: current.documentAttempts } }}
+        </dd>
+        <dt>{{ 'purchasing.notification' | transloco }}</dt>
+        <dd [attr.data-notification]="current.notificationStatus">
+          {{ 'purchasing.notificationStatuses.' + current.notificationStatus | transloco }}
+          @if (current.notificationFailureCode) {
+            <span class="warning">{{ current.notificationFailureCode }}</span>
+          }
+          · {{ 'purchasing.attempts' | transloco: { count: current.notificationAttempts } }}
+        </dd>
+      </dl>
+      <div class="actions">
+        @if (can('download-document')) {
+          <button hlmBtn variant="outline" type="button" (click)="download()">
+            {{ 'purchasing.downloadDocument' | transloco }}
+          </button>
+        }
+        @if (can('retry-document')) {
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            [disabled]="busy()"
+            (click)="retryDocument()"
+          >
+            {{ 'purchasing.retryDocument' | transloco }}
+          </button>
+        }
+        @if (can('retry-notification')) {
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            [disabled]="busy()"
+            (click)="retryNotification()"
+          >
+            {{ 'purchasing.retryNotification' | transloco }}
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="panel" aria-labelledby="order-lines">
+    <h2 id="order-lines">{{ 'purchasing.lines' | transloco }}</h2>
+    <div
+      class="table-scroll"
+      role="region"
+      tabindex="0"
+      [attr.aria-label]="'purchasing.linesTable' | transloco"
+    >
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ 'purchasing.description' | transloco }}</th>
+            <th>{{ 'purchasing.ordered' | transloco }}</th>
+            @if (current.pricesVisible) {
+              <th>{{ 'purchasing.unitPrice' | transloco }}</th>
+              <th>{{ 'purchasing.lineTotal' | transloco }}</th>
+            }
+            <th>{{ 'purchasing.accepted' | transloco }}</th>
+            <th>{{ 'purchasing.remaining' | transloco }}</th>
+            <th>{{ 'purchasing.promisedDate' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of current.lines; track line.lineNumber) {
+            <tr [attr.data-line]="line.lineNumber">
+              <td data-label="#">{{ line.lineNumber }}</td>
+              <td [attr.data-label]="'purchasing.description' | transloco">
+                {{ line.description }}
+                @if (line.shortClosed) {
+                  <span class="notice">{{ 'purchasing.shortClosedLine' | transloco }}</span>
+                }
+              </td>
+              <td [attr.data-label]="'purchasing.ordered' | transloco">
+                {{ line.quantity }} {{ line.unitCode }}
+              </td>
+              @if (current.pricesVisible) {
+                <td [attr.data-label]="'purchasing.unitPrice' | transloco">
+                  {{ line.unitPrice | money }}
+                </td>
+                <td [attr.data-label]="'purchasing.lineTotal' | transloco">
+                  {{ line.lineTotal | money }}
+                </td>
+              }
+              <td [attr.data-label]="'purchasing.accepted' | transloco">
+                {{ line.acceptedQuantity }}
+              </td>
+              <td [attr.data-label]="'purchasing.remaining' | transloco">
+                {{ line.remainingQuantity }}
+              </td>
+              <td [attr.data-label]="'purchasing.promisedDate' | transloco">
+                @if (can('update')) {
+                  <label class="sr-only" [attr.for]="'promised-' + line.lineNumber"
+                    >{{ 'purchasing.promisedDate' | transloco }} {{ line.lineNumber }}</label
+                  >
+                  <input
+                    hlmInput
+                    type="date"
+                    [id]="'promised-' + line.lineNumber"
+                    [value]="promised()[line.lineNumber] ?? line.promisedDeliveryDate"
+                    (change)="setPromised(line.lineNumber, $any($event.target).value)"
+                  />
+                } @else {
+                  {{ line.promisedDeliveryDate }}
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (can('update')) {
+    <section class="panel" aria-labelledby="order-draft">
+      <h2 id="order-draft">{{ 'purchasing.draftFields' | transloco }}</h2>
+      <form class="form-grid" (submit)="$event.preventDefault(); saveDraft()" novalidate>
+        <label for="deliveryAddress"
+          >{{ 'purchasing.deliveryAddress' | transloco }}
+          <textarea
+            id="deliveryAddress"
+            class="textarea"
+            rows="2"
+            maxlength="500"
+            [value]="address()"
+            (input)="address.set($any($event.target).value)"
+          ></textarea>
+        </label>
+        <label for="orderNotes"
+          >{{ 'purchasing.notes' | transloco }}
+          <textarea
+            id="orderNotes"
+            class="textarea"
+            rows="2"
+            maxlength="2000"
+            [value]="notes()"
+            (input)="notes.set($any($event.target).value)"
+          ></textarea>
+        </label>
+        <p class="hint">{{ 'purchasing.draftHint' | transloco }}</p>
+        <div class="actions">
+          <button hlmBtn variant="outline" type="submit" [disabled]="busy()">
+            {{ 'purchasing.saveDraft' | transloco }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (can('issue') || can('cancel') || can('short-close') || can('receive')) {
+    <section class="panel" aria-labelledby="order-actions">
+      <h2 id="order-actions">{{ 'common.actions' | transloco }}</h2>
+      <div class="actions">
+        @if (can('issue')) {
+          <button hlmBtn type="button" (click)="open('issue')">
+            {{ 'purchasing.issue' | transloco }}
+          </button>
+        }
+        @if (can('receive')) {
+          <a
+            hlmBtn
+            variant="outline"
+            [routerLink]="['/receiving/orders', current.id, 'receipts', 'new']"
+            >{{ 'purchasing.receive' | transloco }}</a
+          >
+        }
+        @if (can('short-close')) {
+          <button hlmBtn variant="outline" type="button" (click)="open('short-close')">
+            {{ 'purchasing.shortClose' | transloco }}
+          </button>
+        }
+        @if (can('cancel')) {
+          <button hlmBtn variant="destructive" type="button" (click)="open('cancel')">
+            {{ 'purchasing.cancel' | transloco }}
+          </button>
+        }
+      </div>
+      @if (confirming(); as active) {
+        <form
+          class="form-grid"
+          (submit)="$event.preventDefault(); confirm()"
+          novalidate
+          [attr.aria-label]="'purchasing.confirm.' + active | transloco"
+        >
+          <p class="notice">{{ 'purchasing.confirmText.' + active | transloco }}</p>
+          @if (active !== 'issue') {
+            <label for="orderReason"
+              >{{ 'common.reason' | transloco }}
+              <textarea
+                id="orderReason"
+                class="textarea"
+                rows="3"
+                [attr.maxlength]="reasonMax"
+                [attr.aria-invalid]="showReasonError() ? 'true' : null"
+                [attr.aria-describedby]="showReasonError() ? 'orderReasonError' : 'orderReasonHint'"
+                [value]="reason()"
+                (input)="reason.set($any($event.target).value)"
+              ></textarea>
+            </label>
+            @if (showReasonError(); as problem) {
+              <p id="orderReasonError" class="warning">
+                {{
+                  'purchasing.reasonErrors.' + problem
+                    | transloco: { min: reasonMin, max: reasonMax }
+                }}
+              </p>
+            } @else {
+              <p id="orderReasonHint" class="hint">
+                {{ 'purchasing.reasonHint' | transloco: { min: reasonMin, max: reasonMax } }}
+              </p>
+            }
+          }
+          <div class="actions">
+            <button hlmBtn variant="outline" type="button" (click)="confirming.set(undefined)">
+              {{ 'common.cancel' | transloco }}
+            </button>
+            <button hlmBtn type="submit" [disabled]="busy()">
+              {{ 'purchasing.confirm.' + active | transloco }}
+            </button>
+          </div>
+        </form>
+      }
+    </section>
+  }
+
+  @if (receipts().length > 0) {
+    <section class="panel" aria-labelledby="order-receipts">
+      <h2 id="order-receipts">{{ 'purchasing.receipts' | transloco }}</h2>
+      <ul class="timeline">
+        @for (receipt of receipts(); track receipt.id) {
+          <li [attr.data-receipt]="receipt.number">
+            <a [routerLink]="['/receiving/receipts', receipt.id]">{{ receipt.number }}</a> ·
+            {{ receipt.receivedOn }}
+            @if (receipt.hasDiscrepancy) {
+              <span class="warning">{{ 'purchasing.discrepancy' | transloco }}</span>
+            }
+            @if (receipt.corrections.length > 0) {
+              ·
+              {{ 'purchasing.correctionsCount' | transloco: { count: receipt.corrections.length } }}
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <section class="panel" aria-labelledby="order-history">
+    <h2 id="order-history">{{ 'requisition.timeline' | transloco }}</h2>
+    <ol class="timeline">
+      @for (entry of history(); track entry.sequence) {
+        <li>
+          <strong>{{ 'purchasing.history.' + entry.action | transloco }}</strong>
+          @if (entry.reason) {
+            · “{{ entry.reason }}”
+          } @else if (entry.reasonCode) {
+            · {{ entry.reasonCode }}
+          }
+          <br /><small>{{ instant(entry.at) }}</small>
+        </li>
+      }
+    </ol>
+  </section>
+}

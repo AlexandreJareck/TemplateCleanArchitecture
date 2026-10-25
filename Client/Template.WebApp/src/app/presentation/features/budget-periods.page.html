@@ -1,0 +1,94 @@
+<header class="page-title">
+  <p>{{ 'shell.breadcrumbHome' | transloco }} / {{ 'nav.budgetPeriods' | transloco }}</p>
+  <h1>{{ 'nav.budgetPeriods' | transloco }}</h1>
+</header>
+<app-problem-feedback [error]="error()" (reload)="load()" />
+@if (page().items.length === 0) {
+  <div class="empty">
+    <h2>{{ 'common.empty' | transloco }}</h2>
+  </div>
+} @else {
+  <div
+    class="table-scroll"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="'nav.budgetPeriods' | transloco"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>{{ 'fields.code' | transloco }}</th>
+          <th>{{ 'fields.name' | transloco }}</th>
+          <th>{{ 'budget.range' | transloco }}</th>
+          <th>{{ 'fields.status' | transloco }}</th>
+          <th>{{ 'common.actions' | transloco }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (period of page().items; track period.id) {
+          <tr>
+            <td [attr.data-label]="'fields.code' | transloco">{{ period.code }}</td>
+            <td [attr.data-label]="'fields.name' | transloco">{{ period.name }}</td>
+            <td [attr.data-label]="'budget.range' | transloco">
+              {{ period.startDate }} – {{ period.endDate }}
+            </td>
+            <td [attr.data-label]="'fields.status' | transloco">
+              <app-status-badge [status]="period.status" />
+            </td>
+            <td>
+              @if (canManage && period.status === 'Planned') {
+                <button
+                  hlmBtn
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  (click)="ask(period, 'open')"
+                >
+                  {{ 'budget.open' | transloco }}
+                </button>
+              }
+              @if (canManage && period.status === 'Open') {
+                <button
+                  hlmBtn
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  (click)="ask(period, 'close')"
+                >
+                  {{ 'budget.close' | transloco }}
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+@if (canManage) {
+  <section class="panel" aria-labelledby="new-period-title">
+    <h2 id="new-period-title">{{ 'budget.newPeriod' | transloco }}</h2>
+    <form class="form-grid" (submit)="create($event)" novalidate>
+      <label>{{ 'fields.code' | transloco }}<input hlmInput [formField]="periodForm.code" /></label>
+      <label>{{ 'fields.name' | transloco }}<input hlmInput [formField]="periodForm.name" /></label>
+      <label
+        >{{ 'budget.startDate' | transloco
+        }}<input hlmInput type="date" [formField]="periodForm.startDate"
+      /></label>
+      <label
+        >{{ 'budget.endDate' | transloco
+        }}<input hlmInput type="date" [formField]="periodForm.endDate"
+      /></label>
+      <div class="actions">
+        <button hlmBtn type="submit" [disabled]="periodForm().invalid()">
+          {{ 'common.create' | transloco }}
+        </button>
+      </div>
+    </form>
+  </section>
+}
+<app-action-confirmation
+  [request]="confirmation()"
+  (confirmed)="confirm()"
+  (cancelled)="pending.set(undefined)"
+/>

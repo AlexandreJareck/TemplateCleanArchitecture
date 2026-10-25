@@ -25,42 +25,7 @@ export interface ActionConfirmationRequest {
   selector: 'app-action-confirmation',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoPipe, HlmButton, HlmInput],
-  template: `
-    @if (request(); as current) {
-      <div class="dialog-backdrop" role="presentation" (keydown.escape)="cancel()">
-        <section role="dialog" aria-modal="true" aria-labelledby="confirmation-title">
-          <h2 id="confirmation-title">{{ current.title }}</h2>
-          @if (current.description) {
-            <p class="description">{{ current.description }}</p>
-          }
-          @if (current.requireReason !== false) {
-            <label for="action-reason">{{ 'common.reason' | transloco }}</label>
-            <input
-              id="action-reason"
-              #reasonInput
-              hlmInput
-              [value]="reason()"
-              (input)="reason.set($any($event.target).value)"
-            />
-          }
-          <div class="actions">
-            <button hlmBtn variant="outline" type="button" (click)="cancel()">
-              {{ 'common.cancel' | transloco }}
-            </button>
-            <button
-              #confirmButton
-              hlmBtn
-              type="button"
-              [disabled]="current.requireReason !== false && !reason().trim()"
-              (click)="confirm()"
-            >
-              {{ current.actionLabel }}
-            </button>
-          </div>
-        </section>
-      </div>
-    }
-  `,
+  templateUrl: './action-confirmation.html',
   styles: [
     `
       .dialog-backdrop {

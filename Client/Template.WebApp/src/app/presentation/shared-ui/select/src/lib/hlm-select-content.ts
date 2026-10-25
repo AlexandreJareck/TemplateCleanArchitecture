@@ -17,19 +17,7 @@ import { HlmSelectScrollUp } from './hlm-select-scroll-up';
   imports: [HlmSelectScrollUp, HlmSelectScrollDown, BrnSelectList],
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [BrnSelectContent],
-  template: `
-    @if (showScroll()) {
-      <hlm-select-scroll-up />
-    }
-
-    <div brnSelectList [class]="_computedListboxClasses()">
-      <ng-content />
-    </div>
-
-    @if (showScroll()) {
-      <hlm-select-scroll-down />
-    }
-  `,
+  templateUrl: './hlm-select-content.html',
 })
 export class HlmSelectContent {
   protected readonly _computedListboxClasses = computed(() => hlm('flex flex-col'));

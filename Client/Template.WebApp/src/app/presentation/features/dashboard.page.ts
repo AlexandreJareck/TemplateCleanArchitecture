@@ -8,31 +8,7 @@ import { SessionFacade } from '../state/session.facade';
   selector: 'app-dashboard-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, TranslocoPipe, PermissionDirective],
-  template: `<header class="page-title">
-      <p>{{ 'shell.breadcrumbHome' | transloco }}</p>
-      <h1>{{ 'dashboard.title' | transloco }}</h1>
-      <p>{{ 'dashboard.welcome' | transloco: { name: session.user()?.displayName } }}</p>
-    </header>
-    <div class="cards">
-      <a *appPermission="'organization.read'" routerLink="/organization/departments">{{
-        'nav.departments' | transloco
-      }}</a
-      ><a *appPermission="'suppliers.read'" routerLink="/suppliers">{{
-        'nav.suppliers' | transloco
-      }}</a
-      ><a *appPermission="'catalog.read'" routerLink="/catalog/items">{{
-        'nav.items' | transloco
-      }}</a
-      ><a *appPermission="'requisitions.create'" routerLink="/requisitions/new">{{
-        'requisition.new' | transloco
-      }}</a
-      ><a *appPermission="'requisitions.create'" routerLink="/requisitions/mine">{{
-        'nav.myRequisitions' | transloco
-      }}</a
-      ><a *appPermission="'budget.read'" routerLink="/budget/allocations">{{
-        'nav.budgetAllocations' | transloco
-      }}</a>
-    </div>`,
+  templateUrl: './dashboard.page.html',
   styles: [
     `
       .page-title {

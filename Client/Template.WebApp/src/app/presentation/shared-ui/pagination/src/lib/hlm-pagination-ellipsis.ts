@@ -10,10 +10,7 @@ import { classes } from '@presentation/shared-ui/utils';
   providers: [provideIcons({ lucideEllipsis })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { 'data-slot': 'pagination-ellipsis' },
-  template: `
-    <ng-icon name="lucideEllipsis" />
-    <span class="sr-only">{{ srOnlyText() }}</span>
-  `,
+  templateUrl: './hlm-pagination-ellipsis.html',
 })
 export class HlmPaginationEllipsis {
   /** Screen reader only text for the ellipsis */

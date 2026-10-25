@@ -1,0 +1,217 @@
+<header class="page-title">
+  <p>{{ 'shell.breadcrumbHome' | transloco }} / {{ 'nav.reports' | transloco }}</p>
+  <h1>{{ 'nav.reports' | transloco }}</h1>
+</header>
+<p class="sr-only" aria-live="polite" role="status">{{ announcement() }}</p>
+<app-problem-feedback [error]="error()" (reload)="load()" />
+
+<section class="panel" aria-labelledby="request-title">
+  <h2 id="request-title">{{ 'reports.request' | transloco }}</h2>
+  @if (availableTypes().length === 0) {
+    <p class="empty">{{ 'reports.noTypes' | transloco }}</p>
+  } @else {
+    <form class="form-grid" (submit)="$event.preventDefault(); submit()">
+      <label for="reportType"
+        >{{ 'reports.type' | transloco }}
+        <select
+          id="reportType"
+          class="select"
+          [value]="type()"
+          (change)="type.set($any($event.target).value)"
+        >
+          @for (option of availableTypes(); track option.type) {
+            <option [value]="option.type">
+              {{ 'reports.types.' + option.type | transloco }} ({{ option.format }})
+            </option>
+          }
+        </select>
+      </label>
+      @switch (type()) {
+        @case ('RequisitionPdf') {
+          <label for="requisitionId"
+            >{{ 'reports.requisitionId' | transloco }}
+            <input
+              id="requisitionId"
+              hlmInput
+              [value]="values().requisitionId ?? ''"
+              (input)="set('requisitionId', $any($event.target).value)"
+            />
+          </label>
+        }
+        @case ('QuoteComparisonPdf') {
+          <label for="rfqId"
+            >{{ 'reports.rfqId' | transloco }}
+            <input
+              id="rfqId"
+              hlmInput
+              [value]="values().rfqId ?? ''"
+              (input)="set('rfqId', $any($event.target).value)"
+            />
+          </label>
+        }
+        @case ('BudgetConsumptionXlsx') {
+          <label for="fiscalPeriodId"
+            >{{ 'reports.fiscalPeriod' | transloco }}
+            <select
+              id="fiscalPeriodId"
+              class="select"
+              [value]="values().fiscalPeriodId ?? ''"
+              (change)="set('fiscalPeriodId', $any($event.target).value)"
+            >
+              <option value="">—</option>
+              @for (period of periods(); track period.id) {
+                <option [value]="period.id">{{ period.code }} — {{ period.name }}</option>
+              }
+            </select>
+          </label>
+          <label for="currency"
+            >{{ 'reports.currency' | transloco }}
+            <input
+              id="currency"
+              hlmInput
+              maxlength="3"
+              [value]="values().currency ?? ''"
+              (input)="set('currency', $any($event.target).value)"
+            />
+          </label>
+          <label for="costCenterId"
+            >{{ 'reports.costCenterId' | transloco }}
+            <input
+              id="costCenterId"
+              hlmInput
+              [value]="values().costCenterId ?? ''"
+              (input)="set('costCenterId', $any($event.target).value)"
+            />
+          </label>
+        }
+        @case ('SupplierQuotesXlsx') {
+          <label for="from"
+            >{{ 'reports.from' | transloco }}
+            <input
+              id="from"
+              hlmInput
+              type="date"
+              [value]="values().from ?? ''"
+              (input)="set('from', $any($event.target).value)"
+            />
+          </label>
+          <label for="to"
+            >{{ 'reports.to' | transloco }}
+            <input
+              id="to"
+              hlmInput
+              type="date"
+              [value]="values().to ?? ''"
+              (input)="set('to', $any($event.target).value)"
+            />
+          </label>
+          <label for="supplierId"
+            >{{ 'reports.supplierId' | transloco }}
+            <input
+              id="supplierId"
+              hlmInput
+              [value]="values().supplierId ?? ''"
+              (input)="set('supplierId', $any($event.target).value)"
+            />
+          </label>
+        }
+      }
+      <button hlmBtn type="submit" [disabled]="busy()">
+        {{ 'reports.submit' | transloco }}
+      </button>
+    </form>
+    <p class="hint">{{ 'reports.asOfHelp' | transloco }}</p>
+  }
+</section>
+
+<section class="panel" aria-labelledby="jobs-title">
+  <h2 id="jobs-title">{{ 'reports.jobs' | transloco }}</h2>
+  <div class="toolbar">
+    <button hlmBtn variant="outline" size="sm" type="button" (click)="load()">
+      {{ 'common.refresh' | transloco }}
+    </button>
+  </div>
+  @if (jobs().items.length === 0) {
+    <p class="empty">{{ 'reports.noJobs' | transloco }}</p>
+  } @else {
+    <div
+      class="table-scroll"
+      role="region"
+      tabindex="0"
+      [attr.aria-label]="'reports.jobsTable' | transloco"
+    >
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>{{ 'reports.type' | transloco }}</th>
+            <th>{{ 'reports.requestedAt' | transloco }}</th>
+            <th>{{ 'fields.status' | transloco }}</th>
+            <th>{{ 'reports.progress' | transloco }}</th>
+            <th>{{ 'reports.details' | transloco }}</th>
+            <th>{{ 'common.actions' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (job of jobs().items; track job.id) {
+            <tr [attr.data-job]="job.id">
+              <td [attr.data-label]="'reports.type' | transloco">
+                {{ 'reports.types.' + job.reportType | transloco }}
+              </td>
+              <td [attr.data-label]="'reports.requestedAt' | transloco">
+                {{ instant(job.requestedAt) }}
+              </td>
+              <td [attr.data-label]="'fields.status' | transloco">
+                <app-status-badge [status]="job.status" />
+              </td>
+              <td [attr.data-label]="'reports.progress' | transloco">
+                @if (isActive(job)) {
+                  <progress
+                    max="100"
+                    [value]="job.progress"
+                    [attr.aria-label]="'reports.progress' | transloco"
+                  ></progress>
+                  {{ job.progress }}%
+                  @if (stillRunning().has(job.id)) {
+                    <span class="notice">{{ 'reports.stillRunning' | transloco }}</span>
+                  }
+                } @else {
+                  {{ job.attempts }}/{{ job.maxAttempts }}
+                }
+              </td>
+              <td [attr.data-label]="'reports.details' | transloco">
+                @if (job.status === 'Failed') {
+                  <span class="warning">{{ failureKey(job.failureCode) | transloco }}</span>
+                  <small> ({{ job.failureCode }})</small>
+                } @else if (job.status === 'Ready') {
+                  {{ job.fileName }} · {{ 'reports.expiresAt' | transloco }}
+                  {{ instant(job.expiresAt) }}
+                } @else if (job.status === 'Expired') {
+                  {{ 'reports.expired' | transloco }}
+                } @else {
+                  {{ 'reports.asOf' | transloco }} {{ instant(job.asOf) }}
+                }
+              </td>
+              <td class="actions">
+                @if (can(job, 'download')) {
+                  <button hlmBtn size="sm" type="button" (click)="download(job)">
+                    {{ 'reports.download' | transloco }}
+                  </button>
+                }
+                @if (can(job, 'cancel')) {
+                  <button hlmBtn size="sm" variant="outline" type="button" (click)="cancel(job)">
+                    {{ 'common.cancel' | transloco }}
+                  </button>
+                }
+                @if (can(job, 'retry')) {
+                  <button hlmBtn size="sm" variant="outline" type="button" (click)="retry(job)">
+                    {{ 'reports.retry' | transloco }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

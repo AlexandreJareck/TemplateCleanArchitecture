@@ -1,0 +1,303 @@
+<header class="page-title">
+  <p>
+    {{ 'shell.breadcrumbHome' | transloco }} /
+    <a routerLink="/requisitions/mine">{{ 'nav.myRequisitions' | transloco }}</a> /
+    {{ requisition()?.number ?? ('requisition.new' | transloco) }}
+  </p>
+  <h1>
+    {{ requisition() ? ('requisition.editDraft' | transloco) : ('requisition.new' | transloco) }}
+  </h1>
+  @if (requisition(); as current) {
+    <p>
+      <app-status-badge [status]="current.status" /> · {{ 'requisition.revision' | transloco }}
+      {{ current.revision }}
+    </p>
+  }
+</header>
+<app-problem-feedback [error]="error()" (reload)="reload()" />
+
+<section class="panel" aria-labelledby="header-title">
+  <h2 id="header-title">{{ 'requisition.header' | transloco }}</h2>
+  <form class="form-grid" (submit)="saveHeader($event)" novalidate>
+    <label>
+      {{ 'requisition.costCenter' | transloco }}
+      <select class="select" [formField]="headerForm.costCenterId">
+        <option value="">—</option>
+        @for (option of costCenters(); track option.id) {
+          <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      {{ 'requisition.currency' | transloco }}
+      <select class="select" [formField]="headerForm.currency">
+        @for (currency of currencies; track currency) {
+          <option [value]="currency">{{ currency }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      {{ 'requisition.neededBy' | transloco }}
+      <input hlmInput type="date" [formField]="headerForm.neededBy" />
+    </label>
+    <label class="wide">
+      {{ 'requisition.purpose' | transloco }}
+      <textarea hlmInput rows="3" [formField]="headerForm.purpose"></textarea>
+    </label>
+    <div class="actions">
+      <button hlmBtn type="submit" [disabled]="headerForm().invalid() || !editable()">
+        {{ 'common.save' | transloco }}
+      </button>
+    </div>
+  </form>
+</section>
+
+@if (requisition(); as current) {
+  <section class="panel" aria-labelledby="lines-title">
+    <h2 id="lines-title">{{ 'requisition.lines' | transloco }}</h2>
+    @if (current.lines.length === 0) {
+      <p class="notice">{{ 'requisition.noLines' | transloco }}</p>
+    } @else {
+      <div
+        class="table-scroll"
+        role="region"
+        tabindex="0"
+        [attr.aria-label]="'requisition.linesTable' | transloco"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ 'requisition.description' | transloco }}</th>
+              <th>{{ 'requisition.quantity' | transloco }}</th>
+              <th>{{ 'requisition.unitPrice' | transloco }}</th>
+              <th>{{ 'requisition.lineTotal' | transloco }}</th>
+              <th>{{ 'common.actions' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of current.lines; track line.lineNumber) {
+              <tr>
+                <td data-label="#">{{ line.lineNumber }}</td>
+                <td [attr.data-label]="'requisition.description' | transloco">
+                  {{ line.description }} ({{ line.categoryCode }})
+                </td>
+                <td [attr.data-label]="'requisition.quantity' | transloco">
+                  {{ line.quantity }} {{ line.unitCode }}
+                </td>
+                <td [attr.data-label]="'requisition.unitPrice' | transloco">
+                  {{ line.estimatedUnitPrice | money }}
+                </td>
+                <td [attr.data-label]="'requisition.lineTotal' | transloco">
+                  {{ line.lineTotal | money }}
+                </td>
+                <td>
+                  @if (editable()) {
+                    <button
+                      hlmBtn
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      (click)="editLine(line)"
+                    >
+                      {{ 'common.edit' | transloco }}
+                    </button>
+                    <button
+                      hlmBtn
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      (click)="removeLine(line)"
+                    >
+                      {{ 'requisition.removeLine' | transloco }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <dl class="summary-grid">
+      <div>
+        <dt>{{ 'requisition.serverTotal' | transloco }}</dt>
+        <dd>{{ current.estimatedTotal | money }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'requisition.previewTotal' | transloco }}</dt>
+        <dd data-testid="preview-total">{{ previewTotal() }}</dd>
+      </div>
+    </dl>
+    @if (editable()) {
+      <h3>
+        {{
+          editingLine()
+            ? ('requisition.editLine' | transloco: { number: editingLine() })
+            : ('requisition.addLine' | transloco)
+        }}
+      </h3>
+      <form class="form-grid" (submit)="saveLine($event)" novalidate>
+        <label>
+          {{ 'requisition.catalogItem' | transloco }}
+          <select class="select" [formField]="lineForm.catalogItemId" (change)="applyCatalogItem()">
+            <option value="">{{ 'requisition.freeLine' | transloco }}</option>
+            @for (option of catalogItems(); track option.id) {
+              <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          {{ 'requisition.description' | transloco }}
+          <input hlmInput [formField]="lineForm.description" />
+        </label>
+        <label>
+          {{ 'fields.kind' | transloco }}
+          <select class="select" [formField]="lineForm.kind">
+            <option value="Good">{{ 'fields.good' | transloco }}</option>
+            <option value="Service">{{ 'fields.service' | transloco }}</option>
+          </select>
+        </label>
+        <label>
+          {{ 'nav.categories' | transloco }}
+          <select class="select" [formField]="lineForm.categoryId">
+            <option value="">—</option>
+            @for (option of categories(); track option.id) {
+              <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          {{ 'nav.units' | transloco }}
+          <select class="select" [formField]="lineForm.unitOfMeasureId">
+            <option value="">—</option>
+            @for (option of units(); track option.id) {
+              <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          {{ 'requisition.quantity' | transloco }}
+          <input hlmInput inputmode="decimal" [formField]="lineForm.quantity" />
+        </label>
+        <label>
+          {{ 'requisition.unitPrice' | transloco }} ({{ current.currency }})
+          <input hlmInput inputmode="decimal" [formField]="lineForm.unitPrice" />
+        </label>
+        <p class="notice" data-testid="line-preview">
+          {{ 'requisition.linePreview' | transloco }}: {{ linePreview() ?? '—' }}
+        </p>
+        <div class="actions">
+          <button hlmBtn type="submit" [disabled]="lineForm().invalid()">
+            {{ 'common.save' | transloco }}
+          </button>
+          @if (editingLine()) {
+            <button hlmBtn variant="outline" type="button" (click)="resetLine()">
+              {{ 'common.cancel' | transloco }}
+            </button>
+          }
+        </div>
+      </form>
+    }
+  </section>
+
+  <section class="panel" aria-labelledby="attachments-title">
+    <h2 id="attachments-title">{{ 'requisition.attachments' | transloco }}</h2>
+    <p class="notice">{{ 'requisition.attachmentsNotice' | transloco }}</p>
+    <ul>
+      @for (attachment of current.attachments; track attachment.id) {
+        <li>
+          {{ attachment.fileName }} ({{ attachment.length }} B, {{ attachment.status }})
+          @if (!attachment.locked && editable()) {
+            <button
+              hlmBtn
+              size="sm"
+              variant="ghost"
+              type="button"
+              (click)="removeAttachment(attachment.id)"
+            >
+              {{ 'requisition.removeLine' | transloco }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+    @if (can('attach')) {
+      <form class="form-grid" (submit)="addAttachment($event)" novalidate>
+        <label
+          >{{ 'requisition.fileName' | transloco
+          }}<input hlmInput [formField]="attachmentForm.fileName"
+        /></label>
+        <label>
+          {{ 'requisition.mediaType' | transloco }}
+          <select class="select" [formField]="attachmentForm.mediaType">
+            @for (type of mediaTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </label>
+        <label
+          >{{ 'requisition.length' | transloco
+          }}<input hlmInput inputmode="numeric" [formField]="attachmentForm.length"
+        /></label>
+        <div class="actions">
+          <button hlmBtn variant="outline" type="submit" [disabled]="attachmentForm().invalid()">
+            {{ 'requisition.addAttachment' | transloco }}
+          </button>
+        </div>
+      </form>
+    }
+  </section>
+
+  <section class="panel" aria-labelledby="budget-title">
+    <h2 id="budget-title">{{ 'budget.availability' | transloco }}</h2>
+    @if (availability(); as budget) {
+      @if (budget.hasOpenAllocation) {
+        <dl class="summary-grid">
+          <div>
+            <dt>{{ 'budget.period' | transloco }}</dt>
+            <dd>{{ budget.fiscalPeriodCode }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'budget.available' | transloco }}</dt>
+            <dd data-testid="available">{{ budget.available | money }}</dd>
+          </div>
+        </dl>
+        @if (fits() === false) {
+          <p class="warning">{{ 'budget.insufficientPreview' | transloco }}</p>
+        }
+      } @else {
+        <p class="warning">{{ 'budget.noOpenAllocation' | transloco }}</p>
+      }
+    } @else {
+      <p class="notice">{{ 'budget.availabilityUnknown' | transloco }}</p>
+    }
+  </section>
+
+  <div class="actions panel">
+    @if (can('submit')) {
+      <button
+        hlmBtn
+        type="button"
+        [disabled]="current.lines.length === 0"
+        (click)="pending.set('submit')"
+      >
+        {{ 'requisition.submit' | transloco }}
+      </button>
+    }
+    @if (can('discard')) {
+      <button hlmBtn variant="outline" type="button" (click)="pending.set('discard')">
+        {{ 'requisition.discard' | transloco }}
+      </button>
+    }
+    <a hlmBtn variant="ghost" [routerLink]="['/requisitions', current.id]">{{
+      'common.details' | transloco
+    }}</a>
+  </div>
+}
+
+<app-action-confirmation
+  [request]="confirmation()"
+  (confirmed)="confirm()"
+  (cancelled)="pending.set(undefined)"
+/>

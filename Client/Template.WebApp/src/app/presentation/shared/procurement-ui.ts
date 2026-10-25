@@ -35,33 +35,7 @@ export class MoneyPipe implements PipeTransform {
   selector: 'app-problem-feedback',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoPipe, HlmButton],
-  template: `
-    @if (error(); as problem) {
-      <div class="feedback" role="alert">
-        <strong>{{ messageKey(problem) | transloco }}</strong>
-        <span
-          >{{ problem.code }}
-          @if (problem.ruleId) {
-            · {{ problem.ruleId }}
-          }
-        </span>
-        @if (problem.detail) {
-          <span>{{ problem.detail }}</span>
-        }
-        @for (entry of fields(problem); track entry[0]) {
-          <span>{{ entry[0] }}: {{ entry[1] }}</span>
-        }
-        @if (problem.traceId) {
-          <small>Trace: {{ problem.traceId }}</small>
-        }
-        @if (problem.kind === 'version-mismatch' || problem.kind === 'conflict') {
-          <button hlmBtn variant="outline" size="sm" type="button" (click)="reload.emit()">
-            {{ 'common.reload' | transloco }}
-          </button>
-        }
-      </div>
-    }
-  `,
+  templateUrl: './procurement-ui.problem-feedback.html',
 })
 export class ProblemFeedback {
   readonly error = input<ApplicationError | undefined>();
@@ -84,9 +58,7 @@ export class ProblemFeedback {
   selector: 'app-status-badge',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoPipe],
-  template: `<span class="status-badge" [attr.data-status]="status()">{{
-    'statuses.' + status() | transloco
-  }}</span>`,
+  templateUrl: './procurement-ui.status-badge.html',
   styles: [
     `
       .status-badge {

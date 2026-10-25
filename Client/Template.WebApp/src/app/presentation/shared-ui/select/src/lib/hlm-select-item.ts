@@ -12,16 +12,7 @@ import { classes } from '@presentation/shared-ui/utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [{ directive: BrnSelectItem, inputs: ['id', 'disabled', 'value'] }],
   host: { 'data-slot': 'select-item' },
-  template: `
-    <ng-content />
-    @if (_active()) {
-      <ng-icon
-        name="lucideCheck"
-        class="absolute end-2 flex items-center justify-center text-[length:--spacing(4)]"
-        aria-hidden="true"
-      />
-    }
-  `,
+  templateUrl: './hlm-select-item.html',
 })
 export class HlmSelectItem {
   private readonly _brnSelectItem = inject(BrnSelectItem);

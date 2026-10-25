@@ -19,24 +19,7 @@ import type { ClassValue } from 'clsx';
   imports: [NgIcon, BrnSelectTrigger, BrnFieldControlDescribedBy],
   providers: [provideIcons({ lucideChevronDown })],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <button
-      brnSelectTrigger
-      brnFieldControlDescribedBy
-      [forceInvalid]="forceInvalid()"
-      [id]="buttonId()"
-      [class]="_computedClass()"
-      [aria-invalid]="ariaInvalidInput()"
-      [attr.data-size]="size()"
-      data-slot="select-trigger"
-    >
-      <ng-content />
-      <ng-icon
-        name="lucideChevronDown"
-        class="text-muted-foreground text-[length:--spacing(4)] ms-auto"
-      />
-    </button>
-  `,
+  templateUrl: './hlm-select-trigger.html',
 })
 export class HlmSelectTrigger {
   private static _id = 0;

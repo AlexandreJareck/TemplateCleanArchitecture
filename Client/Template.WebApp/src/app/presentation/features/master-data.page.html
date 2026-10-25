@@ -1,0 +1,159 @@
+<header class="page-title">
+  <p>{{ 'shell.breadcrumbHome' | transloco }} / {{ titleKey | transloco }}</p>
+  <h1>{{ titleKey | transloco }}</h1>
+</header>
+<div class="toolbar">
+  <label for="search" class="sr-only">{{ 'common.search' | transloco }}</label
+  ><input
+    id="search"
+    hlmInput
+    [value]="query()"
+    (input)="search($event)"
+    [placeholder]="'common.search' | transloco"
+  /><button hlmBtn type="button" variant="outline" (click)="load()">
+    {{ 'common.refresh' | transloco }}
+  </button>
+</div>
+@if (error(); as problem) {
+  <div class="feedback" role="alert">
+    <strong>{{ problem.code }}</strong
+    ><span>{{ problem.detail }}</span>
+    @if (problem.traceId) {
+      <small>Trace: {{ problem.traceId }}</small>
+    }
+    @if (problem.kind === 'version-mismatch') {
+      <button hlmBtn type="button" variant="outline" (click)="load()">
+        {{ 'common.reload' | transloco }}
+      </button>
+    }
+    @for (entry of fieldErrors(problem); track entry[0]) {
+      <span>{{ entry[0] }}: {{ entry[1].join(', ') }}</span>
+    }
+  </div>
+}
+@if (loading()) {
+  <div aria-busy="true" role="status"><div hlmSkeleton class="loading"></div></div>
+} @else if (page().items.length === 0) {
+  <div class="empty">
+    <h2>{{ 'common.empty' | transloco }}</h2>
+    <p>{{ 'common.emptyHelp' | transloco }}</p>
+  </div>
+} @else {
+  <div class="table-scroll" role="region" tabindex="0" [attr.aria-label]="titleKey | transloco">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ 'fields.code' | transloco }}</th>
+          <th>{{ 'fields.name' | transloco }}</th>
+          <th>{{ 'fields.status' | transloco }}</th>
+          <th>{{ 'common.actions' | transloco }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of page().items; track item.id) {
+          <tr>
+            <td data-label="Código">{{ item.code }}</td>
+            <td data-label="Nome">{{ item.name }}</td>
+            <td data-label="Status">
+              {{ (item.active ? 'common.active' : 'common.inactive') | transloco }}
+            </td>
+            <td>
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="edit(item)"
+                [disabled]="!canManage"
+              >
+                {{ 'common.edit' | transloco }}</button
+              ><button
+                hlmBtn
+                size="sm"
+                variant="ghost"
+                type="button"
+                (click)="pendingToggle.set(item)"
+                [disabled]="!canManage"
+              >
+                {{ (item.active ? 'common.deactivate' : 'common.reactivate') | transloco }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+<nav class="pager" aria-label="Paginação">
+  <button hlmBtn variant="outline" type="button" [disabled]="page().page <= 1" (click)="move(-1)">
+    ←</button
+  ><span>{{ page().page }} / {{ page().totalPages || 1 }}</span
+  ><button
+    hlmBtn
+    variant="outline"
+    type="button"
+    [disabled]="page().page >= page().totalPages"
+    (click)="move(1)"
+  >
+    →
+  </button>
+</nav>
+@if (canManage) {
+  <section class="editor">
+    <h2>{{ selected() ? ('common.edit' | transloco) : ('common.create' | transloco) }}</h2>
+    <form novalidate (submit)="save($event)">
+      <label for="code">{{ 'fields.code' | transloco }}</label
+      ><input id="code" hlmInput [formField]="itemForm.code" [readOnly]="!!selected()" /><label
+        for="name"
+        >{{ 'fields.name' | transloco }}</label
+      ><input id="name" hlmInput [formField]="itemForm.name" />
+      @if (kind === 'cost-centers' || kind === 'catalog-items') {
+        <label for="related">{{ 'fields.relatedId' | transloco }}</label
+        ><input id="related" hlmInput [formField]="itemForm.relatedId" />
+      }
+      @if (kind === 'departments' || kind === 'cost-centers') {
+        <label for="owner">{{ 'fields.ownerUserId' | transloco }}</label
+        ><input id="owner" hlmInput [formField]="itemForm.ownerUserId" />
+      }
+      @if (kind === 'catalog-items') {
+        <label for="kind">{{ 'fields.kind' | transloco }}</label>
+        <select id="kind" [formField]="itemForm.kind">
+          <option value="Good">{{ 'fields.good' | transloco }}</option>
+          <option value="Service">{{ 'fields.service' | transloco }}</option>
+        </select>
+        <label for="secondary">{{ 'fields.secondaryRelatedId' | transloco }}</label
+        ><input id="secondary" hlmInput [formField]="itemForm.secondaryRelatedId" />
+      }
+      @if (kind === 'units') {
+        <label for="decimals">{{ 'fields.decimals' | transloco }}</label
+        ><input id="decimals" hlmInput type="number" [formField]="itemForm.allowedDecimals" />
+      }
+      <div class="actions">
+        <button hlmBtn type="submit" [disabled]="itemForm().invalid() || saving()">
+          {{ 'common.save' | transloco }}
+        </button>
+        @if (selected()) {
+          <button hlmBtn variant="outline" type="button" (click)="cancel()">
+            {{ 'common.cancel' | transloco }}
+          </button>
+        }
+      </div>
+    </form>
+  </section>
+}
+<app-action-confirmation
+  [request]="
+    pendingToggle()
+      ? {
+          title: pendingToggle()!.active
+            ? ('common.confirmDeactivate' | transloco)
+            : ('common.confirmReactivate' | transloco),
+          actionLabel: pendingToggle()!.active
+            ? ('common.deactivate' | transloco)
+            : ('common.reactivate' | transloco),
+        }
+      : undefined
+  "
+  (confirmed)="confirmToggle($event)"
+  (cancelled)="pendingToggle.set(undefined)"
+/>

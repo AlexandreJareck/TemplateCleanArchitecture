@@ -1,0 +1,188 @@
+<header class="page-title">
+  <p>
+    {{ 'shell.breadcrumbHome' | transloco }} /
+    <a routerLink="/receiving/queue">{{ 'nav.receiving' | transloco }}</a>
+  </p>
+  <h1>{{ 'purchasing.newReceipt' | transloco: { number: order()?.number ?? '' } }}</h1>
+</header>
+@if (problemKey(); as key) {
+  <div class="feedback" role="alert">
+    <strong>{{ key | transloco }}</strong>
+    <span>{{ error()?.code }}</span>
+  </div>
+} @else {
+  <app-problem-feedback [error]="error()" (reload)="load()" />
+}
+
+@if (order(); as current) {
+  <form
+    class="panel form-grid"
+    aria-labelledby="receipt-form"
+    (submit)="$event.preventDefault(); post()"
+    novalidate
+  >
+    <h2 id="receipt-form">{{ 'purchasing.receiptHeader' | transloco }}</h2>
+    <label for="receivedOn"
+      >{{ 'purchasing.receivedOn' | transloco }}
+      <input
+        id="receivedOn"
+        hlmInput
+        type="date"
+        [value]="receivedOn()"
+        (change)="receivedOn.set($any($event.target).value)"
+      />
+    </label>
+    <label for="location"
+      >{{ 'purchasing.location' | transloco }}
+      <input
+        id="location"
+        hlmInput
+        maxlength="200"
+        [value]="location()"
+        (input)="location.set($any($event.target).value)"
+      />
+    </label>
+    <label for="deliveryReference"
+      >{{ 'purchasing.deliveryReference' | transloco }}
+      <input
+        id="deliveryReference"
+        hlmInput
+        maxlength="100"
+        [value]="reference()"
+        (input)="reference.set($any($event.target).value)"
+      />
+    </label>
+
+    <div
+      class="table-scroll"
+      role="region"
+      tabindex="0"
+      [attr.aria-label]="'purchasing.receiptLinesTable' | transloco"
+    >
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ 'purchasing.description' | transloco }}</th>
+            <th>{{ 'purchasing.remaining' | transloco }}</th>
+            <th>{{ 'purchasing.received' | transloco }}</th>
+            <th>{{ 'purchasing.accepted' | transloco }}</th>
+            <th>{{ 'purchasing.rejected' | transloco }}</th>
+            <th>{{ 'purchasing.discrepancy' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of openLines(); track line.lineNumber) {
+            @let draft = drafts()[line.lineNumber];
+            @let issues = issuesFor(line);
+            <tr [attr.data-line]="line.lineNumber">
+              <td data-label="#">{{ line.lineNumber }}</td>
+              <td [attr.data-label]="'purchasing.description' | transloco">
+                {{ line.description }} ({{ line.unitCode }})
+              </td>
+              <td [attr.data-label]="'purchasing.remaining' | transloco">
+                {{ line.remainingQuantity }} / {{ line.quantity }}
+              </td>
+              <td [attr.data-label]="'purchasing.received' | transloco">
+                <label class="sr-only" [attr.for]="'received-' + line.lineNumber">{{
+                  'purchasing.receivedLine' | transloco: { line: line.lineNumber }
+                }}</label>
+                <input
+                  hlmInput
+                  inputmode="decimal"
+                  [id]="'received-' + line.lineNumber"
+                  [value]="draft.received"
+                  [attr.aria-invalid]="issues.length > 0 ? 'true' : null"
+                  [attr.aria-describedby]="issues.length > 0 ? 'issues-' + line.lineNumber : null"
+                  (input)="update(line.lineNumber, { received: $any($event.target).value })"
+                />
+              </td>
+              <td [attr.data-label]="'purchasing.accepted' | transloco">
+                <label class="sr-only" [attr.for]="'accepted-' + line.lineNumber">{{
+                  'purchasing.acceptedLine' | transloco: { line: line.lineNumber }
+                }}</label>
+                <input
+                  hlmInput
+                  inputmode="decimal"
+                  [id]="'accepted-' + line.lineNumber"
+                  [value]="draft.accepted"
+                  (input)="update(line.lineNumber, { accepted: $any($event.target).value })"
+                />
+              </td>
+              <td [attr.data-label]="'purchasing.rejected' | transloco">
+                <label class="sr-only" [attr.for]="'rejected-' + line.lineNumber">{{
+                  'purchasing.rejectedLine' | transloco: { line: line.lineNumber }
+                }}</label>
+                <input
+                  hlmInput
+                  inputmode="decimal"
+                  [id]="'rejected-' + line.lineNumber"
+                  [value]="draft.rejected"
+                  (input)="update(line.lineNumber, { rejected: $any($event.target).value })"
+                />
+              </td>
+              <td [attr.data-label]="'purchasing.discrepancy' | transloco">
+                <label class="sr-only" [attr.for]="'type-' + line.lineNumber">{{
+                  'purchasing.discrepancyTypeLine' | transloco: { line: line.lineNumber }
+                }}</label>
+                <select
+                  class="select"
+                  [id]="'type-' + line.lineNumber"
+                  [value]="draft.discrepancyType ?? ''"
+                  (change)="
+                    update(line.lineNumber, {
+                      discrepancyType: $any($event.target).value || undefined,
+                    })
+                  "
+                >
+                  <option value="">—</option>
+                  @for (type of types; track type) {
+                    <option [value]="type">
+                      {{ 'purchasing.discrepancyTypes.' + type | transloco }}
+                    </option>
+                  }
+                </select>
+                <label class="sr-only" [attr.for]="'notes-' + line.lineNumber">{{
+                  'purchasing.discrepancyNotesLine' | transloco: { line: line.lineNumber }
+                }}</label>
+                <input
+                  hlmInput
+                  [id]="'notes-' + line.lineNumber"
+                  [attr.maxlength]="notesMax"
+                  [value]="draft.discrepancyNotes ?? ''"
+                  [attr.placeholder]="'purchasing.discrepancyNotes' | transloco"
+                  (input)="update(line.lineNumber, { discrepancyNotes: $any($event.target).value })"
+                />
+                @if (issues.length > 0) {
+                  <p class="warning" [id]="'issues-' + line.lineNumber">
+                    @for (issue of issues; track issue) {
+                      <span>{{
+                        'purchasing.lineIssues.' + issue
+                          | transloco
+                            : { remaining: line.remainingQuantity, decimals: line.unitDecimals }
+                      }}</span>
+                    }
+                  </p>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (submitted() && active().length === 0) {
+      <p class="warning" role="alert">{{ 'purchasing.noLines' | transloco }}</p>
+    }
+    <p class="hint">
+      {{ 'purchasing.receiptHint' | transloco: { policy: current.receivingPolicy } }}
+    </p>
+    <div class="actions">
+      <a hlmBtn variant="outline" [routerLink]="['/purchasing/orders', current.id]">{{
+        'common.cancel' | transloco
+      }}</a>
+      <button hlmBtn type="submit" [disabled]="busy()">
+        {{ 'purchasing.postReceipt' | transloco }}
+      </button>
+    </div>
+  </form>
+}

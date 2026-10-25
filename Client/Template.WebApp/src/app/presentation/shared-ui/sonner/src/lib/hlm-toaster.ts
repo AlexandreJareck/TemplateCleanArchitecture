@@ -34,61 +34,7 @@ import type { ClassValue } from 'clsx';
     }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <brn-sonner-toaster
-      [class]="_computedClass()"
-      [invert]="invert()"
-      [theme]="theme()"
-      [position]="position()"
-      [hotKey]="hotKey()"
-      [richColors]="richColors()"
-      [expand]="expand()"
-      [duration]="duration()"
-      [visibleToasts]="visibleToasts()"
-      [closeButton]="closeButton()"
-      [toastOptions]="_computedToastOptions()"
-      [offset]="offset()"
-      [style]="userStyle()"
-    >
-      <ng-template #loadingIcon>
-        <ng-icon
-          name="lucideLoader2"
-          class="overflow-visible! text-base [&>svg]:motion-safe:animate-spin"
-        />
-      </ng-template>
-      <ng-template #successIcon>
-        <ng-icon name="lucideCircleCheck" class="overflow-visible! text-base" />
-      </ng-template>
-      <ng-template #errorIcon>
-        <ng-icon name="lucideOctagonX" class="overflow-visible! text-base" />
-      </ng-template>
-      <ng-template #infoIcon>
-        <ng-icon name="lucideInfo" class="overflow-visible! text-base" />
-      </ng-template>
-      <ng-template #warningIcon>
-        <ng-icon name="lucideTriangleAlert" class="overflow-visible! text-base" />
-      </ng-template>
-      <button
-        *brnToastAction="let action; let toast = toast"
-        [style]="toast.actionButtonStyle"
-        hlmBtn
-        size="sm"
-        (click)="action.onClick($event)"
-      >
-        {{ action.label }}
-      </button>
-      <button
-        *brnToastCancelAction="let cancel; let toast = toast"
-        [style]="toast.cancelButtonStyle"
-        hlmBtn
-        size="sm"
-        variant="secondary"
-        (click)="cancel.onClick($event)"
-      >
-        {{ cancel.label }}
-      </button>
-    </brn-sonner-toaster>
-  `,
+  templateUrl: './hlm-toaster.html',
 })
 export class HlmToaster {
   public readonly invert = input<ToasterProps['invert'], BooleanInput>(false, {

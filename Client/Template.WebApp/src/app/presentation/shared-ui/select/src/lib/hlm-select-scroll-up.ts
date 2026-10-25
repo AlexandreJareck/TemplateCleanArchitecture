@@ -11,7 +11,7 @@ import { classes } from '@presentation/shared-ui/utils';
   providers: [provideIcons({ lucideChevronUp })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [BrnSelectScrollUp],
-  template: ` <ng-icon name="lucideChevronUp" /> `,
+  templateUrl: './hlm-select-scroll-up.html',
 })
 export class HlmSelectScrollUp {
   constructor() {
