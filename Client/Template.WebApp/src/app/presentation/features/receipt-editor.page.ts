@@ -15,6 +15,8 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { ProblemFeedback } from '../shared/procurement-ui';
 import { PURCHASING_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 /**
  * Partial receipt editor (Phase 32, `/receiving/orders/:id/receipts/new`): one row per open order line with the
@@ -26,7 +28,15 @@ import { PURCHASING_PORT } from '../state/ports';
 @Component({
   selector: 'app-receipt-editor-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe, RouterLink, HlmButton, HlmInput, ProblemFeedback],
+  imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
+    TranslocoPipe,
+    RouterLink,
+    HlmButton,
+    HlmInput,
+    ProblemFeedback,
+  ],
   templateUrl: './receipt-editor.page.html',
   styleUrl: './data-pages.css',
 })

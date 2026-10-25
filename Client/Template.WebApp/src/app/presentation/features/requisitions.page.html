@@ -11,18 +11,18 @@
     [attr.aria-label]="'requisition.searchNumber' | transloco"
   />
   <label for="statusFilter" class="sr-only">{{ 'fields.status' | transloco }}</label>
-  <select
-    id="statusFilter"
-    class="select"
+  <hlm-native-select
+    class="w-full"
+    selectId="statusFilter"
     [value]="status()"
-    (change)="status.set($any($event.target).value)"
+    (valueChange)="status.set($any($event))"
   >
     @for (option of statuses; track option) {
-      <option [value]="option">
+      <option hlmNativeSelectOption [value]="option">
         {{ (option ? 'statuses.' + option : 'requisition.allStatuses') | transloco }}
       </option>
     }
-  </select>
+  </hlm-native-select>
   <button hlmBtn variant="outline" type="button" (click)="search()">
     {{ 'common.search' | transloco }}
   </button>
@@ -40,34 +40,34 @@
   </div>
 } @else {
   <div class="table-scroll" role="region" tabindex="0" [attr.aria-label]="titleKey | transloco">
-    <table class="responsive-table">
-      <thead>
-        <tr>
-          <th>{{ 'requisition.number' | transloco }}</th>
-          <th>{{ 'requisition.costCenter' | transloco }}</th>
-          <th>{{ 'requisition.neededBy' | transloco }}</th>
-          <th>{{ 'requisition.total' | transloco }}</th>
-          <th>{{ 'fields.status' | transloco }}</th>
-          <th>{{ 'common.actions' | transloco }}</th>
+    <table hlmTable class="responsive-table">
+      <thead hlmTHead>
+        <tr hlmTr>
+          <th hlmTh>{{ 'requisition.number' | transloco }}</th>
+          <th hlmTh>{{ 'requisition.costCenter' | transloco }}</th>
+          <th hlmTh>{{ 'requisition.neededBy' | transloco }}</th>
+          <th hlmTh>{{ 'requisition.total' | transloco }}</th>
+          <th hlmTh>{{ 'fields.status' | transloco }}</th>
+          <th hlmTh>{{ 'common.actions' | transloco }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody hlmTBody>
         @for (item of page().items; track item.id) {
-          <tr>
-            <td [attr.data-label]="'requisition.number' | transloco">{{ item.number }}</td>
-            <td [attr.data-label]="'requisition.costCenter' | transloco">
+          <tr hlmTr>
+            <td hlmTd [attr.data-label]="'requisition.number' | transloco">{{ item.number }}</td>
+            <td hlmTd [attr.data-label]="'requisition.costCenter' | transloco">
               {{ item.costCenter.code }} — {{ item.costCenter.name }}
             </td>
-            <td [attr.data-label]="'requisition.neededBy' | transloco">
+            <td hlmTd [attr.data-label]="'requisition.neededBy' | transloco">
               {{ item.neededBy ?? '—' }}
             </td>
-            <td [attr.data-label]="'requisition.total' | transloco">
+            <td hlmTd [attr.data-label]="'requisition.total' | transloco">
               {{ item.estimatedTotal | money }}
             </td>
-            <td [attr.data-label]="'fields.status' | transloco">
+            <td hlmTd [attr.data-label]="'fields.status' | transloco">
               <app-status-badge [status]="item.status" />
             </td>
-            <td>
+            <td hlmTd>
               <a hlmBtn size="sm" variant="outline" [routerLink]="['/requisitions', item.id]">{{
                 'common.details' | transloco
               }}</a>

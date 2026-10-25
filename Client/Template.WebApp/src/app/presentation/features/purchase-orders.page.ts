@@ -8,6 +8,8 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { MoneyPipe, ProblemFeedback } from '../shared/procurement-ui';
 import { PURCHASING_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 const EMPTY: Page<PurchaseOrderSummary> = {
   items: [],
@@ -35,7 +37,16 @@ const RECEIVING_FILTERS = ['Issued,PartiallyReceived'] as const;
 @Component({
   selector: 'app-purchase-orders-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe, RouterLink, HlmButton, HlmInput, MoneyPipe, ProblemFeedback],
+  imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
+    TranslocoPipe,
+    RouterLink,
+    HlmButton,
+    HlmInput,
+    MoneyPipe,
+    ProblemFeedback,
+  ],
   templateUrl: './purchase-orders.page.html',
   styleUrl: './data-pages.css',
 })

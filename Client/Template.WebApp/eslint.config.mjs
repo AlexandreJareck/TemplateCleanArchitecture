@@ -23,6 +23,13 @@ export default tseslint.config(
   {
     files: ['**/*.html'],
     extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
+    rules: {
+      // hlm-native-select renders a native <select>, so a wrapping <label> stays associated.
+      '@angular-eslint/template/label-has-associated-control': [
+        'error',
+        { controlComponents: ['hlm-native-select'] },
+      ],
+    },
   },
   {
     files: ['src/app/presentation/shared-ui/**/*.ts'],

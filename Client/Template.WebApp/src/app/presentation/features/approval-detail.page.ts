@@ -16,6 +16,9 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { MoneyPipe, ProblemFeedback } from '../shared/procurement-ui';
 import { APPROVAL_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
+import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
 
 type Mode = 'Approved' | 'Rejected' | 'delegate' | 'cancel';
 
@@ -28,7 +31,17 @@ type Mode = 'Approved' | 'Rejected' | 'delegate' | 'cancel';
 @Component({
   selector: 'app-approval-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe, RouterLink, HlmButton, HlmInput, MoneyPipe, ProblemFeedback],
+  imports: [
+    ...HlmTextareaImports,
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
+    TranslocoPipe,
+    RouterLink,
+    HlmButton,
+    HlmInput,
+    MoneyPipe,
+    ProblemFeedback,
+  ],
   templateUrl: './approval-detail.page.html',
   styleUrl: './data-pages.css',
 })

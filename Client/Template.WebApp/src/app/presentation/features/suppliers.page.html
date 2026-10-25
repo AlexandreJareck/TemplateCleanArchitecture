@@ -48,22 +48,22 @@
   </div>
 } @else {
   <div class="table-scroll" role="region" tabindex="0" aria-label="Fornecedores">
-    <table>
-      <thead>
-        <tr>
-          <th>{{ 'fields.name' | transloco }}</th>
-          <th>CNPJ</th>
-          <th>{{ 'fields.status' | transloco }}</th>
-          <th>{{ 'common.actions' | transloco }}</th>
+    <table hlmTable>
+      <thead hlmTHead>
+        <tr hlmTr>
+          <th hlmTh>{{ 'fields.name' | transloco }}</th>
+          <th hlmTh>CNPJ</th>
+          <th hlmTh>{{ 'fields.status' | transloco }}</th>
+          <th hlmTh>{{ 'common.actions' | transloco }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody hlmTBody>
         @for (item of page().items; track item.id) {
-          <tr>
-            <td>{{ item.legalName }}</td>
-            <td>{{ item.taxId }}</td>
-            <td>{{ item.status }}</td>
-            <td>
+          <tr hlmTr>
+            <td hlmTd>{{ item.legalName }}</td>
+            <td hlmTd>{{ item.taxId }}</td>
+            <td hlmTd>{{ item.status }}</td>
+            <td hlmTd>
               <button hlmBtn size="sm" variant="outline" type="button" (click)="open(item.id)">
                 {{ 'common.details' | transloco }}
               </button>

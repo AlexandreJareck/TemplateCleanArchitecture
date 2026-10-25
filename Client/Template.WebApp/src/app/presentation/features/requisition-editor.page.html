@@ -21,20 +21,22 @@
   <form class="form-grid" (submit)="saveHeader($event)" novalidate>
     <label>
       {{ 'requisition.costCenter' | transloco }}
-      <select class="select" [formField]="headerForm.costCenterId">
-        <option value="">—</option>
+      <hlm-native-select class="w-full" [formField]="headerForm.costCenterId">
+        <option hlmNativeSelectOption value="">—</option>
         @for (option of costCenters(); track option.id) {
-          <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+          <option hlmNativeSelectOption [value]="option.id">
+            {{ option.code }} — {{ option.name }}
+          </option>
         }
-      </select>
+      </hlm-native-select>
     </label>
     <label>
       {{ 'requisition.currency' | transloco }}
-      <select class="select" [formField]="headerForm.currency">
+      <hlm-native-select class="w-full" [formField]="headerForm.currency">
         @for (currency of currencies; track currency) {
-          <option [value]="currency">{{ currency }}</option>
+          <option hlmNativeSelectOption [value]="currency">{{ currency }}</option>
         }
-      </select>
+      </hlm-native-select>
     </label>
     <label>
       {{ 'requisition.neededBy' | transloco }}
@@ -42,7 +44,7 @@
     </label>
     <label class="wide">
       {{ 'requisition.purpose' | transloco }}
-      <textarea hlmInput rows="3" [formField]="headerForm.purpose"></textarea>
+      <textarea hlmTextarea rows="3" [formField]="headerForm.purpose"></textarea>
     </label>
     <div class="actions">
       <button hlmBtn type="submit" [disabled]="headerForm().invalid() || !editable()">
@@ -64,34 +66,34 @@
         tabindex="0"
         [attr.aria-label]="'requisition.linesTable' | transloco"
       >
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>{{ 'requisition.description' | transloco }}</th>
-              <th>{{ 'requisition.quantity' | transloco }}</th>
-              <th>{{ 'requisition.unitPrice' | transloco }}</th>
-              <th>{{ 'requisition.lineTotal' | transloco }}</th>
-              <th>{{ 'common.actions' | transloco }}</th>
+        <table hlmTable>
+          <thead hlmTHead>
+            <tr hlmTr>
+              <th hlmTh>#</th>
+              <th hlmTh>{{ 'requisition.description' | transloco }}</th>
+              <th hlmTh>{{ 'requisition.quantity' | transloco }}</th>
+              <th hlmTh>{{ 'requisition.unitPrice' | transloco }}</th>
+              <th hlmTh>{{ 'requisition.lineTotal' | transloco }}</th>
+              <th hlmTh>{{ 'common.actions' | transloco }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody hlmTBody>
             @for (line of current.lines; track line.lineNumber) {
-              <tr>
-                <td data-label="#">{{ line.lineNumber }}</td>
-                <td [attr.data-label]="'requisition.description' | transloco">
+              <tr hlmTr>
+                <td hlmTd data-label="#">{{ line.lineNumber }}</td>
+                <td hlmTd [attr.data-label]="'requisition.description' | transloco">
                   {{ line.description }} ({{ line.categoryCode }})
                 </td>
-                <td [attr.data-label]="'requisition.quantity' | transloco">
+                <td hlmTd [attr.data-label]="'requisition.quantity' | transloco">
                   {{ line.quantity }} {{ line.unitCode }}
                 </td>
-                <td [attr.data-label]="'requisition.unitPrice' | transloco">
+                <td hlmTd [attr.data-label]="'requisition.unitPrice' | transloco">
                   {{ line.estimatedUnitPrice | money }}
                 </td>
-                <td [attr.data-label]="'requisition.lineTotal' | transloco">
+                <td hlmTd [attr.data-label]="'requisition.lineTotal' | transloco">
                   {{ line.lineTotal | money }}
                 </td>
-                <td>
+                <td hlmTd>
                   @if (editable()) {
                     <button
                       hlmBtn
@@ -140,12 +142,18 @@
       <form class="form-grid" (submit)="saveLine($event)" novalidate>
         <label>
           {{ 'requisition.catalogItem' | transloco }}
-          <select class="select" [formField]="lineForm.catalogItemId" (change)="applyCatalogItem()">
-            <option value="">{{ 'requisition.freeLine' | transloco }}</option>
+          <hlm-native-select
+            class="w-full"
+            [formField]="lineForm.catalogItemId"
+            (change)="applyCatalogItem()"
+          >
+            <option hlmNativeSelectOption value="">{{ 'requisition.freeLine' | transloco }}</option>
             @for (option of catalogItems(); track option.id) {
-              <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+              <option hlmNativeSelectOption [value]="option.id">
+                {{ option.code }} — {{ option.name }}
+              </option>
             }
-          </select>
+          </hlm-native-select>
         </label>
         <label>
           {{ 'requisition.description' | transloco }}
@@ -153,28 +161,34 @@
         </label>
         <label>
           {{ 'fields.kind' | transloco }}
-          <select class="select" [formField]="lineForm.kind">
-            <option value="Good">{{ 'fields.good' | transloco }}</option>
-            <option value="Service">{{ 'fields.service' | transloco }}</option>
-          </select>
+          <hlm-native-select class="w-full" [formField]="lineForm.kind">
+            <option hlmNativeSelectOption value="Good">{{ 'fields.good' | transloco }}</option>
+            <option hlmNativeSelectOption value="Service">
+              {{ 'fields.service' | transloco }}
+            </option>
+          </hlm-native-select>
         </label>
         <label>
           {{ 'nav.categories' | transloco }}
-          <select class="select" [formField]="lineForm.categoryId">
-            <option value="">—</option>
+          <hlm-native-select class="w-full" [formField]="lineForm.categoryId">
+            <option hlmNativeSelectOption value="">—</option>
             @for (option of categories(); track option.id) {
-              <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+              <option hlmNativeSelectOption [value]="option.id">
+                {{ option.code }} — {{ option.name }}
+              </option>
             }
-          </select>
+          </hlm-native-select>
         </label>
         <label>
           {{ 'nav.units' | transloco }}
-          <select class="select" [formField]="lineForm.unitOfMeasureId">
-            <option value="">—</option>
+          <hlm-native-select class="w-full" [formField]="lineForm.unitOfMeasureId">
+            <option hlmNativeSelectOption value="">—</option>
             @for (option of units(); track option.id) {
-              <option [value]="option.id">{{ option.code }} — {{ option.name }}</option>
+              <option hlmNativeSelectOption [value]="option.id">
+                {{ option.code }} — {{ option.name }}
+              </option>
             }
-          </select>
+          </hlm-native-select>
         </label>
         <label>
           {{ 'requisition.quantity' | transloco }}
@@ -230,11 +244,11 @@
         /></label>
         <label>
           {{ 'requisition.mediaType' | transloco }}
-          <select class="select" [formField]="attachmentForm.mediaType">
+          <hlm-native-select class="w-full" [formField]="attachmentForm.mediaType">
             @for (type of mediaTypes; track type) {
-              <option [value]="type">{{ type }}</option>
+              <option hlmNativeSelectOption [value]="type">{{ type }}</option>
             }
-          </select>
+          </hlm-native-select>
         </label>
         <label
           >{{ 'requisition.length' | transloco

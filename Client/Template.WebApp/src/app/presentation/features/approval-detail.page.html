@@ -81,35 +81,35 @@
           tabindex="0"
           [attr.aria-label]="'approvals.comparison' | transloco"
         >
-          <table class="responsive-table">
-            <thead>
-              <tr>
-                <th>{{ 'approvals.rankColumn' | transloco }}</th>
-                <th>{{ 'approvals.supplier' | transloco }}</th>
-                <th>{{ 'approvals.quoted' | transloco }}</th>
-                <th>{{ 'approvals.normalized' | transloco }}</th>
-                <th>{{ 'approvals.deliveryDays' | transloco }}</th>
+          <table hlmTable class="responsive-table">
+            <thead hlmTHead>
+              <tr hlmTr>
+                <th hlmTh>{{ 'approvals.rankColumn' | transloco }}</th>
+                <th hlmTh>{{ 'approvals.supplier' | transloco }}</th>
+                <th hlmTh>{{ 'approvals.quoted' | transloco }}</th>
+                <th hlmTh>{{ 'approvals.normalized' | transloco }}</th>
+                <th hlmTh>{{ 'approvals.deliveryDays' | transloco }}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody hlmTBody>
               @for (entry of award.comparison; track entry.supplierId) {
-                <tr [attr.data-awarded]="entry.awarded">
-                  <td [attr.data-label]="'approvals.rankColumn' | transloco">
+                <tr hlmTr [attr.data-awarded]="entry.awarded">
+                  <td hlmTd [attr.data-label]="'approvals.rankColumn' | transloco">
                     {{ entry.valid ? entry.rank : ('approvals.invalidQuote' | transloco) }}
                   </td>
-                  <td [attr.data-label]="'approvals.supplier' | transloco">
+                  <td hlmTd [attr.data-label]="'approvals.supplier' | transloco">
                     {{ entry.supplierName }}
                     @if (entry.awarded) {
                       <strong> · {{ 'approvals.awarded' | transloco }}</strong>
                     }
                   </td>
-                  <td [attr.data-label]="'approvals.quoted' | transloco">
+                  <td hlmTd [attr.data-label]="'approvals.quoted' | transloco">
                     {{ entry.quoted | money }}
                   </td>
-                  <td [attr.data-label]="'approvals.normalized' | transloco">
+                  <td hlmTd [attr.data-label]="'approvals.normalized' | transloco">
                     {{ entry.normalized | money }}
                   </td>
-                  <td [attr.data-label]="'approvals.deliveryDays' | transloco">
+                  <td hlmTd [attr.data-label]="'approvals.deliveryDays' | transloco">
                     {{ entry.deliveryDays }}
                   </td>
                 </tr>
@@ -213,29 +213,33 @@
             </button>
             <label for="delegateUser"
               >{{ 'approvals.delegateTo' | transloco }}
-              <select
-                id="delegateUser"
-                class="select"
+              <hlm-native-select
+                class="w-full"
+                selectId="delegateUser"
                 [value]="delegateUserId()"
-                (change)="delegateUserId.set($any($event.target).value)"
+                (valueChange)="delegateUserId.set($any($event))"
               >
-                <option value="">—</option>
+                <option hlmNativeSelectOption value="">—</option>
                 @for (candidate of delegates(); track candidate.userId) {
-                  <option [value]="candidate.userId" [disabled]="!candidate.eligible">
+                  <option
+                    hlmNativeSelectOption
+                    [value]="candidate.userId"
+                    [disabled]="!candidate.eligible"
+                  >
                     {{ candidate.displayName ?? candidate.userName }}
                     @if (candidate.ineligibleReason) {
                       ({{ 'approvals.ineligible.' + candidate.ineligibleReason | transloco }})
                     }
                   </option>
                 }
-              </select>
+              </hlm-native-select>
             </label>
           }
           <label for="approvalReason"
             >{{ reasonLabel() | transloco }}
             <textarea
+              hlmTextarea
               id="approvalReason"
-              class="textarea"
               rows="3"
               [attr.maxlength]="reasonMax"
               [attr.aria-invalid]="showReasonError() ? 'true' : null"

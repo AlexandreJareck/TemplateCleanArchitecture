@@ -4,17 +4,17 @@
 </header>
 <div class="toolbar">
   <label for="periodFilter">{{ 'budget.period' | transloco }}</label>
-  <select
-    id="periodFilter"
-    class="select"
+  <hlm-native-select
+    class="w-full"
+    selectId="periodFilter"
     [value]="periodFilter()"
-    (change)="filter($any($event.target).value)"
+    (valueChange)="filter($any($event))"
   >
-    <option value="">{{ 'budget.allPeriods' | transloco }}</option>
+    <option hlmNativeSelectOption value="">{{ 'budget.allPeriods' | transloco }}</option>
     @for (period of periods(); track period.id) {
-      <option [value]="period.id">{{ period.code }}</option>
+      <option hlmNativeSelectOption [value]="period.id">{{ period.code }}</option>
     }
-  </select>
+  </hlm-native-select>
 </div>
 <app-problem-feedback [error]="error()" (reload)="load()" />
 @if (page().items.length === 0) {
@@ -28,40 +28,40 @@
     tabindex="0"
     [attr.aria-label]="'nav.budgetAllocations' | transloco"
   >
-    <table>
-      <thead>
-        <tr>
-          <th>{{ 'budget.period' | transloco }}</th>
-          <th>{{ 'requisition.costCenter' | transloco }}</th>
-          <th>{{ 'budget.amount' | transloco }}</th>
-          <th>{{ 'budget.reserved' | transloco }}</th>
-          <th>{{ 'budget.available' | transloco }}</th>
-          <th>{{ 'fields.status' | transloco }}</th>
-          <th>{{ 'common.actions' | transloco }}</th>
+    <table hlmTable>
+      <thead hlmTHead>
+        <tr hlmTr>
+          <th hlmTh>{{ 'budget.period' | transloco }}</th>
+          <th hlmTh>{{ 'requisition.costCenter' | transloco }}</th>
+          <th hlmTh>{{ 'budget.amount' | transloco }}</th>
+          <th hlmTh>{{ 'budget.reserved' | transloco }}</th>
+          <th hlmTh>{{ 'budget.available' | transloco }}</th>
+          <th hlmTh>{{ 'fields.status' | transloco }}</th>
+          <th hlmTh>{{ 'common.actions' | transloco }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody hlmTBody>
         @for (allocation of page().items; track allocation.id) {
-          <tr>
-            <td [attr.data-label]="'budget.period' | transloco">
+          <tr hlmTr>
+            <td hlmTd [attr.data-label]="'budget.period' | transloco">
               {{ periodCode(allocation.fiscalPeriodId) }}
             </td>
-            <td [attr.data-label]="'requisition.costCenter' | transloco">
+            <td hlmTd [attr.data-label]="'requisition.costCenter' | transloco">
               {{ costCenterLabel(allocation.costCenterId) }}
             </td>
-            <td [attr.data-label]="'budget.amount' | transloco">
+            <td hlmTd [attr.data-label]="'budget.amount' | transloco">
               {{ allocation.amount | money }}
             </td>
-            <td [attr.data-label]="'budget.reserved' | transloco">
+            <td hlmTd [attr.data-label]="'budget.reserved' | transloco">
               {{ allocation.reserved | money }}
             </td>
-            <td [attr.data-label]="'budget.available' | transloco">
+            <td hlmTd [attr.data-label]="'budget.available' | transloco">
               {{ allocation.available | money }}
             </td>
-            <td [attr.data-label]="'fields.status' | transloco">
+            <td hlmTd [attr.data-label]="'fields.status' | transloco">
               <app-status-badge [status]="allocation.status" />
             </td>
-            <td>
+            <td hlmTd>
               <a
                 hlmBtn
                 size="sm"
@@ -82,31 +82,33 @@
     <form class="form-grid" (submit)="create($event)" novalidate>
       <label>
         {{ 'budget.period' | transloco }}
-        <select class="select" [formField]="allocationForm.fiscalPeriodId">
-          <option value="">—</option>
+        <hlm-native-select class="w-full" [formField]="allocationForm.fiscalPeriodId">
+          <option hlmNativeSelectOption value="">—</option>
           @for (period of periods(); track period.id) {
             @if (period.status !== 'Closed') {
-              <option [value]="period.id">{{ period.code }}</option>
+              <option hlmNativeSelectOption [value]="period.id">{{ period.code }}</option>
             }
           }
-        </select>
+        </hlm-native-select>
       </label>
       <label>
         {{ 'requisition.costCenter' | transloco }}
-        <select class="select" [formField]="allocationForm.costCenterId">
-          <option value="">—</option>
+        <hlm-native-select class="w-full" [formField]="allocationForm.costCenterId">
+          <option hlmNativeSelectOption value="">—</option>
           @for (costCenter of costCenters(); track costCenter.id) {
-            <option [value]="costCenter.id">{{ costCenter.code }} — {{ costCenter.name }}</option>
+            <option hlmNativeSelectOption [value]="costCenter.id">
+              {{ costCenter.code }} — {{ costCenter.name }}
+            </option>
           }
-        </select>
+        </hlm-native-select>
       </label>
       <label>
         {{ 'requisition.currency' | transloco }}
-        <select class="select" [formField]="allocationForm.currency">
-          <option value="BRL">BRL</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-        </select>
+        <hlm-native-select class="w-full" [formField]="allocationForm.currency">
+          <option hlmNativeSelectOption value="BRL">BRL</option>
+          <option hlmNativeSelectOption value="USD">USD</option>
+          <option hlmNativeSelectOption value="EUR">EUR</option>
+        </hlm-native-select>
       </label>
       <label
         >{{ 'budget.amount' | transloco

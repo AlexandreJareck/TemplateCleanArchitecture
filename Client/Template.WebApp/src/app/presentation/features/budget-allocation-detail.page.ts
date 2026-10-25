@@ -11,12 +11,14 @@ import { ActionConfirmation, type ActionConfirmationRequest } from '../shared/ac
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
 import { BUDGET_PORT } from '../state/ports';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 /** Allocation detail: totals, amount history (BUD-003), reservation visibility and reasoned amount change / close. */
 @Component({
   selector: 'app-budget-allocation-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ...HlmTableImports,
     FormField,
     RouterLink,
     TranslocoPipe,

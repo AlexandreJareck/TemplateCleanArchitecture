@@ -10,12 +10,16 @@ import { HlmInput } from '@presentation/shared-ui/input';
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
 import { BUDGET_PORT, MASTER_DATA_PORT } from '../state/ports';
+import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
+import { HlmTableImports } from '@presentation/shared-ui/table';
 
 /** Allocations with server-computed reserved/committed/available totals (CALC-003) and creation (BUD-002). */
 @Component({
   selector: 'app-budget-allocations-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ...HlmTableImports,
+    ...HlmNativeSelectImports,
     FormField,
     RouterLink,
     TranslocoPipe,

@@ -14,28 +14,28 @@
     tabindex="0"
     [attr.aria-label]="'nav.budgetPeriods' | transloco"
   >
-    <table>
-      <thead>
-        <tr>
-          <th>{{ 'fields.code' | transloco }}</th>
-          <th>{{ 'fields.name' | transloco }}</th>
-          <th>{{ 'budget.range' | transloco }}</th>
-          <th>{{ 'fields.status' | transloco }}</th>
-          <th>{{ 'common.actions' | transloco }}</th>
+    <table hlmTable>
+      <thead hlmTHead>
+        <tr hlmTr>
+          <th hlmTh>{{ 'fields.code' | transloco }}</th>
+          <th hlmTh>{{ 'fields.name' | transloco }}</th>
+          <th hlmTh>{{ 'budget.range' | transloco }}</th>
+          <th hlmTh>{{ 'fields.status' | transloco }}</th>
+          <th hlmTh>{{ 'common.actions' | transloco }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody hlmTBody>
         @for (period of page().items; track period.id) {
-          <tr>
-            <td [attr.data-label]="'fields.code' | transloco">{{ period.code }}</td>
-            <td [attr.data-label]="'fields.name' | transloco">{{ period.name }}</td>
-            <td [attr.data-label]="'budget.range' | transloco">
+          <tr hlmTr>
+            <td hlmTd [attr.data-label]="'fields.code' | transloco">{{ period.code }}</td>
+            <td hlmTd [attr.data-label]="'fields.name' | transloco">{{ period.name }}</td>
+            <td hlmTd [attr.data-label]="'budget.range' | transloco">
               {{ period.startDate }} – {{ period.endDate }}
             </td>
-            <td [attr.data-label]="'fields.status' | transloco">
+            <td hlmTd [attr.data-label]="'fields.status' | transloco">
               <app-status-badge [status]="period.status" />
             </td>
-            <td>
+            <td hlmTd>
               @if (canManage && period.status === 'Planned') {
                 <button
                   hlmBtn
