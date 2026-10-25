@@ -1,21 +1,20 @@
-<header class="page-title">
-  <p>{{ 'shell.breadcrumbHome' | transloco }}</p>
-  <h1>{{ 'dashboard.title' | transloco }}</h1>
-  <p>{{ 'dashboard.welcome' | transloco: { name: session.user()?.displayName } }}</p>
-</header>
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">{{ 'shell.breadcrumbHome' | transloco }}</p>
+    <h1>{{ 'dashboard.title' | transloco }}</h1>
+    <p>{{ 'dashboard.welcome' | transloco: { name: session.user()?.displayName } }}</p>
+  </div>
+  <app-brand-logo class="hero-mark" [size]="88" [showWordmark]="false" />
+</section>
+
+<h2 class="section-title">{{ 'dashboard.shortcuts' | transloco }}</h2>
 <div class="cards">
-  <a *appPermission="'organization.read'" routerLink="/organization/departments">{{
-    'nav.departments' | transloco
-  }}</a
-  ><a *appPermission="'suppliers.read'" routerLink="/suppliers">{{ 'nav.suppliers' | transloco }}</a
-  ><a *appPermission="'catalog.read'" routerLink="/catalog/items">{{ 'nav.items' | transloco }}</a
-  ><a *appPermission="'requisitions.create'" routerLink="/requisitions/new">{{
-    'requisition.new' | transloco
-  }}</a
-  ><a *appPermission="'requisitions.create'" routerLink="/requisitions/mine">{{
-    'nav.myRequisitions' | transloco
-  }}</a
-  ><a *appPermission="'budget.read'" routerLink="/budget/allocations">{{
-    'nav.budgetAllocations' | transloco
-  }}</a>
+  @for (card of cards(); track card.link) {
+    <a class="card" [routerLink]="card.link" [attr.data-tone]="card.tone">
+      <span class="card-icon"><ng-icon [name]="card.icon" aria-hidden="true" /></span>
+      <span class="card-title">{{ card.labelKey | transloco }}</span>
+      <span class="card-description">{{ card.descriptionKey | transloco }}</span>
+      <ng-icon class="card-arrow" name="lucideArrowRight" aria-hidden="true" />
+    </a>
+  }
 </div>

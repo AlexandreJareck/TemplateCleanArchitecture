@@ -59,7 +59,13 @@
   },
   "shell": {
     "skip": "Skip to content",
-    "breadcrumbHome": "Home"
+    "breadcrumbHome": "Home",
+    "closeMenu": "Close menu",
+    "theme": {
+      "light": "Light theme (click for dark)",
+      "dark": "Dark theme (click to follow the system)",
+      "system": "System theme (click for light)"
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -81,7 +87,16 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Hello, {{name}}. Open the modules available to your permissions."
+    "welcome": "Hello, {{name}}. Open the modules available to your permissions.",
+    "shortcuts": "Shortcuts",
+    "cards": {
+      "newRequisition": "Open a purchase request with a budget reservation.",
+      "myRequisitions": "Track drafts, submissions and approvals.",
+      "budgetAllocations": "See total, reserved, committed and available.",
+      "suppliers": "Suppliers, contacts, addresses and categories.",
+      "items": "Catalog items, units and categories.",
+      "departments": "Organization structure and owners."
+    }
   },
   "common": {
     "loading": "Loading…",
@@ -754,5 +769,12 @@
     "openOrder": "Open the purchase order",
     "linesTable": "Order lines table",
     "receiptLinesTable": "Received lines table"
+  },
+  "navGroups": {
+    "overview": "Overview",
+    "procurement": "Procurement",
+    "budget": "Budget",
+    "masterData": "Master data",
+    "insights": "Insights"
   }
 }
