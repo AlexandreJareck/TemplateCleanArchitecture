@@ -110,8 +110,8 @@ import { SessionFacade } from '../state/session.facade';
           padding: var(--space-8);
           color: var(--primary-foreground);
           background:
-            radial-gradient(circle at 20% 15%, oklch(0.62 0.17 258 / 0.55), transparent 55%),
-            linear-gradient(160deg, var(--primary), oklch(0.3 0.12 262));
+            radial-gradient(circle at 20% 15%, var(--brand-glow), transparent 55%),
+            linear-gradient(160deg, var(--primary), var(--brand-gradient-to));
         }
         .brand-mark {
           display: flex;
