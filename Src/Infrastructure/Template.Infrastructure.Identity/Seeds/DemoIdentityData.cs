@@ -44,6 +44,11 @@ public static class DemoIdentityData
                 };
                 EnsureSucceeded(await userManager.CreateAsync(user, password), persona.UserName);
             }
+            else if (!await userManager.CheckPasswordAsync(user, password))
+            {
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+                EnsureSucceeded(await userManager.ResetPasswordAsync(user, resetToken, password), persona.UserName);
+            }
 
             if (!await userManager.IsInRoleAsync(user, persona.Role))
                 EnsureSucceeded(await userManager.AddToRoleAsync(user, persona.Role), persona.UserName);

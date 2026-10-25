@@ -226,7 +226,7 @@ Isso apaga bancos, filas, índices, caches, arquivos e histórico de workflows l
 - **Workflow indisponível:** confira `workflow-functions` e `workflow-storage`; a chave interna deve ser idêntica nos serviços.
 - **Monitor de workflows vazio:** confirme que existe uma aprovação iniciada, selecione `TemplateApprovals` e confira `workflow-monitor` e `workflow-storage` com `docker compose ps`.
 - **Relatório não conclui:** confira `worker`, `rabbitmq` e `azurite` e depois `/health/ready` do Worker.
-- **Login falha após trocar a senha no `.env`:** usuários existentes não têm senha sobrescrita pelo seed. Reinicie os volumes ou altere a senha pela API.
+- **Login falha após trocar a senha no `.env`:** recrie o contêiner da API com `docker compose up -d --build --force-recreate webapi`; quando a massa acadêmica está ativa, o seed sincroniza somente as contas `demo.*` com `DEMO_USER_PASSWORD`.
 - **Máquina sem memória:** feche outros workloads e aumente a memória do Docker Desktop; Elasticsearch e os builds são os maiores consumidores.
 
 ## Desenvolvimento sem Docker
