@@ -49,7 +49,13 @@
     "enter": "Continue",
     "logout": "Sign out",
     "logoutAll": "Sign out everywhere",
-    "failed": "Unable to sign in"
+    "failed": "Unable to sign in",
+    "subtitle": "Use your corporate account to access the platform.",
+    "tagline": "Corporate procurement from request to receipt.",
+    "pointRequisitions": "Requisitions with budget reservation",
+    "pointSourcing": "Transparent quote comparison",
+    "pointApprovals": "Traceable multi-level approvals",
+    "academic": "Academic environment with fictitious data."
   },
   "shell": {
     "skip": "Skip to content",

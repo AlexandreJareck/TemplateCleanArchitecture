@@ -49,7 +49,13 @@
     "enter": "Acessar",
     "logout": "Sair",
     "logoutAll": "Encerrar todas",
-    "failed": "Não foi possível entrar"
+    "failed": "Não foi possível entrar",
+    "subtitle": "Use sua conta corporativa para acessar a plataforma.",
+    "tagline": "Compras corporativas do pedido ao recebimento.",
+    "pointRequisitions": "Requisições com reserva de orçamento",
+    "pointSourcing": "Cotações comparadas com transparência",
+    "pointApprovals": "Aprovações rastreáveis em vários níveis",
+    "academic": "Ambiente acadêmico com dados fictícios."
   },
   "shell": {
     "skip": "Ir para o conteúdo",
