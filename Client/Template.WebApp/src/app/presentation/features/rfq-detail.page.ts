@@ -163,8 +163,10 @@ export class RfqDetailPage {
   }
 
   async invite() {
-    await this.run((rfq) => this.port.invite(rfq, this.inviteSupplier()), 'sourcing.invited');
-    this.inviteSupplier.set('');
+    const supplierId = this.inviteSupplier();
+    await this.run((rfq) => this.port.invite(rfq, supplierId), 'sourcing.invited');
+    // Clear only the choice that was invited: the user may already have picked the next supplier meanwhile.
+    if (this.inviteSupplier() === supplierId) this.inviteSupplier.set('');
   }
 
   removeInvitation(supplierId: string) {
