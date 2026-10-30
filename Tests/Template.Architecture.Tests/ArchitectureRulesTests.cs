@@ -503,6 +503,7 @@ public sealed class ArchitectureRulesTests
         Directory.GetFiles(Path.Combine(Root, "Src"), "*.csproj", SearchOption.AllDirectories)
             .Where(path => References(XDocument.Load(path), "PackageReference").Contains("Microsoft.Extensions.Http"))
             .Select(Relative)
+            .OrderBy(path => path, StringComparer.Ordinal)
             .ShouldBe([$"{IntegrationsProject}Template.Infrastructure.Integrations.csproj",
                 // Phase 31 (ADR-0003 §5): the internal WorkflowFunctions client; it calls no external provider.
                 "Src/Infrastructure/Template.Infrastructure.Workflow/Template.Infrastructure.Workflow.csproj"]);
