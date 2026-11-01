@@ -44,6 +44,9 @@ public sealed class UpgradeRehearsalTests : IAsyncLifetime
     public Task InitializeAsync()
     {
         Directory.CreateDirectory(snapshotDirectory);
+        // The image runs as uid 1000, not the host user that owns a Linux bind mount; Docker Desktop hides this on Windows.
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(snapshotDirectory, (UnixFileMode)0b111_111_111);
         source = ElasticsearchImage.Build(image: ElasticsearchImage.Source, clusterName: "phase11-source", snapshotDirectory: snapshotDirectory);
         target = ElasticsearchImage.Build(targetPort, ElasticsearchImage.Target, "phase11-target", snapshotDirectory);
         return Task.CompletedTask;
