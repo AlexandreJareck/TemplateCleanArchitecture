@@ -12,7 +12,8 @@ public sealed class OutboxDispatchSettings
     public int MaxAttempts { get; set; } = 8;
     public TimeSpan FirstRetryDelay { get; set; } = TimeSpan.FromSeconds(1);
     public TimeSpan MaxRetryDelay { get; set; } = TimeSpan.FromMinutes(5);
-    public TimeSpan DispatchedRetention { get; set; } = TimeSpan.FromDays(30);
+    /// <summary>NFR §5: dispatched Outbox rows are kept 7 days.</summary>
+    public TimeSpan DispatchedRetention { get; set; } = TimeSpan.FromDays(7);
     public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromHours(1);
 
     public static bool IsValid(OutboxDispatchSettings value) =>

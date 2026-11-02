@@ -75,6 +75,56 @@ public sealed class WorkerCompositionTests : IClassFixture<WorkerCompositionTest
         Interlocked.Read(ref failures).ShouldBe(0);
     }
 
+    /// <summary>
+    /// NFR §5: the retention pass resolves its port and removes only rows past their window (expired idempotency
+    /// record, Inbox entry older than 7 days, session family past absolute expiry + 30 days), keeping recent ones.
+    /// </summary>
+    [Fact]
+    public async Task DataRetention_RemovesOnlyRowsPastTheirWindow()
+    {
+        var now = new DateTime(2026, 11, 2, 12, 0, 0, DateTimeKind.Utc);
+        var consumer = $"retention-{Guid.NewGuid():N}";
+        var userId = Guid.NewGuid();
+        var policy = new Template.Domain.Access.SessionPolicy(TimeSpan.FromDays(7), TimeSpan.FromHours(12), TimeSpan.FromSeconds(10), 5);
+        var oldFamily = Template.Domain.Access.SessionFamily.Start(Guid.NewGuid(), userId, Hash(), Hash(), now.AddDays(-40), policy);
+        var recentFamily = Template.Domain.Access.SessionFamily.Start(Guid.NewGuid(), userId, Hash(), Hash(), now.AddDays(-20), policy);
+        var oldInbox = new Template.Infrastructure.Persistence.Messaging.InboxMessage(consumer, Guid.NewGuid(), "procurement.test", now.AddDays(-8));
+        oldInbox.Complete(now.AddDays(-8));
+        var recentInbox = new Template.Infrastructure.Persistence.Messaging.InboxMessage(consumer, Guid.NewGuid(), "procurement.test", now.AddDays(-1));
+        recentInbox.Complete(now.AddDays(-1));
+        await using (var seed = factory.Services.CreateAsyncScope())
+        {
+            var context = seed.ServiceProvider.GetRequiredService<Template.Infrastructure.Persistence.Contexts.ApplicationDbContext>();
+            context.AddRange(oldFamily, recentFamily, oldInbox, recentInbox);
+            await context.SaveChangesAsync();
+        }
+
+        var service = new DataRetentionService(
+            factory.Services.GetRequiredService<IServiceScopeFactory>(),
+            factory.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DataRetentionSettings>>(),
+            new FixedTimeProvider(now),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<DataRetentionService>.Instance);
+
+        var result = await service.RunOnceAsync(CancellationToken.None);
+
+        result.InboxEntries.ShouldBeGreaterThanOrEqualTo(1);
+        result.SessionFamilies.ShouldBeGreaterThanOrEqualTo(1);
+        await using var verify = factory.Services.CreateAsyncScope();
+        var db = verify.ServiceProvider.GetRequiredService<Template.Infrastructure.Persistence.Contexts.ApplicationDbContext>();
+        db.Set<Template.Domain.Access.SessionFamily>().Any(family => family.Id == oldFamily.Id).ShouldBeFalse();
+        db.Set<Template.Domain.Access.RefreshTokenRecord>().Any(token => token.FamilyId == oldFamily.Id).ShouldBeFalse();
+        db.Set<Template.Domain.Access.SessionFamily>().Any(family => family.Id == recentFamily.Id).ShouldBeTrue();
+        db.Set<Template.Infrastructure.Persistence.Messaging.InboxMessage>().Any(message => message.EventId == oldInbox.EventId).ShouldBeFalse();
+        db.Set<Template.Infrastructure.Persistence.Messaging.InboxMessage>().Any(message => message.EventId == recentInbox.EventId).ShouldBeTrue();
+    }
+
+    private static string Hash() => Convert.ToHexStringLower(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+
+    private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => new(utcNow);
+    }
+
     /// <summary>Phase 33: a consumer scope keeps one correlation ID and adopts only a safe inbound one.</summary>
     [Fact]
     public async Task RequestContext_IsStablePerScope_AndAdoptsOnlySafeInboundCorrelation()

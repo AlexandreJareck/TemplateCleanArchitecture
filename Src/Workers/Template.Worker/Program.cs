@@ -62,6 +62,13 @@ builder.Services.AddOptions<ScheduledSweepSettings>()
     .ValidateOnStart();
 builder.Services.AddSingleton<ScheduledSweepService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<ScheduledSweepService>());
+// Operational data retention (NFR §5): expired idempotency records, completed Inbox entries and old session families.
+builder.Services.AddSingleton<IValidateOptions<DataRetentionSettings>, DataRetentionSettingsValidator>();
+builder.Services.AddOptions<DataRetentionSettings>()
+    .Bind(builder.Configuration.GetSection(DataRetentionSettings.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<DataRetentionService>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<DataRetentionService>());
 // An in-flight report attempt hands its job back on shutdown; allow it to finish that bounded step.
 builder.Services.Configure<HostOptions>(host => host.ShutdownTimeout = TimeSpan.FromSeconds(45));
 

@@ -27,4 +27,10 @@ public static class WorkerMetrics
 
     public static readonly Counter<long> SweepFailures = Meter.CreateCounter<long>(
         "worker.sweep_failures", description: "Scheduled sweeps that failed and will retry at the next interval.");
+
+    public static readonly Counter<long> RetentionDeleted = Meter.CreateCounter<long>(
+        "worker.retention_deleted", description: "Operational rows removed by the data retention pass, by dataset.");
+
+    public static readonly Counter<long> RetentionFailures = Meter.CreateCounter<long>(
+        "worker.retention_failures", description: "Data retention passes that failed for a dataset and will retry at the next interval.");
 }
