@@ -19,27 +19,8 @@
     </button>
   }
 </div>
-<ng-template #problemFeedback>
-  @if (error(); as problem) {
-    <div class="feedback" role="alert">
-      <strong>{{ problem.code }}</strong
-      ><span>{{ problem.detail }}</span>
-      @if (problem.traceId) {
-        <small>Trace: {{ problem.traceId }}</small>
-      }
-      @if (problem.kind === 'version-mismatch') {
-        <button hlmBtn type="button" variant="outline" (click)="load()">
-          {{ 'common.reload' | transloco }}
-        </button>
-      }
-      @for (entry of fieldErrors(problem); track entry[0]) {
-        <span>{{ entry[0] }}: {{ entry[1].join(', ') }}</span>
-      }
-    </div>
-  }
-</ng-template>
 @if (!drawerOpen()) {
-  <ng-container [ngTemplateOutlet]="problemFeedback" />
+  <app-problem-feedback [error]="error()" (reload)="load()" />
 }
 @if (loading()) {
   <div aria-busy="true" role="status"><div hlmSkeleton class="loading"></div></div>
@@ -62,9 +43,9 @@
       <tbody hlmTBody>
         @for (item of page().items; track item.id) {
           <tr hlmTr>
-            <td hlmTd data-label="Código">{{ item.code }}</td>
-            <td hlmTd data-label="Nome">{{ item.name }}</td>
-            <td hlmTd data-label="Status">
+            <td hlmTd [attr.data-label]="'fields.code' | transloco">{{ item.code }}</td>
+            <td hlmTd [attr.data-label]="'fields.name' | transloco">{{ item.name }}</td>
+            <td hlmTd [attr.data-label]="'fields.status' | transloco">
               {{ (item.active ? 'common.active' : 'common.inactive') | transloco }}
             </td>
             <td hlmTd>
@@ -115,13 +96,37 @@
     [description]="titleKey | transloco"
     (closed)="cancel()"
   >
-    <ng-container [ngTemplateOutlet]="problemFeedback" />
+    <app-problem-feedback [error]="error()" (reload)="load()" />
     <form class="drawer-form" novalidate (submit)="save($event)">
-      <label for="code">{{ 'fields.code' | transloco }}</label
-      ><input id="code" hlmInput [formField]="itemForm.code" [readOnly]="!!selected()" /><label
-        for="name"
-        >{{ 'fields.name' | transloco }}</label
-      ><input id="name" hlmInput [formField]="itemForm.name" />
+      <label for="code">{{ 'fields.code' | transloco }}</label>
+      <input
+        id="code"
+        hlmInput
+        autocapitalize="characters"
+        [formField]="itemForm.code"
+        [readOnly]="!!selected()"
+        [attr.aria-invalid]="fieldMessage('code') ? 'true' : null"
+        [attr.aria-describedby]="fieldMessage('code') ? 'code-error code-hint' : 'code-hint'"
+      />
+      <small id="code-hint" class="field-hint">{{
+        'validation.codeHint.' + kind | transloco: { max: codeRule.max }
+      }}</small>
+      @if (fieldMessage('code'); as message) {
+        <small id="code-error" class="field-error" role="alert">{{
+          message | transloco: { min: codeRule.min, max: codeRule.max }
+        }}</small>
+      }
+      <label for="name">{{ 'fields.name' | transloco }}</label>
+      <input
+        id="name"
+        hlmInput
+        [formField]="itemForm.name"
+        [attr.aria-invalid]="fieldMessage('name') ? 'true' : null"
+        [attr.aria-describedby]="fieldMessage('name') ? 'name-error' : null"
+      />
+      @if (fieldMessage('name'); as message) {
+        <small id="name-error" class="field-error" role="alert">{{ message | transloco }}</small>
+      }
       @if (kind === 'cost-centers' || kind === 'catalog-items') {
         <label for="related">{{ 'fields.relatedId' | transloco }}</label
         ><input id="related" hlmInput [formField]="itemForm.relatedId" />
