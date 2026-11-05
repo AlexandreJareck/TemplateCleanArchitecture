@@ -203,7 +203,7 @@ Likely files:
 
 ### F-06 — Dates, instants and actor identifiers are not presented for humans
 
-> **Resolution (2026-11-05): Partially fixed.** Details, files, tests and evidence in [Remediation results](#remediation-results-2026-11-05) → F-06. The original evidence below is kept unchanged.
+> **Resolution (2026-11-05): Fixed** (frontend remediation plus the additive `actorName` API follow-up). Details, files, tests and evidence in [Remediation results](#remediation-results-2026-11-05) → F-06. The original evidence below is kept unchanged.
 
 - Priority: **Medium (P2)**
 - Type: localization / auditability / UX
@@ -373,7 +373,7 @@ For transactional coverage, create an isolated deterministic scenario that advan
 
 ## Remediation results (2026-11-05)
 
-Executed from `docs/testing/execute-functional-ui-ux-handoff.md`. All changes are frontend-only (`Client/Template.WebApp`): no C#, project, migration, HTTP contract or OpenAPI change (`api:drift`: 211 generated files match; the generated client was not edited). Server validation, permissions, audit allow-lists and ETag/`If-Match` handling are unchanged. Paths below are relative to `Client/Template.WebApp/`.
+Executed from `docs/testing/execute-functional-ui-ux-handoff.md`. The F-06 follow-up (see F-06 → *Actor names from the API*) later added one additive, nullable `actorName` field to three v2 representations; everything else below is frontend-only (`Client/Template.WebApp`): no C#, project, migration, HTTP contract or OpenAPI change (`api:drift`: 211 generated files match; the generated client was not edited). Server validation, permissions, audit allow-lists and ETag/`If-Match` handling are unchanged. Paths below are relative to `Client/Template.WebApp/`.
 
 ### Summary
 
@@ -384,7 +384,7 @@ Executed from `docs/testing/execute-functional-ui-ux-handoff.md`. All changes ar
 | F-03 | **Fixed** | New `/audit` screen (`audit.read` route guard, menu item, dashboard shortcut) on the existing v2 audit API. |
 | F-04 | **Fixed** | Report parameters validated per type before any request; shared Problem Details feedback is localized and moves code/detail/trace into collapsed "Detalhes técnicos". |
 | F-05 | **Fixed** | Supplier statuses via an entity-specific status group (`Ativo`, `Suspenso`…); missing workflow statuses added; unknown values fall back to the raw value instead of a key. |
-| F-06 | **Partially fixed** | pt-BR business dates, instants in the organization time zone, human actor labels and a decimal editor hint/preview. Other users' names are shown only to sessions that may read the user directory (see limitations). |
+| F-06 | **Fixed** | pt-BR business dates, instants in the organization time zone, human actor labels and a decimal editor hint/preview. Timelines, RFQ history and the audit screen name every actor from the API's `actorName` for any reader of the resource. |
 | F-07 | **Fixed** | Searchable selectors for requisition, RFQ, cost center and supplier (business labels, stable IDs submitted); currency is a controlled list from organization settings. |
 | F-08 | **Fixed** | Domain code syntax (ORG-001/CAT-001) mirrored per kind, inline localized message, Save disabled; the code is sent normalized. |
 | F-09 | **Fixed** | Attachment copy now describes present behavior (metadata only, no file upload); sizes, statuses and media types are human-readable. |
@@ -435,7 +435,11 @@ Executed from `docs/testing/execute-functional-ui-ux-handoff.md`. All changes ar
 - Files: `src/app/domain/date-display.ts`, `src/app/application/organization/organization-settings.ts`, `src/app/infrastructure/api/adapters/organization-api-adapter.ts`, `src/app/presentation/shared/display.ts`, `src/app/presentation/state/organization.context.ts`, `actor-directory.ts`, and the feature templates/components listed above.
 - Tests: `src/app/domain/date-display.spec.ts`, `display.spec.ts`, `audit-api-adapter.spec.ts` (organization adapter), `e2e/sourcing.spec.ts` (deadline `04/03/2027`).
 - Manual evidence: `REQ-2026-000001` shows needed-by `17/12/2026`, timeline `02/11/2026, 13:55 · Lucas Almeida (você)`; no raw ISO instant or GUID on requisition and budget pages; budget amount preview visible.
-- Status rationale (**Partially fixed**): for sessions without `access.users.manage`, other people appear as "Outro usuário" because no API exposes display names to them. Full names everywhere need an additive, permission-aware actor-name projection in the API (contract change, not done here).
+- Status rationale at the first remediation (**Partially fixed**): for sessions without `access.users.manage`, other people appeared as "Outro usuário" because no API exposed display names to them.
+- Actor names from the API (follow-up, **Fixed**): `RequisitionTimelineEntryView`, `RfqHistoryEntryView` and `AuditRecordView` gained `actorName` (string, nullable, additive; OpenAPI v1 unchanged, v2 +3 optional properties, new baseline `docs/refactoring/baseline-f06-actor-names` used by `OpenApiContractTests`, `scripts/compose-baseline.ps1`, the CI comment and `orval.config.ts`). The handlers resolve every distinct actor ID of the page in one call to the new Application port `IUserDisplayNames` (implemented by `IdentityApproverDirectory`, registered in the WebApi and the WorkflowFunctions directory composition): display name, or user name when no name is set; never email, phone or claims. Names are added only after the existing read checks (requisition REQ-001/011 visibility, `sourcing.rfqs.manage`/`sourcing.quotes.read`, `audit.read`), so a 403/404 response carries no name and no lookup runs. `null` means a system action or an actor no longer in the directory. Frontend: generated client regenerated with `pnpm api:generate` (no hand edit), adapters map `actorName`, and `ActorDirectory.label(id, name)`/`app-actor [actorName]` prefer the API name; the current user still shows "Nome (você)", the `access.users.manage` directory remains a fallback for representations without a name, and the ID stays only in the hover hint.
+- Follow-up files: `Src/Core/Template.Application/Interfaces/Access/IUserDisplayNames.cs`, `Features/Requisitions/RequisitionViews.cs`/`RequisitionQueries.cs`, `Features/Sourcing/SourcingViews.cs`/`QuoteUseCases.cs`, `Features/Auditing/Queries/ListAuditRecordsQuery.cs`, `Interfaces/Auditing/IAuditRecordReader.cs`, `Interfaces/Approvals/IApprovalPorts.cs` (`IApproverDirectory : IUserDisplayNames`), `Src/Infrastructure/Template.Infrastructure.Identity/ServiceRegistration.cs`; frontend `application/{auditing,procurement,sourcing}`, the three adapters, `presentation/state/actor-directory.ts`, `presentation/shared/display.ts` and the requisition, RFQ and audit templates.
+- Follow-up tests: unit `ListAuditRecordsQueryHandlerTests` (one batched lookup, system/unknown actors unnamed, invalid request or empty page never reaches the directory), `RequisitionHandlerTests` and `SourcingHandlerEdgeCaseTests` (names from one lookup; a forbidden/unreadable request triggers no lookup); functional `ActorNameFunctionalTests` (requester and auditor read the requisition timeline with the actor's name and no email, an outsider gets 404 without names; an auditor reads the RFQ history with the buyer's name, the requester gets 403; the audit query names the actor for `audit.read` and is 403 without it; the readers hold no `access.users.manage`); `OpenApiContractTests` against the new baseline; Vitest `display.spec.ts` (API name preferred without the directory permission and without a directory call, blank name falls back, self still wins) and `audit-api-adapter.spec.ts`.
+- Follow-up evidence: backend unit 839/839, functional 392/392, integration 268/268, Worker 5/5, WorkflowFunctions 26/26, PostgreSQL requisition/sourcing/access suites 35/35 (Docker; `T_NFR_PERF_4` timed out once while the browser suite ran in parallel and passed when rerun alone); frontend `pnpm validate` chain green (Prettier content check with `--end-of-line auto` on this CRLF checkout, lint, typecheck, Vitest 37 files 132/132, dependency-cruiser no violation, 5/5 mutations, API drift 211 files match, build) and mocked Playwright 21/21 (after clearing a stale `.angular` cache). The real Compose stack was not rebuilt for this follow-up.
 
 ### F-07 — Raw entity IDs in report filters
 
@@ -492,7 +496,7 @@ Run from `Client/Template.WebApp` with the pinned Node 24.22.0 and pnpm 12.14.0.
 | 4 | Incomplete report blocked locally, localized, no API keys | Pass |
 | 5 | Supplier and workflow statuses localized | Pass |
 | 6 | Dates/instants pt-BR in the business time zone | Pass |
-| 7 | Timeline actors human-readable when allowed | Pass for the current user and directory readers; others see "Outro usuário" (F-06 limitation) |
+| 7 | Timeline actors human-readable when allowed | Pass for the current user and directory readers at the first remediation; the follow-up names every actor for any reader through the API `actorName` (automated evidence, see F-06) |
 | 8 | Report selectors show business labels, submit stable IDs | Pass |
 | 9 | Currency from a controlled list | Pass |
 | 10 | Code `x` rejected before any request | Pass |
@@ -501,7 +505,6 @@ Run from `Client/Template.WebApp` with the pinned Node 24.22.0 and pnpm 12.14.0.
 
 ### Remaining risks and follow-up
 
-- F-06: an additive, permission-aware actor display-name projection in the API would let every authorized reader see names (contract change; needs the API contract process).
 - F-09: uploading real attachment bytes for requisitions remains a backend feature (FIL-002 metadata-only contract).
 - The deterministic transactional scenario recommended above (requisition → RFQ → approval → PO → receipt) was not added here; it is covered by the existing real-stack SC-01 journey (`e2e-real`), which was not rerun.
 - `pnpm validate`'s `format:check` fails on Windows checkouts with `core.autocrlf=true`; CI on Linux is unaffected.
