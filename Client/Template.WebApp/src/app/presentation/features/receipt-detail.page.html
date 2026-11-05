@@ -26,7 +26,7 @@
         }}</a>
       </dd>
       <dt>{{ 'purchasing.receivedOn' | transloco }}</dt>
-      <dd>{{ current.receivedOn }}</dd>
+      <dd>{{ current.receivedOn | localDate }}</dd>
       <dt>{{ 'purchasing.location' | transloco }}</dt>
       <dd>{{ current.location ?? '—' }}</dd>
       <dt>{{ 'purchasing.deliveryReference' | transloco }}</dt>
@@ -110,7 +110,7 @@
               'purchasing.correctionEntry'
                 | transloco: { line: correction.poLineNumber, delta: correction.acceptedDelta }
             }}
-            · “{{ correction.reason }}” <br /><small>{{ instant(correction.at) }}</small>
+            · “{{ correction.reason }}” <br /><small>{{ correction.at | instant }}</small>
           </li>
         }
       </ol>

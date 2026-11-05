@@ -228,3 +228,21 @@
   color: var(--destructive);
   font-weight: 700;
 }
+.field-hint,
+.hint {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+.field-error {
+  color: var(--destructive);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.form-grid .field-error,
+.form-grid .field-hint {
+  display: block;
+}
+.form-grid .form-actions {
+  align-self: end;
+}

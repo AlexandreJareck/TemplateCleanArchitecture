@@ -14,6 +14,7 @@ import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-u
 import { SessionFacade } from '../state/session.facade';
 import { REQUISITION_PORT } from '../state/ports';
 import { HlmTableImports } from '@presentation/shared-ui/table';
+import { LocalDatePipe, InstantPipe, ActorName, FileSizePipe } from '../shared/display';
 
 type PendingAction = 'withdraw' | 'cancel' | undefined;
 
@@ -25,6 +26,10 @@ type PendingAction = 'withdraw' | 'cancel' | undefined;
   selector: 'app-requisition-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    LocalDatePipe,
+    InstantPipe,
+    ActorName,
+    FileSizePipe,
     ...HlmTableImports,
     RouterLink,
     TranslocoPipe,

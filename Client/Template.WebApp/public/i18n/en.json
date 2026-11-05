@@ -40,7 +40,20 @@
     "body": "This dialog demonstrates accessible focus, keyboard, and semantics."
   },
   "validation": {
-    "required": "Required field"
+    "required": "Required field",
+    "invalid": "Invalid value.",
+    "length": "Length out of range.",
+    "format": "Invalid format.",
+    "codeLength": "The code must have {{min}} to {{max}} characters.",
+    "codeFormat": "Invalid code format; follow the field guidance.",
+    "nameLength": "The name can have at most 200 characters.",
+    "codeHint": {
+      "departments": "Letters, digits and hyphen, 2 to {{max}} characters (e.g. TEC-INFRA). Stored in upper case.",
+      "cost-centers": "Letters, digits and hyphen, 2 to {{max}} characters (e.g. TEC-INFRA). Stored in upper case.",
+      "categories": "Letters, digits and hyphen, up to {{max}} characters. Stored in upper case.",
+      "units": "Letters, digits and hyphen, up to {{max}} characters (e.g. UN, KG). Stored in upper case.",
+      "catalog-items": "Starts with a letter or digit; allows dot, underscore and hyphen; up to {{max}} characters."
+    }
   },
   "auth": {
     "signIn": "Sign in",
@@ -83,7 +96,8 @@
     "reports": "Reports",
     "approvals": "Approvals",
     "purchaseOrders": "Purchase orders",
-    "receiving": "Receiving"
+    "receiving": "Receiving",
+    "audit": "Audit"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -95,7 +109,8 @@
       "budgetAllocations": "See total, reserved, committed and available.",
       "suppliers": "Suppliers, contacts, addresses and categories.",
       "items": "Catalog items, units and categories.",
-      "departments": "Organization structure and owners."
+      "departments": "Organization structure and owners.",
+      "audit": "Search the audit trail by action, resource, user and period."
     }
   },
   "common": {
@@ -121,7 +136,11 @@
     "confirmDeactivate": "Confirm deactivation",
     "confirmReactivate": "Confirm reactivation",
     "confirmStatus": "Confirm status change",
-    "pagination": "Pagination"
+    "pagination": "Pagination",
+    "optional": "optional",
+    "searchIn": "Search {{field}}",
+    "choose": "Select…",
+    "any": "All"
   },
   "fields": {
     "code": "Code",
@@ -149,7 +168,15 @@
     "street": "Street",
     "number": "Number",
     "city": "City",
-    "categoryIds": "Category IDs (comma separated)"
+    "categoryIds": "Category IDs (comma separated)",
+    "categories": "Categories",
+    "categoryCount": "{{count}} linked category(ies)",
+    "actions": {
+      "activate": "Activate",
+      "suspend": "Suspend",
+      "inactivate": "Inactivate",
+      "reactivate": "Reactivate"
+    }
   },
   "status": {
     "forbidden": {
@@ -193,7 +220,20 @@
     "Pending": "Queued",
     "Running": "Running",
     "Ready": "Ready",
-    "Failed": "Failed"
+    "Failed": "Failed",
+    "Invalidated": "Invalidated",
+    "Issued": "Issued",
+    "PartiallyReceived": "Partially received",
+    "Completed": "Completed",
+    "Posted": "Posted",
+    "Available": "Available",
+    "Deleted": "Deleted",
+    "Waiting": "Waiting",
+    "Sent": "Sent",
+    "NotRequested": "Not requested",
+    "Suspended": "Suspended",
+    "Inactive": "Inactive",
+    "Revoked": "Revoked"
   },
   "problems": {
     "cancelled": "Operation cancelled",
@@ -207,7 +247,110 @@
     "rate-limited": "Too many attempts; please wait",
     "unavailable": "Service unavailable",
     "unexpected": "Unexpected error",
-    "gone": "The resource is no longer available"
+    "gone": "The resource is no longer available",
+    "technicalDetails": "Technical details",
+    "code": "Code",
+    "serverDetail": "Server message",
+    "trace": "Trace",
+    "codes": {
+      "auth": {
+        "invalid-credentials": "Invalid user name or password.",
+        "session-expired": "Your session expired; sign in again.",
+        "session-revoked": "This session was ended; sign in again.",
+        "forbidden": "Your role does not allow this action.",
+        "rate-limited": "Too many attempts; wait and try again."
+      },
+      "concurrency": {
+        "version-mismatch": "Someone else changed this record. Reload to see the current version.",
+        "precondition-required": "Reload the record before changing it."
+      },
+      "idempotency": {
+        "in-progress": "This operation is already in progress; please wait."
+      },
+      "reason-required": "Enter a reason of 10 to 500 characters.",
+      "organization": {
+        "code-duplicate": "A record with this code already exists.",
+        "inactive": "The selected record is inactive.",
+        "department-has-active-cost-centers": "The department still has active cost centers.",
+        "settings-locked": "Base currency and time zone cannot change after the first budget allocation."
+      },
+      "supplier": {
+        "tax-id-invalid": "Invalid CNPJ.",
+        "tax-id-duplicate": "A supplier with this CNPJ already exists.",
+        "activation-incomplete": "Complete the required data before activating the supplier.",
+        "not-eligible": "The supplier is not eligible for this operation."
+      },
+      "catalog": {
+        "code-duplicate": "An item with this code already exists.",
+        "inactive": "The selected catalog item is inactive."
+      },
+      "integration": {
+        "provider-unavailable": "The external lookup service is unavailable; try again later."
+      },
+      "budget": {
+        "period-overlap": "The period overlaps another fiscal period.",
+        "period-closed": "The fiscal period is closed.",
+        "below-reserved": "The new amount is below what is already reserved and committed.",
+        "no-open-allocation": "There is no open budget allocation for this cost center.",
+        "insufficient": "Insufficient budget balance."
+      },
+      "requisition": {
+        "not-submittable": "The requisition cannot be submitted yet; check its lines and required data.",
+        "immutable": "The requisition can no longer be changed."
+      },
+      "file": {
+        "too-large": "The file exceeds the maximum size.",
+        "type-not-allowed": "File type not allowed.",
+        "limit-reached": "The attachment limit was reached.",
+        "unavailable": "The file is temporarily unavailable."
+      },
+      "rfq": {
+        "deadline-invalid": "Invalid quotation deadline.",
+        "insufficient-invitations": "Invite more suppliers before publishing.",
+        "deadline-passed": "The quotation deadline has passed.",
+        "supplier-already-invited": "The supplier was already invited.",
+        "already-active": "An active RFQ already exists for this requisition."
+      },
+      "quote": {
+        "late": "The quote arrived after the deadline.",
+        "supplier-not-invited": "The supplier was not invited to this RFQ."
+      },
+      "award": {
+        "insufficient-quotations": "There are not enough quotes to award.",
+        "non-leading-requires-waiver": "Choosing a quote that is not the lowest requires a waiver justification.",
+        "comparison-incomplete": "The comparison is incomplete.",
+        "pending-exists": "A selection is already awaiting approval."
+      },
+      "report": {
+        "type-unknown": "Unknown report type.",
+        "source-not-available": "The source data cannot produce this report yet (for example, the RFQ has no comparison).",
+        "not-ready": "The report is not ready yet.",
+        "expired": "The report file expired; generate it again."
+      },
+      "approval": {
+        "self-approval": "You cannot approve your own request.",
+        "step-already-decided": "This step was already decided.",
+        "workflow-unavailable": "The approval service is unavailable; try again later.",
+        "not-assignee": "This step is not assigned to you.",
+        "maker-checker": "Whoever prepared the request cannot approve it."
+      },
+      "purchase-order": {
+        "document-not-ready": "The order document is not ready yet.",
+        "not-issuable": "The order cannot be issued yet."
+      },
+      "receipt": {
+        "over-receipt": "The received quantity exceeds the order balance.",
+        "order-not-receivable": "This order is not open for receiving.",
+        "correction-out-of-range": "The correction exceeds the received quantities."
+      },
+      "request": {
+        "too-large": "The request is too large."
+      },
+      "waiver": {
+        "required": "This operation requires a waiver justification.",
+        "permission-required": "Your role cannot grant this waiver."
+      }
+    }
   },
   "requisition": {
     "new": "New requisition",
@@ -238,7 +381,7 @@
     "freeLine": "Free line (no catalog item)",
     "linePreview": "Line total preview",
     "attachments": "Attachments",
-    "attachmentsNotice": "Metadata only in this phase; file upload arrives in Phase 30.",
+    "attachmentsNotice": "In this version a requisition records only the attachment details (name, type and size); the file itself is not uploaded or stored. Keep the original document for reference.",
     "fileName": "File name",
     "mediaType": "Type",
     "length": "Size (bytes)",
@@ -261,7 +404,8 @@
     "reasonHelp": "Enter the reason (10 to 500 characters). The reservation will be released.",
     "confirmWithdraw": "Withdraw submission",
     "withdrawHelp": "The requisition returns to draft with a new revision and the reservation is released.",
-    "linesTable": "Lines table"
+    "linesTable": "Lines table",
+    "lengthHint": "File size in bytes."
   },
   "budget": {
     "availability": "Budget availability",
@@ -291,7 +435,10 @@
     "requisition": "Requisition",
     "releaseReason": "Release reason",
     "confirmCloseAllocation": "Close allocation",
-    "reservationsTable": "Reservations table"
+    "reservationsTable": "Reservations table",
+    "amountHint": "Use a dot for decimals and no thousands separator (e.g. 1800000.00).",
+    "amountPreview": "Reads as:",
+    "amountFormat": "Invalid format: use digits and a decimal dot only, with up to 2 decimals."
   },
   "sourcing": {
     "queue": "Requisitions waiting for sourcing",
@@ -448,14 +595,14 @@
     "stillRunning": "Still running; check again later.",
     "downloaded": "Download of {{name}} started.",
     "announce": "{{type}}: {{status}}",
-    "requisitionId": "Requisition (ID)",
-    "rfqId": "Request for quotation (ID)",
+    "requisitionId": "Requisition",
+    "rfqId": "Request for quotation",
     "fiscalPeriod": "Fiscal period",
-    "currency": "Currency (optional)",
-    "costCenterId": "Cost center (ID, optional)",
+    "currency": "Currency",
+    "costCenterId": "Cost center",
     "from": "Received from",
     "to": "Received until",
-    "supplierId": "Supplier (ID, optional)",
+    "supplierId": "Supplier",
     "requisitionPdf": "Generate requisition PDF",
     "comparisonPdf": "Generate quote comparison (PDF)",
     "types": {
@@ -474,6 +621,18 @@
       "attempts-exhausted": "Generation failed after 3 attempts.",
       "output-invalid": "The generated file failed verification.",
       "unexpected": "Unexpected generation failure."
+    },
+    "baseCurrency": "Base currency ({{currency}})",
+    "searchRequisition": "Search by requisition number",
+    "searchRfq": "Search by RFQ or requisition number",
+    "searchCostCenter": "Search by code or name",
+    "searchSupplier": "Search by legal or trade name",
+    "fixFields": "Review the highlighted fields before generating the report.",
+    "problems": {
+      "required": "Required for this report type.",
+      "range": "The end date must be on or after the start date.",
+      "window": "The period can have at most 366 days.",
+      "invalid": "Invalid date."
     }
   },
   "approvals": {
@@ -776,5 +935,100 @@
     "budget": "Budget",
     "masterData": "Master data",
     "insights": "Insights"
+  },
+  "supplierStatuses": {
+    "Draft": "Draft",
+    "Active": "Active",
+    "Suspended": "Suspended",
+    "Inactive": "Inactive"
+  },
+  "attachmentStatuses": {
+    "Pending": "attachment details only"
+  },
+  "mediaTypes": {
+    "pdf": "PDF",
+    "png": "PNG image",
+    "jpeg": "JPEG image",
+    "text": "Text (.txt)",
+    "csv": "CSV spreadsheet",
+    "xlsx": "Excel spreadsheet (.xlsx)",
+    "docx": "Word document (.docx)"
+  },
+  "problemFields": {
+    "requisitionId": "Requisition",
+    "rfqId": "RFQ",
+    "fiscalPeriodId": "Fiscal period",
+    "costCenterId": "Cost center",
+    "currency": "Currency",
+    "from": "Start date",
+    "to": "End date",
+    "supplierId": "Supplier",
+    "reportType": "Report type",
+    "code": "Code",
+    "name": "Name",
+    "reason": "Reason",
+    "amount": "Amount",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price",
+    "description": "Description",
+    "categoryId": "Category",
+    "unitOfMeasureId": "Unit of measure",
+    "neededBy": "Needed by",
+    "purpose": "Purpose",
+    "legalName": "Legal name",
+    "tradeName": "Trade name",
+    "taxId": "CNPJ",
+    "email": "E-mail",
+    "fileName": "File name",
+    "length": "File size",
+    "mediaType": "File type",
+    "actorId": "User",
+    "unknown": "Submitted field"
+  },
+  "actors": {
+    "system": "System",
+    "self": "{{name}} (you)",
+    "otherUser": "Another user",
+    "idHint": "Technical ID: {{id}}"
+  },
+  "audit": {
+    "intro": "Read-only trail of the actions recorded by the system. Times in the organization time zone.",
+    "filters": "Filters",
+    "action": "Action",
+    "actionPlaceholder": "e.g. requisition.submitted",
+    "resourceType": "Resource type",
+    "resourceTypePlaceholder": "e.g. PurchaseRequisition",
+    "resourceId": "Resource ID",
+    "actorId": "User ID",
+    "from": "From",
+    "to": "To",
+    "sort": "Sort",
+    "newestFirst": "Newest first",
+    "oldestFirst": "Oldest first",
+    "technicalFilters": "Filters by ID (technical)",
+    "clear": "Clear filters",
+    "results": "Records found: {{count}}",
+    "empty": "No audit record found.",
+    "table": "Audit records table",
+    "occurredAt": "When",
+    "resource": "Resource",
+    "transition": "Transition",
+    "actor": "User",
+    "details": "Details",
+    "moreDetails": "Show details",
+    "rules": "Rules",
+    "correlationId": "Correlation",
+    "problems": {
+      "actorFormat": "Enter the user ID as a GUID.",
+      "range": "The end date must be on or after the start date."
+    },
+    "detailKeys": {
+      "number": "Number",
+      "revision": "Revision",
+      "reportType": "Report type",
+      "reportJobId": "Report",
+      "amount": "Amount",
+      "currency": "Currency"
+    }
   }
 }

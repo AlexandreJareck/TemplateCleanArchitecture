@@ -11,6 +11,7 @@ import { SessionFacade } from '../state/session.facade';
 import { REQUISITION_PORT, SOURCING_PORT } from '../state/ports';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
+import { LocalDatePipe, InstantPipe } from '../shared/display';
 
 const RFQ_STATUSES = ['', 'Draft', 'Published', 'Closed', 'AwardPending', 'Cancelled'] as const;
 
@@ -24,6 +25,8 @@ const EMPTY = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 0 }
   selector: 'app-sourcing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    LocalDatePipe,
+    InstantPipe,
     ...HlmTableImports,
     ...HlmNativeSelectImports,
     RouterLink,

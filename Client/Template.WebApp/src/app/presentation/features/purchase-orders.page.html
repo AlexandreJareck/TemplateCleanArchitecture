@@ -98,7 +98,7 @@
                 </td>
               } @else {
                 <td hlmTd [attr.data-label]="'purchasing.promisedBy' | transloco">
-                  {{ item.earliestPromisedDate ?? '—' }}
+                  {{ item.earliestPromisedDate | localDate }}
                 </td>
               }
               <td hlmTd class="actions">

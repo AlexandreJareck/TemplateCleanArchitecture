@@ -36,7 +36,7 @@
                   {{ item.costCenter.code }} — {{ item.costCenter.name }}
                 </td>
                 <td hlmTd [attr.data-label]="'requisition.neededBy' | transloco">
-                  {{ item.neededBy ?? '—' }}
+                  {{ item.neededBy | localDate }}
                 </td>
                 <td hlmTd [attr.data-label]="'requisition.total' | transloco">
                   {{ item.estimatedTotal | money }}
@@ -115,7 +115,7 @@
                 {{ 'sourcing.methods.' + item.method | transloco }}
               </td>
               <td hlmTd [attr.data-label]="'sourcing.deadline' | transloco">
-                {{ item.deadline ?? '—' }}
+                {{ item.deadline | instant }}
               </td>
               <td hlmTd [attr.data-label]="'sourcing.invitations' | transloco">
                 {{ item.invitationCount }}

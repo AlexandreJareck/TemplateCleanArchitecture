@@ -80,7 +80,7 @@
       <dd>{{ current.deliveryAddress ?? '—' }}</dd>
       @if (current.issueDate) {
         <dt>{{ 'purchasing.issuedOn' | transloco }}</dt>
-        <dd>{{ current.issueDate }}</dd>
+        <dd>{{ current.issueDate | localDate }}</dd>
       }
       <dt>{{ 'purchasing.receivingPolicy' | transloco }}</dt>
       <dd>{{ current.receivingPolicy }}</dd>
@@ -210,7 +210,7 @@
                     (change)="setPromised(line.lineNumber, $any($event.target).value)"
                   />
                 } @else {
-                  {{ line.promisedDeliveryDate }}
+                  {{ line.promisedDeliveryDate | localDate }}
                 }
               </td>
             </tr>
@@ -339,7 +339,7 @@
         @for (receipt of receipts(); track receipt.id) {
           <li [attr.data-receipt]="receipt.number">
             <a [routerLink]="['/receiving/receipts', receipt.id]">{{ receipt.number }}</a> ·
-            {{ receipt.receivedOn }}
+            {{ receipt.receivedOn | localDate }}
             @if (receipt.hasDiscrepancy) {
               <span class="warning">{{ 'purchasing.discrepancy' | transloco }}</span>
             }
@@ -364,7 +364,7 @@
           } @else if (entry.reasonCode) {
             · {{ entry.reasonCode }}
           }
-          <br /><small>{{ instant(entry.at) }}</small>
+          <br /><small>{{ entry.at | instant }}</small>
         </li>
       }
     </ol>

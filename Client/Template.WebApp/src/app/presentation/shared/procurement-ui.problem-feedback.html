@@ -1,25 +1,47 @@
 @if (error(); as problem) {
-  <div class="feedback" role="alert">
+  <div class="feedback" role="alert" data-testid="problem-feedback">
     <strong>{{ messageKey(problem) | transloco }}</strong>
-    <span
-      >{{ problem.code }}
-      @if (problem.ruleId) {
-        · {{ problem.ruleId }}
+    @if (summary(problem); as message) {
+      <span>{{ message }}</span>
+    }
+    @if (fields(problem); as entries) {
+      @if (entries.length > 0) {
+        <ul class="problem-fields">
+          @for (entry of entries; track entry[0]) {
+            <li>
+              <span class="problem-field">{{ entry[0] }}</span
+              >: {{ entry[1] }}
+            </li>
+          }
+        </ul>
       }
-    </span>
-    @if (problem.detail) {
-      <span>{{ problem.detail }}</span>
-    }
-    @for (entry of fields(problem); track entry[0]) {
-      <span>{{ entry[0] }}: {{ entry[1] }}</span>
-    }
-    @if (problem.traceId) {
-      <small>Trace: {{ problem.traceId }}</small>
     }
     @if (problem.kind === 'version-mismatch' || problem.kind === 'conflict') {
       <button hlmBtn variant="outline" size="sm" type="button" (click)="reload.emit()">
         {{ 'common.reload' | transloco }}
       </button>
     }
+    <details class="problem-technical">
+      <summary>{{ 'problems.technicalDetails' | transloco }}</summary>
+      <dl>
+        <dt>{{ 'problems.code' | transloco }}</dt>
+        <dd>
+          <code>{{ problem.code }}</code>
+          @if (problem.ruleId) {
+            · <code>{{ problem.ruleId }}</code>
+          }
+        </dd>
+        @if (problem.detail) {
+          <dt>{{ 'problems.serverDetail' | transloco }}</dt>
+          <dd>{{ problem.detail }}</dd>
+        }
+        @if (problem.traceId) {
+          <dt>{{ 'problems.trace' | transloco }}</dt>
+          <dd>
+            <code>{{ problem.traceId }}</code>
+          </dd>
+        }
+      </dl>
+    </details>
   </div>
 }

@@ -15,6 +15,7 @@ import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-u
 import { REQUISITION_PORT } from '../state/ports';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
+import { LocalDatePipe } from '../shared/display';
 
 const STATUSES = ['', 'Draft', 'Submitted', 'Cancelled', 'Expired', 'Rejected'] as const;
 
@@ -23,6 +24,7 @@ const STATUSES = ['', 'Draft', 'Submitted', 'Cancelled', 'Expired', 'Rejected'] 
   selector: 'app-requisitions-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    LocalDatePipe,
     ...HlmTableImports,
     ...HlmNativeSelectImports,
     RouterLink,

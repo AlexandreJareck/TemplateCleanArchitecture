@@ -37,7 +37,7 @@
       </div>
       <div>
         <dt>{{ 'requisition.neededBy' | transloco }}</dt>
-        <dd>{{ current.neededBy ?? '—' }}</dd>
+        <dd>{{ current.neededBy | localDate }}</dd>
       </div>
       <div>
         <dt>{{ 'requisition.serverTotal' | transloco }}</dt>
@@ -127,7 +127,10 @@
       <h3>{{ 'requisition.attachments' | transloco }}</h3>
       <ul>
         @for (attachment of current.attachments; track attachment.id) {
-          <li>{{ attachment.fileName }} ({{ attachment.status }})</li>
+          <li>
+            {{ attachment.fileName }} ({{ attachment.length | fileSize }} ·
+            {{ 'attachmentStatuses.' + attachment.status | transloco }})
+          </li>
         }
       </ul>
     }
@@ -173,9 +176,7 @@
           @if (entry.reason) {
             · “{{ entry.reason }}”
           }
-          <br /><small
-            >{{ entry.at }} · {{ entry.actorId ?? ('requisition.systemActor' | transloco) }}</small
-          >
+          <br /><small>{{ entry.at | instant }} · <app-actor [actorId]="entry.actorId" /></small>
         </li>
       }
     </ol>

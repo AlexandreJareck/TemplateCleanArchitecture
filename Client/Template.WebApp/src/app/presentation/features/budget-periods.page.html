@@ -30,7 +30,7 @@
             <td hlmTd [attr.data-label]="'fields.code' | transloco">{{ period.code }}</td>
             <td hlmTd [attr.data-label]="'fields.name' | transloco">{{ period.name }}</td>
             <td hlmTd [attr.data-label]="'budget.range' | transloco">
-              {{ period.startDate }} – {{ period.endDate }}
+              {{ period.startDate | localDate }} – {{ period.endDate | localDate }}
             </td>
             <td hlmTd [attr.data-label]="'fields.status' | transloco">
               <app-status-badge [status]="period.status" />
