@@ -435,6 +435,7 @@ function mapTimeline(value: RequisitionTimelineView): readonly TimelineEntry[] {
     kind: entry.kind === 'reservation' ? 'reservation' : 'state',
     at: entry.at ?? '',
     actorId: entry.actorId ?? undefined,
+    actorName: entry.actorName ?? undefined,
     from: entry.from ?? undefined,
     to: entry.to ?? '',
     revision: entry.revision ?? undefined,

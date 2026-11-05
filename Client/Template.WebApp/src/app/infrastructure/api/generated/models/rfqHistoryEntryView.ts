@@ -15,6 +15,8 @@ export interface RfqHistoryEntryView {
   to?: string | null;
   /** @nullable */
   actorId?: string | null;
+  /** @nullable */
+  actorName?: string | null;
   at?: string;
   /** @nullable */
   reason?: string | null;

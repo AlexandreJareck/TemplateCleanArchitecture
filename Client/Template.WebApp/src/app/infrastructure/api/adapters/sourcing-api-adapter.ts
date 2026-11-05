@@ -441,6 +441,7 @@ function mapHistory(value: RfqHistoryView): readonly RfqHistoryEntry[] {
     from: entry.from ?? undefined,
     to: entry.to ?? '',
     actorId: entry.actorId ?? undefined,
+    actorName: entry.actorName ?? undefined,
     at: entry.at ?? '',
     reason: entry.reason ?? undefined,
     eventType: entry.eventType ?? undefined,
