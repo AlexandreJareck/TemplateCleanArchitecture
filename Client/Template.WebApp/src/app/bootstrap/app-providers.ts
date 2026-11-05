@@ -4,6 +4,8 @@ import { provideRouter } from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { DepartmentsService } from '@infrastructure/api/generated/departments/departments.service';
 import { ApprovalApiAdapter } from '@infrastructure/api/adapters/approval-api-adapter';
+import { AuditApiAdapter } from '@infrastructure/api/adapters/audit-api-adapter';
+import { OrganizationApiAdapter } from '@infrastructure/api/adapters/organization-api-adapter';
 import { PurchasingApiAdapter } from '@infrastructure/api/adapters/purchasing-api-adapter';
 import { DepartmentApiReader } from '@infrastructure/api/adapters/department-api-reader';
 import { MasterDataApiAdapter } from '@infrastructure/api/adapters/master-data-api-adapter';
@@ -15,6 +17,8 @@ import type { RuntimeConfig } from '@infrastructure/runtime/runtime-config';
 import { routes } from '@presentation/routes';
 import {
   APPROVAL_PORT,
+  AUDIT_PORT,
+  ORGANIZATION_SETTINGS_PORT,
   PURCHASING_PORT,
   BUDGET_PORT,
   MASTER_DATA_PORT,
@@ -22,6 +26,7 @@ import {
   REQUISITION_PORT,
   SESSION_PORT,
   SOURCING_PORT,
+  USER_DIRECTORY_PORT,
 } from '@presentation/state/ports';
 import { apiBaseUrlInterceptor } from './api-base-url.interceptor';
 import { authInterceptor } from '@infrastructure/session/auth.interceptor';
@@ -61,6 +66,9 @@ export function createAppConfig(runtimeConfig: RuntimeConfig): ApplicationConfig
       { provide: REPORT_PORT, useExisting: ReportApiAdapter },
       { provide: APPROVAL_PORT, useExisting: ApprovalApiAdapter },
       { provide: PURCHASING_PORT, useExisting: PurchasingApiAdapter },
+      { provide: AUDIT_PORT, useExisting: AuditApiAdapter },
+      { provide: ORGANIZATION_SETTINGS_PORT, useExisting: OrganizationApiAdapter },
+      { provide: USER_DIRECTORY_PORT, useExisting: OrganizationApiAdapter },
     ],
   };
 }

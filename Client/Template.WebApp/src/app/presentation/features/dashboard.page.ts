@@ -9,6 +9,7 @@ import {
   lucideFileText,
   lucidePackage,
   lucidePiggyBank,
+  lucideShieldCheck,
   lucideTruck,
 } from '@ng-icons/lucide';
 import { BrandLogo } from '../shared/brand-logo';
@@ -24,6 +25,14 @@ interface DashboardCard {
 }
 
 const CARDS: readonly DashboardCard[] = [
+  {
+    labelKey: 'nav.audit',
+    descriptionKey: 'dashboard.cards.audit',
+    link: '/audit',
+    icon: 'lucideShieldCheck',
+    tone: 'emerald',
+    permission: 'audit.read',
+  },
   {
     labelKey: 'requisition.new',
     descriptionKey: 'dashboard.cards.newRequisition',
@@ -86,6 +95,7 @@ const CARDS: readonly DashboardCard[] = [
       lucideFileText,
       lucidePackage,
       lucidePiggyBank,
+      lucideShieldCheck,
       lucideTruck,
     }),
   ],
