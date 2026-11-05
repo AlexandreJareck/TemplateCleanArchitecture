@@ -23,7 +23,9 @@ public static class ServiceRegistration
     public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase)
     {
         AddIdentityContext(services, configuration, useInMemoryDatabase);
-        services.AddScoped<IApproverDirectory, IdentityApproverDirectory>();
+        services.AddScoped<IdentityApproverDirectory>();
+        services.AddScoped<IApproverDirectory>(provider => provider.GetRequiredService<IdentityApproverDirectory>());
+        services.AddScoped<IUserDisplayNames>(provider => provider.GetRequiredService<IdentityApproverDirectory>());
         services.AddTransient<IGetUserServices, GetUserServices>();
         services.AddTransient<IAccountServices, AccountServices>();
         services.AddSingleton<JwtTokenFactory>();
@@ -89,7 +91,9 @@ public static class ServiceRegistration
     public static IServiceCollection AddIdentityDirectoryInfrastructure(this IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase)
     {
         AddIdentityContext(services, configuration, useInMemoryDatabase);
-        services.AddScoped<IApproverDirectory, IdentityApproverDirectory>();
+        services.AddScoped<IdentityApproverDirectory>();
+        services.AddScoped<IApproverDirectory>(provider => provider.GetRequiredService<IdentityApproverDirectory>());
+        services.AddScoped<IUserDisplayNames>(provider => provider.GetRequiredService<IdentityApproverDirectory>());
         return services;
     }
 

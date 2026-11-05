@@ -21,6 +21,9 @@ import { ProblemFeedback, StatusBadge } from './procurement-ui';
     <p id="size">{{ 2048 | fileSize }}</p>
     <p id="self"><app-actor [actorId]="selfId" /></p>
     <p id="other"><app-actor [actorId]="otherId" /></p>
+    <p id="api-named"><app-actor [actorId]="otherId" actorName="Synthetic Buyer" /></p>
+    <p id="api-blank"><app-actor [actorId]="otherId" actorName="  " /></p>
+    <p id="api-self"><app-actor [actorId]="selfId" actorName="Server Name" /></p>
     <p id="system"><app-actor [actorId]="null" /></p>
     <p id="supplier"><app-status-badge prefix="supplierStatuses" status="Suspended" /></p>
     <p id="workflow"><app-status-badge status="PartiallyReceived" /></p>
@@ -67,6 +70,20 @@ describe('localized display primitives (F-05, F-06)', () => {
     expect(root.querySelector('#other .actor')!.getAttribute('title')).toContain(
       'd0000000-0000-0000-0000-000000000002',
     );
+  });
+
+  it('prefers the API-resolved name without the user directory permission (F-06)', async () => {
+    const list = vi.fn();
+    TestBed.overrideProvider(USER_DIRECTORY_PORT, { useValue: { list } });
+    const { root, read } = await render();
+    expect(read('api-named')).toBe('Synthetic Buyer');
+    expect(root.querySelector('#api-named .actor')!.getAttribute('data-actor-kind')).toBe('named');
+    expect(root.querySelector('#api-named .actor')!.getAttribute('title')).toContain(
+      'd0000000-0000-0000-0000-000000000002',
+    );
+    expect(read('api-blank')).toBe('Outro usuário');
+    expect(read('api-self')).toBe('Demo User (você)');
+    expect(list).not.toHaveBeenCalled();
   });
 
   it('names other users from the directory when the session may read it', async () => {

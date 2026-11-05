@@ -191,6 +191,8 @@ export interface RfqHistoryEntry {
   readonly from?: string;
   readonly to: string;
   readonly actorId?: string;
+  /** Display name resolved by the API for a readable RFQ; never an email. */
+  readonly actorName?: string;
   readonly at: string;
   readonly reason?: string;
   readonly eventType?: string;

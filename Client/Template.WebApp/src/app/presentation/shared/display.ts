@@ -46,7 +46,10 @@ export class FileSizePipe implements PipeTransform {
   }
 }
 
-/** Actor name; the user ID is never the visible text and is available only as a hover/assistive hint. */
+/**
+ * Actor name; the user ID is never the visible text and is available only as a hover/assistive hint. Pass the
+ * API-resolved `actorName` when the representation carries one (timelines, RFQ history, audit records).
+ */
 @Component({
   selector: 'app-actor',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -78,5 +81,6 @@ export class FileSizePipe implements PipeTransform {
 export class ActorName {
   private readonly directory = inject(ActorDirectory);
   readonly actorId = input<string | undefined | null>(undefined);
-  protected readonly label = computed(() => this.directory.label(this.actorId()));
+  readonly actorName = input<string | undefined | null>(undefined);
+  protected readonly label = computed(() => this.directory.label(this.actorId(), this.actorName()));
 }

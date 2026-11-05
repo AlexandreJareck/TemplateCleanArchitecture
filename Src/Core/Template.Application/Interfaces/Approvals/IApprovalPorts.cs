@@ -74,7 +74,7 @@ public interface IApprovalPolicyRepository
 /// Approver facts from the user store (Identity adapter): activity, roles, the <c>approvals.decide</c> permission and
 /// display names. No claim, email or credential crosses this port.
 /// </summary>
-public interface IApproverDirectory
+public interface IApproverDirectory : IUserDisplayNames
 {
     /// <summary>The user as a delegation, reassignment or resolution target; <c>null</c> when the user does not exist.</summary>
     Task<ApprovalCandidate?> GetCandidateAsync(Guid userId, CancellationToken cancellationToken);
@@ -83,8 +83,6 @@ public interface IApproverDirectory
 
     /// <summary>Active users holding <c>approvals.decide</c> whose user or display name contains <paramref name="search"/>.</summary>
     Task<PagedResult<UserSummary>> SearchApproversAsync(string? search, PageRequest page, CancellationToken cancellationToken);
-
-    Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
 }
 
 public enum ApprovalWorkflowRuntimeStatus

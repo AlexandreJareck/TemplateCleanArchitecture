@@ -163,6 +163,8 @@ export interface TimelineEntry {
   readonly kind: 'state' | 'reservation';
   readonly at: string;
   readonly actorId?: string;
+  /** Display name resolved by the API for a readable requisition; never an email. */
+  readonly actorName?: string;
   readonly from?: string;
   readonly to: string;
   readonly revision?: number;

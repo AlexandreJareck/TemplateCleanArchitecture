@@ -3,7 +3,10 @@ using Template.Application.Common.Paging;
 
 namespace Template.Application.Interfaces.Auditing;
 
-/// <summary>Read model of an audit record (AUD-004). Details contain allow-listed keys only (AUD-003).</summary>
+/// <summary>
+/// Read model of an audit record (AUD-004). Details contain allow-listed keys only (AUD-003). <c>ActorName</c> is the
+/// actor's display name, filled by the query from the user directory (never an email or other personal datum).
+/// </summary>
 public sealed record AuditRecordView(
     Guid Id,
     DateTime OccurredAt,
@@ -16,7 +19,8 @@ public sealed record AuditRecordView(
     IReadOnlyList<string> RuleIds,
     string? Reason,
     string CorrelationId,
-    IReadOnlyDictionary<string, string> Details);
+    IReadOnlyDictionary<string, string> Details,
+    string? ActorName = null);
 
 /// <summary>Optional filters of the global audit query; every value is matched exactly, dates as [from, to).</summary>
 public sealed record AuditRecordFilter(

@@ -10,9 +10,11 @@ export type ActorLabel =
   | { readonly kind: 'unknown'; readonly id: string };
 
 /**
- * Human-readable actor names for timelines and the audit trail. The current user is always named; other users are
- * named only when the session may read the user directory (`access.users.manage`); otherwise the UI shows a neutral
- * label and keeps the ID as optional technical detail. Nothing here widens what the API returns.
+ * Human-readable actor names for timelines and the audit trail. The current user is always named. Other users are
+ * named by the display name the API returned with the record (`actorName`, resolved server-side for any caller that
+ * may read the resource); without it, by the user directory when the session may read it (`access.users.manage`);
+ * otherwise the UI shows a neutral label. The ID stays optional technical detail. Nothing here widens what the API
+ * returns.
  */
 @Injectable({ providedIn: 'root' })
 export class ActorDirectory {
@@ -21,11 +23,13 @@ export class ActorDirectory {
   private readonly users = signal<ReadonlyMap<string, DirectoryUser>>(new Map());
   private requested = false;
 
-  label(actorId: string | undefined | null): ActorLabel {
+  label(actorId: string | undefined | null, actorName?: string | null): ActorLabel {
     if (!actorId) return { kind: 'system' };
     const user = this.session.user();
     if (user && user.id.toLowerCase() === actorId.toLowerCase())
       return { kind: 'self', name: user.displayName || user.userName, id: actorId };
+    const resolved = actorName?.trim();
+    if (resolved) return { kind: 'named', name: resolved, id: actorId };
     this.ensureLoaded();
     const known = this.users().get(actorId.toLowerCase());
     return known

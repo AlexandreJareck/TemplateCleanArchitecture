@@ -39,6 +39,7 @@ export function mapAuditRecord(value: AuditRecordView): AuditRecord {
     id: value.id ?? '',
     occurredAt: value.occurredAt ?? '',
     actorId: value.actorId ?? undefined,
+    actorName: value.actorName ?? undefined,
     action: value.action ?? '',
     resourceType: value.resourceType ?? '',
     resourceId: value.resourceId ?? undefined,

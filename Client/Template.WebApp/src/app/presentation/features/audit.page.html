@@ -163,7 +163,7 @@
                 }
               </td>
               <td hlmTd [attr.data-label]="'audit.actor' | transloco">
-                <app-actor [actorId]="record.actorId" />
+                <app-actor [actorId]="record.actorId" [actorName]="record.actorName" />
               </td>
               <td hlmTd [attr.data-label]="'audit.details' | transloco">
                 @if (record.reason) {

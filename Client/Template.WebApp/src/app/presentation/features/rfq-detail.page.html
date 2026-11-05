@@ -634,7 +634,10 @@
           @if (entry.reason) {
             · “{{ entry.reason }}”
           }
-          <br /><small>{{ entry.at | instant }} · <app-actor [actorId]="entry.actorId" /></small>
+          <br /><small
+            >{{ entry.at | instant }} ·
+            <app-actor [actorId]="entry.actorId" [actorName]="entry.actorName"
+          /></small>
         </li>
       }
     </ol>

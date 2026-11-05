@@ -426,6 +426,33 @@ public sealed class RequisitionHandlerTests
     }
 
     [Fact]
+    public async Task Timeline_NamesEachActor_FromOneBatchedDirectoryLookup_AndLeavesAnUnknownActorUnnamed()
+    {
+        var draft = await SubmittableDraftAsync();
+        await doubles.Transitions().Handle(new SubmitRequisitionCommand(draft.Id, draft.Version), default);
+        doubles.DisplayNames.Names[doubles.Requester.Id] = "Synthetic Requester";
+
+        var timeline = await doubles.Queries().Handle(new GetRequisitionTimelineQuery(draft.Id), default);
+
+        timeline.Value.Entries.ShouldAllBe(entry => entry.ActorId == doubles.Requester.Id && entry.ActorName == "Synthetic Requester");
+        doubles.DisplayNames.Lookups.Single().ShouldBe([doubles.Requester.Id]);
+
+        doubles.DisplayNames.Names.Clear();
+        (await doubles.Queries().Handle(new GetRequisitionTimelineQuery(draft.Id), default)).Value.Entries
+            .ShouldAllBe(entry => entry.ActorId == doubles.Requester.Id && entry.ActorName == null);
+    }
+
+    [Fact]
+    public async Task Timeline_OfAnUnreadableRequisition_NeverReachesTheDirectory()
+    {
+        var draft = await SubmittableDraftAsync();
+        doubles.ActAs(new ProcurementTestDoubles.Actor());
+
+        (await doubles.Queries().Handle(new GetRequisitionTimelineQuery(draft.Id), default)).IsSuccess.ShouldBeFalse();
+        doubles.DisplayNames.Lookups.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Copy_CreatesANewDraftFromATerminalRequisition()
     {
         var draft = await SubmittedAsync();

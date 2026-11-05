@@ -6,6 +6,8 @@ export interface AuditRecord {
   readonly id: string;
   readonly occurredAt: string;
   readonly actorId?: string;
+  /** Display name resolved by the API for a readable record; never an email. */
+  readonly actorName?: string;
   readonly action: string;
   readonly resourceType: string;
   readonly resourceId?: string;

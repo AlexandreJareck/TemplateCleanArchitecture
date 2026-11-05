@@ -17,6 +17,7 @@ describe('AuditApiAdapter', () => {
             id: 'a1',
             occurredAt: '2026-11-02T16:55:03Z',
             actorId: 'u1',
+            actorName: 'Synthetic Auditee',
             action: 'requisition.submitted',
             resourceType: 'PurchaseRequisition',
             resourceId: 'r1',
@@ -48,6 +49,8 @@ describe('AuditApiAdapter', () => {
       }),
     );
     expect(result.ok && result.value.items[0]).toMatchObject({
+      actorId: 'u1',
+      actorName: 'Synthetic Auditee',
       action: 'requisition.submitted',
       ruleIds: ['REQ-004'],
       details: [

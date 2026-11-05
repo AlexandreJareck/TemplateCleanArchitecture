@@ -122,6 +122,24 @@ public sealed class SourcingHandlerEdgeCaseTests
     }
 
     [Fact]
+    public async Task History_NamesTheActor_FromTheDirectory_AndTheForbiddenReaderTriggersNoLookup()
+    {
+        var (rfq, _) = await PublishedAsync();
+        var actor = rfq.History.Select(entry => entry.ActorId).OfType<Guid>().First();
+        doubles.DisplayNames.Names[actor] = "Synthetic Buyer";
+
+        var history = await doubles.RfqQueries().Handle(new GetRfqHistoryQuery(rfq.Id), default);
+
+        history.Value.Entries.Where(entry => entry.ActorId == actor).ShouldAllBe(entry => entry.ActorName == "Synthetic Buyer");
+        history.Value.Entries.Where(entry => entry.ActorId == null).ShouldAllBe(entry => entry.ActorName == null);
+        doubles.DisplayNames.Lookups.Count.ShouldBe(1);
+
+        doubles.ActAs(doubles.Requester);
+        (await doubles.RfqQueries().Handle(new GetRfqHistoryQuery(rfq.Id), default)).Error!.Code.ShouldBe(ProblemCodes.Forbidden);
+        doubles.DisplayNames.Lookups.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task SystemClose_UnknownRfq_IsNotFound_AndAnRfqBeforeItsDeadlineIsNotDue()
     {
         var (rfq, _) = await PublishedAsync();
