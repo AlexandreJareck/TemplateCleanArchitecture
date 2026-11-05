@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { failure, success } from '../common/result';
-import { POLLING, ReportUseCases, type PollingClock, type ReportJob } from './reports';
+import {
+  POLLING,
+  ReportUseCases,
+  type PollingClock,
+  type ReportJob,
+  type ReportType,
+  type ReportTypeInfo,
+} from './reports';
 
 function job(overrides: Partial<ReportJob> = {}): ReportJob {
   return {
@@ -152,5 +159,53 @@ describe('ReportUseCases', () => {
     expect(ReportUseCases.can(undefined, 'retry')).toBe(false);
     expect(ReportUseCases.isActive(job({ status: 'Running' }))).toBe(true);
     expect(ReportUseCases.isActive(job({ status: 'Expired' }))).toBe(false);
+  });
+
+  describe('parameter validation (F-04)', () => {
+    const info = (type: ReportType, parameters: string[]): ReportTypeInfo => ({
+      type,
+      format: 'Pdf',
+      requiredPermissions: [],
+      parameters,
+      available: true,
+    });
+
+    it('requires the parameters the catalog marks as required for the chosen type', () => {
+      expect(
+        ReportUseCases.validate('RequisitionPdf', info('RequisitionPdf', ['requisitionId']), {}),
+      ).toEqual({ requisitionId: 'required' });
+      expect(
+        ReportUseCases.validate(
+          'BudgetConsumptionXlsx',
+          info('BudgetConsumptionXlsx', ['fiscalPeriodId', 'currency?', 'costCenterId?']),
+          { fiscalPeriodId: 'fp-1' },
+        ),
+      ).toEqual({});
+    });
+
+    it('ignores values of other types and falls back to the static list without a catalog', () => {
+      expect(
+        ReportUseCases.validate('QuoteComparisonPdf', undefined, { requisitionId: 'r1' }),
+      ).toEqual({
+        rfqId: 'required',
+      });
+    });
+
+    it('checks the supplier-quotes date order and the 366-day window', () => {
+      const type: ReportType = 'SupplierQuotesXlsx';
+      expect(
+        ReportUseCases.validate(type, undefined, { from: '2026-02-01', to: '2026-01-01' }),
+      ).toEqual({
+        to: 'range',
+      });
+      expect(
+        ReportUseCases.validate(type, undefined, { from: '2026-01-01', to: '2027-01-02' }),
+      ).toEqual({
+        to: 'window',
+      });
+      expect(
+        ReportUseCases.validate(type, undefined, { from: '2026-01-01', to: '2027-01-01' }),
+      ).toEqual({});
+    });
   });
 });

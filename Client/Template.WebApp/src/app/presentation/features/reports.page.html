@@ -3,21 +3,21 @@
   <h1>{{ 'nav.reports' | transloco }}</h1>
 </header>
 <p class="sr-only" aria-live="polite" role="status">{{ announcement() }}</p>
-<app-problem-feedback [error]="error()" (reload)="load()" />
+<app-problem-feedback [error]="error()" [fieldLabels]="fieldLabels" (reload)="load()" />
 
 <section class="panel" aria-labelledby="request-title">
   <h2 id="request-title">{{ 'reports.request' | transloco }}</h2>
   @if (availableTypes().length === 0) {
     <p class="empty">{{ 'reports.noTypes' | transloco }}</p>
   } @else {
-    <form class="form-grid" (submit)="$event.preventDefault(); submit()">
+    <form class="form-grid" novalidate (submit)="$event.preventDefault(); submit()">
       <label for="reportType"
         >{{ 'reports.type' | transloco }}
         <hlm-native-select
           class="w-full"
           selectId="reportType"
           [value]="type()"
-          (valueChange)="type.set($any($event))"
+          (valueChange)="changeType($any($event))"
         >
           @for (option of availableTypes(); track option.type) {
             <option hlmNativeSelectOption [value]="option.type">
@@ -28,26 +28,30 @@
       </label>
       @switch (type()) {
         @case ('RequisitionPdf') {
-          <label for="requisitionId"
-            >{{ 'reports.requisitionId' | transloco }}
-            <input
-              id="requisitionId"
-              hlmInput
-              [value]="values().requisitionId ?? ''"
-              (input)="set('requisitionId', $any($event.target).value)"
-            />
-          </label>
+          <app-entity-picker
+            pickerId="requisitionId"
+            [label]="'reports.requisitionId' | transloco"
+            [searchPlaceholder]="'reports.searchRequisition' | transloco"
+            [required]="isRequired('requisitionId')"
+            [value]="values().requisitionId"
+            [error]="fieldError('requisitionId')"
+            [search]="searchRequisitions"
+            [resolve]="resolveRequisition"
+            (valueChange)="set('requisitionId', $event)"
+          />
         }
         @case ('QuoteComparisonPdf') {
-          <label for="rfqId"
-            >{{ 'reports.rfqId' | transloco }}
-            <input
-              id="rfqId"
-              hlmInput
-              [value]="values().rfqId ?? ''"
-              (input)="set('rfqId', $any($event.target).value)"
-            />
-          </label>
+          <app-entity-picker
+            pickerId="rfqId"
+            [label]="'reports.rfqId' | transloco"
+            [searchPlaceholder]="'reports.searchRfq' | transloco"
+            [required]="isRequired('rfqId')"
+            [value]="values().rfqId"
+            [error]="fieldError('rfqId')"
+            [search]="searchRfqs"
+            [resolve]="resolveRfq"
+            (valueChange)="set('rfqId', $event)"
+          />
         }
         @case ('BudgetConsumptionXlsx') {
           <label for="fiscalPeriodId"
@@ -56,35 +60,45 @@
               class="w-full"
               selectId="fiscalPeriodId"
               [value]="values().fiscalPeriodId ?? ''"
+              [aria-invalid]="fieldError('fiscalPeriodId') ? true : undefined"
               (valueChange)="set('fiscalPeriodId', $any($event))"
             >
-              <option hlmNativeSelectOption value="">—</option>
+              <option hlmNativeSelectOption value="">{{ 'common.choose' | transloco }}</option>
               @for (period of periods(); track period.id) {
                 <option hlmNativeSelectOption [value]="period.id">
                   {{ period.code }} — {{ period.name }}
                 </option>
               }
             </hlm-native-select>
+            @if (fieldError('fiscalPeriodId'); as message) {
+              <small class="field-error" role="alert">{{ message }}</small>
+            }
           </label>
           <label for="currency"
             >{{ 'reports.currency' | transloco }}
-            <input
-              id="currency"
-              hlmInput
-              maxlength="3"
+            <hlm-native-select
+              class="w-full"
+              selectId="currency"
               [value]="values().currency ?? ''"
-              (input)="set('currency', $any($event.target).value)"
-            />
+              (valueChange)="set('currency', $any($event))"
+            >
+              <option hlmNativeSelectOption value="">
+                {{ 'reports.baseCurrency' | transloco: { currency: organization.baseCurrency() } }}
+              </option>
+              @for (currency of organization.currencies(); track currency) {
+                <option hlmNativeSelectOption [value]="currency">{{ currency }}</option>
+              }
+            </hlm-native-select>
           </label>
-          <label for="costCenterId"
-            >{{ 'reports.costCenterId' | transloco }}
-            <input
-              id="costCenterId"
-              hlmInput
-              [value]="values().costCenterId ?? ''"
-              (input)="set('costCenterId', $any($event.target).value)"
-            />
-          </label>
+          <app-entity-picker
+            pickerId="costCenterId"
+            [label]="'reports.costCenterId' | transloco"
+            [searchPlaceholder]="'reports.searchCostCenter' | transloco"
+            [required]="isRequired('costCenterId')"
+            [value]="values().costCenterId"
+            [search]="searchCostCenters"
+            (valueChange)="set('costCenterId', $event)"
+          />
         }
         @case ('SupplierQuotesXlsx') {
           <label for="from"
@@ -94,8 +108,12 @@
               hlmInput
               type="date"
               [value]="values().from ?? ''"
+              [attr.aria-invalid]="fieldError('from') ? 'true' : null"
               (input)="set('from', $any($event.target).value)"
             />
+            @if (fieldError('from'); as message) {
+              <small class="field-error" role="alert">{{ message }}</small>
+            }
           </label>
           <label for="to"
             >{{ 'reports.to' | transloco }}
@@ -104,24 +122,35 @@
               hlmInput
               type="date"
               [value]="values().to ?? ''"
+              [attr.aria-invalid]="fieldError('to') ? 'true' : null"
               (input)="set('to', $any($event.target).value)"
             />
+            @if (fieldError('to'); as message) {
+              <small class="field-error" role="alert">{{ message }}</small>
+            }
           </label>
-          <label for="supplierId"
-            >{{ 'reports.supplierId' | transloco }}
-            <input
-              id="supplierId"
-              hlmInput
-              [value]="values().supplierId ?? ''"
-              (input)="set('supplierId', $any($event.target).value)"
-            />
-          </label>
+          <app-entity-picker
+            pickerId="supplierId"
+            [label]="'reports.supplierId' | transloco"
+            [searchPlaceholder]="'reports.searchSupplier' | transloco"
+            [required]="isRequired('supplierId')"
+            [value]="values().supplierId"
+            [search]="searchSuppliers"
+            (valueChange)="set('supplierId', $event)"
+          />
         }
       }
-      <button hlmBtn type="submit" [disabled]="busy()">
-        {{ 'reports.submit' | transloco }}
-      </button>
+      <div class="form-actions">
+        <button hlmBtn type="submit" [disabled]="busy()">
+          {{ 'reports.submit' | transloco }}
+        </button>
+      </div>
     </form>
+    @if (submitted() && invalid()) {
+      <p class="field-error" role="alert" data-testid="report-validation">
+        {{ 'reports.fixFields' | transloco }}
+      </p>
+    }
     <p class="hint">{{ 'reports.asOfHelp' | transloco }}</p>
   }
 </section>
@@ -160,7 +189,7 @@
                 {{ 'reports.types.' + job.reportType | transloco }}
               </td>
               <td hlmTd [attr.data-label]="'reports.requestedAt' | transloco">
-                {{ instant(job.requestedAt) }}
+                {{ job.requestedAt | instant }}
               </td>
               <td hlmTd [attr.data-label]="'fields.status' | transloco">
                 <app-status-badge [status]="job.status" />
@@ -186,11 +215,11 @@
                   <small> ({{ job.failureCode }})</small>
                 } @else if (job.status === 'Ready') {
                   {{ job.fileName }} · {{ 'reports.expiresAt' | transloco }}
-                  {{ instant(job.expiresAt) }}
+                  {{ job.expiresAt | instant }}
                 } @else if (job.status === 'Expired') {
                   {{ 'reports.expired' | transloco }}
                 } @else {
-                  {{ 'reports.asOf' | transloco }} {{ instant(job.asOf) }}
+                  {{ 'reports.asOf' | transloco }} {{ job.asOf | instant }}
                 }
               </td>
               <td hlmTd class="actions">

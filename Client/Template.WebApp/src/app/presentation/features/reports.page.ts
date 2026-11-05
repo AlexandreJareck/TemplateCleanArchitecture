@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -19,14 +20,23 @@ import {
   type ReportType,
   type ReportTypeInfo,
 } from '@application/reports/reports';
+import { EntityPicker, type EntityOption } from '../shared/entity-picker';
+import { OrganizationContext } from '../state/organization.context';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { SessionFacade } from '../state/session.facade';
-import { BUDGET_PORT, REPORT_PORT } from '../state/ports';
+import {
+  BUDGET_PORT,
+  MASTER_DATA_PORT,
+  REPORT_PORT,
+  REQUISITION_PORT,
+  SOURCING_PORT,
+} from '../state/ports';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
+import { InstantPipe } from '../shared/display';
 
 const EMPTY: Page<ReportJob> = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 0 };
 
@@ -58,6 +68,7 @@ const BROWSER_CLOCK: PollingClock = {
   selector: 'app-reports-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    InstantPipe,
     ...HlmTableImports,
     ...HlmNativeSelectImports,
     TranslocoPipe,
@@ -65,6 +76,7 @@ const BROWSER_CLOCK: PollingClock = {
     HlmInput,
     ProblemFeedback,
     StatusBadge,
+    EntityPicker,
   ],
   templateUrl: './reports.page.html',
   styleUrl: './data-pages.css',
@@ -72,6 +84,11 @@ const BROWSER_CLOCK: PollingClock = {
 export class ReportsPage {
   private readonly reports = inject(REPORT_PORT);
   private readonly budget = inject(BUDGET_PORT);
+  private readonly requisitions = inject(REQUISITION_PORT);
+  private readonly sourcing = inject(SOURCING_PORT);
+  private readonly masterData = inject(MASTER_DATA_PORT);
+  protected readonly organization = inject(OrganizationContext);
+  private readonly document = inject(DOCUMENT);
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly pollers = new Map<string, AbortController>();
@@ -87,6 +104,84 @@ export class ReportsPage {
   readonly error = signal<ApplicationError | undefined>(undefined);
   readonly announcement = signal('');
   readonly busy = signal(false);
+  readonly submitted = signal(false);
+  readonly typeInfo = computed(() => this.catalog().find((item) => item.type === this.type()));
+  readonly problems = computed(() =>
+    ReportUseCases.validate(this.type(), this.typeInfo(), this.values()),
+  );
+  readonly invalid = computed(() => Object.keys(this.problems()).length > 0);
+  /** API parameter name -> visible label, so server field problems name the field people see. */
+  readonly fieldLabels: Readonly<Record<string, string>> = {
+    requisitionId: 'reports.requisitionId',
+    rfqId: 'reports.rfqId',
+    fiscalPeriodId: 'reports.fiscalPeriod',
+    costCenterId: 'reports.costCenterId',
+    currency: 'reports.currency',
+    from: 'reports.from',
+    to: 'reports.to',
+    supplierId: 'reports.supplierId',
+    reportType: 'reports.type',
+  };
+
+  readonly searchRequisitions = async (q: string): Promise<readonly EntityOption[]> => {
+    const result = await this.requisitions.list({
+      scope: 'visible',
+      page: 1,
+      pageSize: 20,
+      q: q || undefined,
+      sort: '-createdAt',
+    });
+    return result.ok
+      ? result.value.items.map((item) => ({
+          id: item.id,
+          label: `${item.number} — ${item.costCenter.code} · ${this.transloco.translate(`statuses.${item.status}`)}`,
+        }))
+      : [];
+  };
+  readonly resolveRequisition = async (id: string): Promise<EntityOption | undefined> => {
+    const result = await this.requisitions.get(id);
+    return result.ok
+      ? { id, label: `${result.value.number} — ${result.value.costCenter.code}` }
+      : undefined;
+  };
+  readonly searchRfqs = async (q: string): Promise<readonly EntityOption[]> => {
+    const result = await this.sourcing.list({ page: 1, pageSize: 20, q: q || undefined });
+    return result.ok
+      ? result.value.items.map((item) => ({
+          id: item.id,
+          label: `${item.number} — ${item.requisitionNumber} · ${this.transloco.translate(`statuses.${item.status}`)}`,
+        }))
+      : [];
+  };
+  readonly resolveRfq = async (id: string): Promise<EntityOption | undefined> => {
+    const result = await this.sourcing.get(id);
+    return result.ok ? { id, label: result.value.number } : undefined;
+  };
+  readonly searchCostCenters = async (q: string): Promise<readonly EntityOption[]> => {
+    const result = await this.masterData.list('cost-centers', {
+      page: 1,
+      pageSize: 20,
+      q: q || undefined,
+      sort: 'code',
+    });
+    return result.ok
+      ? result.value.items.map((item) => ({ id: item.id, label: `${item.code} — ${item.name}` }))
+      : [];
+  };
+  readonly searchSuppliers = async (q: string): Promise<readonly EntityOption[]> => {
+    const result = await this.masterData.listSuppliers({
+      page: 1,
+      pageSize: 20,
+      q: q || undefined,
+      sort: 'legalName',
+    });
+    return result.ok
+      ? result.value.items.map((item) => ({
+          id: item.id,
+          label: `${item.legalName} (${item.taxId})`,
+        }))
+      : [];
+  };
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.stopPolling());
@@ -125,13 +220,37 @@ export class ReportsPage {
     this.values.update((current) => ({ ...current, [key]: value }));
   }
 
+  changeType(type: ReportType) {
+    this.type.set(type);
+    this.submitted.set(false);
+  }
+
+  isRequired(name: keyof ReportParameters) {
+    return ReportUseCases.requiredParameters(this.type(), this.typeInfo()).includes(name);
+  }
+
+  /** Localized inline message once a submission was attempted. */
+  fieldError(name: keyof ReportParameters): string | undefined {
+    if (!this.submitted()) return undefined;
+    const problem = this.problems()[name];
+    return problem ? this.transloco.translate(`reports.problems.${problem}`) : undefined;
+  }
+
   async submit() {
+    this.submitted.set(true);
+    if (this.invalid()) {
+      this.error.set(undefined);
+      const first = Object.keys(this.problems())[0];
+      if (first) this.document.getElementById(first)?.focus();
+      return;
+    }
     this.busy.set(true);
     const result = await this.reports.request({
       reportType: this.type(),
       parameters: ReportUseCases.parametersFor(this.type(), this.values()),
     });
     this.busy.set(false);
+    if (result.ok) this.submitted.set(false);
     this.accept(result);
   }
 
@@ -170,17 +289,6 @@ export class ReportsPage {
 
   failureKey(code: string | undefined) {
     return ReportUseCases.failureKey(code);
-  }
-
-  instant(value: string | undefined) {
-    if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'short',
-          timeStyle: 'medium',
-        }).format(date);
   }
 
   private accept(result: Awaited<ReturnType<typeof this.reports.request>>) {
