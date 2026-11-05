@@ -122,4 +122,8 @@ public static class LogEvents
     // Phase 33: scheduled sweeps (counts and exception types only).
     public static readonly EventId ScheduledSweepCompleted = new(11500, nameof(ScheduledSweepCompleted));
     public static readonly EventId ScheduledSweepFailed = new(11501, nameof(ScheduledSweepFailed));
+
+    // Operational data retention (NFR §5; counts, dataset names and exception types only).
+    public static readonly EventId DataRetentionCompleted = new(11510, nameof(DataRetentionCompleted));
+    public static readonly EventId DataRetentionFailed = new(11511, nameof(DataRetentionFailed));
 }

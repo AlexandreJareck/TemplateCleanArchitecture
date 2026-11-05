@@ -23,7 +23,7 @@ Instruments use `System.Diagnostics.Metrics` and can be read with `dotnet-counte
 |---|---|
 | `Template.Procurement` | domain events written, optimistic-concurrency conflicts (WebApi and Worker use cases) |
 | `Template.Reports` | report attempt duration and outcomes |
-| `Template.Worker` | `worker.outbox_dispatched`, `worker.outbox_dispatch_failures`, `worker.outbox_dispatch_latency` (s, event → broker confirmation), `worker.sweep_items`, `worker.sweep_failures` |
+| `Template.Worker` | `worker.outbox_dispatched`, `worker.outbox_dispatch_failures`, `worker.outbox_dispatch_latency` (s, event → broker confirmation), `worker.sweep_items`, `worker.sweep_failures`, `worker.retention_deleted`, `worker.retention_failures` (tag `dataset`) |
 
 Tags carry event types, sweep names and outcomes only, never record identifiers, names or amounts.
 
@@ -76,6 +76,7 @@ Interpretation:
 | Approval reminders, escalation, expiry | WorkflowFunctions durable timers | policy v1: reminder at 72 h, escalation at 120 h, expiry after a second 120 h | APR-011 |
 | Approval reconciliation | Worker `ApprovalReconciliationService` | 5 min | APR-016 |
 | Report and file retention | Worker `ReportWorkerService` | 15 min | RPT/FIL retention |
-| Dispatched Outbox cleanup | Worker `OutboxDispatcherService` | 1 h | 30-day retention |
+| Dispatched Outbox cleanup | Worker `OutboxDispatcherService` | 1 h | 7-day retention (NFR §5) |
+| Idempotency, Inbox and session-family cleanup | Worker `DataRetentionService` | `DataRetentionSettings:Interval` (1 h) | NFR §5: idempotency 24 h, completed Inbox 7 days, session families absolute expiry + 30 days |
 
 Sweeps are idempotent and retry optimistic conflicts, so several Worker instances can run them at once (D33-1).
