@@ -5,6 +5,7 @@ using MediatR;
 using Template.Application.Common.Concurrency;
 using Template.Application.Common.Paging;
 using Template.Application.Common.Results;
+using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Sourcing;
 using Template.Application.Services.MasterData;
 using Template.Application.Services.Procurement;
@@ -238,7 +239,7 @@ public sealed record ListRfqsQuery(
     string? Q = null) : IRequest<Result<PagedResult<RfqSummaryView>>>;
 
 /// <summary>Reads require <c>sourcing.rfqs.manage</c> or <c>sourcing.quotes.read</c>; commercial details follow SRC-021.</summary>
-public sealed class RfqQueryHandlers(IRequestForQuotationRepository rfqs, SourcingAccess access) :
+public sealed class RfqQueryHandlers(IRequestForQuotationRepository rfqs, SourcingAccess access, IUserDisplayNames displayNames) :
     IRequestHandler<GetRfqQuery, Result<RfqView>>,
     IRequestHandler<GetRfqHistoryQuery, Result<RfqHistoryView>>,
     IRequestHandler<ListRfqsQuery, Result<PagedResult<RfqSummaryView>>>
@@ -258,7 +259,9 @@ public sealed class RfqQueryHandlers(IRequestForQuotationRepository rfqs, Sourci
         if (!await access.MayReadAsync(cancellationToken))
             return ProcurementWriter.Forbidden();
         var rfq = await rfqs.FindAsync(request.Id, cancellationToken);
-        return rfq is null ? SourcingAudit.NotFound() : RfqHistoryView.From(rfq);
+        return rfq is null
+            ? SourcingAudit.NotFound()
+            : RfqHistoryView.From(rfq, await displayNames.ResolveAsync(RfqHistoryView.ActorIds(rfq), cancellationToken));
     }
 
     public async Task<Result<PagedResult<RfqSummaryView>>> Handle(ListRfqsQuery request, CancellationToken cancellationToken)

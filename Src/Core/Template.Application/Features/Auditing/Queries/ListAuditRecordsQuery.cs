@@ -2,6 +2,7 @@
 using MediatR;
 using Template.Application.Common.Paging;
 using Template.Application.Common.Results;
+using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Auditing;
 
 namespace Template.Application.Features.Auditing.Queries;
@@ -21,7 +22,7 @@ public sealed record ListAuditRecordsQuery(
     DateTime? From = null,
     DateTime? To = null) : IRequest<Result<PagedResult<AuditRecordView>>>;
 
-public sealed class ListAuditRecordsQueryHandler(IAuditRecordReader reader)
+public sealed class ListAuditRecordsQueryHandler(IAuditRecordReader reader, IUserDisplayNames displayNames)
     : IRequestHandler<ListAuditRecordsQuery, Result<PagedResult<AuditRecordView>>>
 {
     public const string DefaultSort = "-occurredAt";
@@ -38,7 +39,9 @@ public sealed class ListAuditRecordsQueryHandler(IAuditRecordReader reader)
             return ApplicationError.Validation("from", "from must be earlier than to.");
 
         var filter = new AuditRecordFilter(request.Action, request.ActorId, request.ResourceType, request.ResourceId, from, to);
-        return await reader.ListAsync(filter, page.Value, cancellationToken);
+        var records = await reader.ListAsync(filter, page.Value, cancellationToken);
+        var names = await displayNames.ResolveAsync(records.Items.Select(record => record.ActorId), cancellationToken);
+        return records with { Items = records.Items.Select(record => record with { ActorName = names.NameOf(record.ActorId) }).ToArray() };
     }
 
     // Query-string instants without an offset are read as UTC (docs/product/api-guidelines.md §2).

@@ -3,6 +3,7 @@ using MediatR;
 using Template.Application.Common.Paging;
 using Template.Application.Common.Results;
 using Template.Application.Features.Budgeting;
+using Template.Application.Interfaces.Access;
 using Template.Application.Interfaces.Budgeting;
 using Template.Application.Interfaces.Requisitions;
 using Template.Application.Security;
@@ -45,7 +46,8 @@ public sealed class RequisitionQueryHandlers(
     IBudgetAllocationRepository allocations,
     IFiscalPeriodRepository periods,
     RequisitionAccess access,
-    ProcurementWriter writer) :
+    ProcurementWriter writer,
+    IUserDisplayNames displayNames) :
     IRequestHandler<GetRequisitionQuery, Result<RequisitionView>>,
     IRequestHandler<ListRequisitionsQuery, Result<PagedResult<RequisitionSummaryView>>>,
     IRequestHandler<GetRequisitionTimelineQuery, Result<RequisitionTimelineView>>,
@@ -103,7 +105,9 @@ public sealed class RequisitionQueryHandlers(
         if (requisition is null || !await access.CanReadAsync(requisition, cancellationToken))
             return RequisitionAudit.NotFound();
 
-        return RequisitionTimelineView.From(requisition, await allocations.ListReservationsOfRequisitionAsync(requisition.Id, cancellationToken));
+        var reservations = await allocations.ListReservationsOfRequisitionAsync(requisition.Id, cancellationToken);
+        var names = await displayNames.ResolveAsync(RequisitionTimelineView.ActorIds(requisition, reservations), cancellationToken);
+        return RequisitionTimelineView.From(requisition, reservations, names);
     }
 
     public async Task<Result<BudgetAvailabilityView>> Handle(GetRequisitionBudgetAvailabilityQuery request, CancellationToken cancellationToken)

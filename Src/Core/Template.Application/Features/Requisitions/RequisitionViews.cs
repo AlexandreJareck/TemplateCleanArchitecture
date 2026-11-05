@@ -4,6 +4,7 @@ using Template.Application.Common.Concurrency;
 using Template.Application.Common.Results;
 using Template.Application.Features.Budgeting;
 using Template.Application.Features.Catalog;
+using Template.Application.Interfaces.Access;
 using Template.Application.Wrappers;
 using Template.Domain.Budgeting;
 using Template.Domain.Requisitions;
@@ -157,11 +158,14 @@ public sealed record RequisitionSummaryView(
 /// <summary>
 /// One timeline entry (NFR-AUD-2): a requisition state change (<c>kind = "state"</c>) or a reservation change of any
 /// revision (<c>kind = "reservation"</c>), with actor, UTC instant, reason and the emitted event type.
+/// <c>actorName</c> is the actor's display name from the user directory (never an email or other personal datum);
+/// it is <c>null</c> for a system action or an actor no longer in the directory.
 /// </summary>
 public sealed record RequisitionTimelineEntryView(
     string Kind,
     DateTime At,
     Guid? ActorId,
+    string? ActorName,
     string? From,
     string To,
     int? Revision,
@@ -174,13 +178,18 @@ public sealed record RequisitionTimelineEntryView(
 
 public sealed record RequisitionTimelineView(Guid RequisitionId, IReadOnlyList<RequisitionTimelineEntryView> Entries)
 {
-    public static RequisitionTimelineView From(PurchaseRequisition requisition, IReadOnlyList<BudgetReservation> reservations)
+    public static IEnumerable<Guid?> ActorIds(PurchaseRequisition requisition, IReadOnlyList<BudgetReservation> reservations) =>
+        requisition.StateChanges.Select(change => change.ActorId)
+            .Concat(reservations.SelectMany(reservation => reservation.Changes.Select(change => change.ActorId)));
+
+    public static RequisitionTimelineView From(
+        PurchaseRequisition requisition, IReadOnlyList<BudgetReservation> reservations, IReadOnlyDictionary<Guid, string> actorNames)
     {
         var states = requisition.StateChanges.Select(change => new RequisitionTimelineEntryView(
-            "state", change.AtUtc, change.ActorId, change.From?.ToString(), change.To.ToString(), change.Revision, change.Reason, change.ReasonCode,
+            "state", change.AtUtc, change.ActorId, actorNames.NameOf(change.ActorId), change.From?.ToString(), change.To.ToString(), change.Revision, change.Reason, change.ReasonCode,
             change.EventType, null, null, change.CorrelationId));
         var budget = reservations.SelectMany(reservation => reservation.Changes.Select(change => new RequisitionTimelineEntryView(
-            "reservation", change.AtUtc, change.ActorId, change.From?.ToString(), change.To.ToString(), reservation.RequisitionRevision, null,
+            "reservation", change.AtUtc, change.ActorId, actorNames.NameOf(change.ActorId), change.From?.ToString(), change.To.ToString(), reservation.RequisitionRevision, null,
             change.Reason?.ToString(), ReservationEventType(change.Operation), BudgetMoney.Of(change.Amount, change.Currency), reservation.Id,
             change.CorrelationId)));
         return new RequisitionTimelineView(
