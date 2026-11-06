@@ -261,7 +261,11 @@ test('SC-01 requisition to receipt, report and history on the real stack', async
   await test.step('requester generates the requisition PDF report and sees the closed history', async () => {
     const page = await signIn(browser, 'demo.requester');
     await nav(page, 'Relatórios');
-    await page.getByLabel('Requisição (ID)').fill(requisitionId);
+    // The requisition is chosen by its business number; the selector submits its stable ID (F-07).
+    await page.getByRole('searchbox', { name: 'Buscar Requisição' }).fill(requisitionNumber);
+    const requisition = page.getByRole('combobox', { name: 'Requisição' });
+    await expect(requisition.locator('option', { hasText: requisitionNumber })).toHaveCount(1);
+    await requisition.selectOption(requisitionId);
     await page.getByRole('button', { name: 'Gerar relatório' }).click();
     const row = page.locator('tr[data-job]').first();
     await expect(row).toContainText('Pronto', { timeout: 120_000 });
