@@ -4,6 +4,7 @@ using Template.Application.Common.Concurrency;
 using Template.Application.Common.Results;
 using Template.Application.Features.Budgeting;
 using Template.Application.Features.Catalog;
+using Template.Application.Interfaces.Access;
 using Template.Application.Wrappers;
 using Template.Domain.Sourcing;
 
@@ -274,15 +275,22 @@ public sealed record RfqSummaryView(
         rfq.Invitations.Count(invitation => invitation.IsActive), rfq.CreatedAtUtc, rfq.UpdatedAtUtc, VersionPrecondition.Format(rfq.Version));
 }
 
+/// <summary>
+/// One RFQ history entry. <c>actorName</c> is the actor's display name from the user directory (never an email or other
+/// personal datum); it is <c>null</c> for a system action or an actor no longer in the directory.
+/// </summary>
 public sealed record RfqHistoryEntryView(
-    int Sequence, string Action, string? From, string To, Guid? ActorId, DateTime At, string? Reason, string? EventType, Guid? SubjectId, string CorrelationId);
+    int Sequence, string Action, string? From, string To, Guid? ActorId, string? ActorName, DateTime At, string? Reason, string? EventType, Guid? SubjectId, string CorrelationId);
 
 public sealed record RfqHistoryView(Guid RfqId, IReadOnlyList<RfqHistoryEntryView> Entries)
 {
-    public static RfqHistoryView From(RequestForQuotation rfq) => new(
+    public static IEnumerable<Guid?> ActorIds(RequestForQuotation rfq) => rfq.History.Select(entry => entry.ActorId);
+
+    public static RfqHistoryView From(RequestForQuotation rfq, IReadOnlyDictionary<Guid, string> actorNames) => new(
         rfq.Id,
         rfq.History.OrderBy(entry => entry.Sequence)
-            .Select(entry => new RfqHistoryEntryView(entry.Sequence, entry.Action, entry.From?.ToString(), entry.To.ToString(), entry.ActorId, entry.AtUtc,
+            .Select(entry => new RfqHistoryEntryView(entry.Sequence, entry.Action, entry.From?.ToString(), entry.To.ToString(), entry.ActorId,
+                actorNames.NameOf(entry.ActorId), entry.AtUtc,
                 entry.Reason, entry.EventType, entry.SubjectId, entry.CorrelationId))
             .ToArray());
 }

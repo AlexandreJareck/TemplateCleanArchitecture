@@ -40,7 +40,20 @@
     "body": "Este diálogo demonstra foco, teclado e semântica acessível."
   },
   "validation": {
-    "required": "Campo obrigatório"
+    "required": "Campo obrigatório",
+    "invalid": "Valor inválido.",
+    "length": "Tamanho fora do permitido.",
+    "format": "Formato inválido.",
+    "codeLength": "O código deve ter de {{min}} a {{max}} caracteres.",
+    "codeFormat": "Formato de código inválido; siga a orientação do campo.",
+    "nameLength": "O nome pode ter no máximo 200 caracteres.",
+    "codeHint": {
+      "departments": "Letras, números e hífen, de 2 a {{max}} caracteres (ex.: TEC-INFRA). Gravado em maiúsculas.",
+      "cost-centers": "Letras, números e hífen, de 2 a {{max}} caracteres (ex.: TEC-INFRA). Gravado em maiúsculas.",
+      "categories": "Letras, números e hífen, até {{max}} caracteres. Gravado em maiúsculas.",
+      "units": "Letras, números e hífen, até {{max}} caracteres (ex.: UN, KG). Gravado em maiúsculas.",
+      "catalog-items": "Começa com letra ou número; aceita ponto, sublinhado e hífen; até {{max}} caracteres."
+    }
   },
   "auth": {
     "signIn": "Entrar",
@@ -83,7 +96,8 @@
     "reports": "Relatórios",
     "approvals": "Aprovações",
     "purchaseOrders": "Pedidos de compra",
-    "receiving": "Recebimento"
+    "receiving": "Recebimento",
+    "audit": "Auditoria"
   },
   "dashboard": {
     "title": "Painel",
@@ -95,7 +109,8 @@
       "budgetAllocations": "Veja total, reservado, comprometido e disponível.",
       "suppliers": "Fornecedores, contatos, endereços e categorias.",
       "items": "Itens de catálogo, unidades e categorias.",
-      "departments": "Estrutura organizacional e responsáveis."
+      "departments": "Estrutura organizacional e responsáveis.",
+      "audit": "Pesquise a trilha de auditoria por ação, recurso, usuário e período."
     }
   },
   "common": {
@@ -121,7 +136,11 @@
     "confirmDeactivate": "Confirmar desativação",
     "confirmReactivate": "Confirmar reativação",
     "confirmStatus": "Confirmar alteração de status",
-    "pagination": "Paginação"
+    "pagination": "Paginação",
+    "optional": "opcional",
+    "searchIn": "Buscar {{field}}",
+    "choose": "Selecione…",
+    "any": "Todos"
   },
   "fields": {
     "code": "Código",
@@ -149,7 +168,15 @@
     "street": "Logradouro",
     "number": "Número",
     "city": "Cidade",
-    "categoryIds": "IDs de categorias (separados por vírgula)"
+    "categoryIds": "IDs de categorias (separados por vírgula)",
+    "categories": "Categorias",
+    "categoryCount": "{{count}} categoria(s) vinculada(s)",
+    "actions": {
+      "activate": "Ativar",
+      "suspend": "Suspender",
+      "inactivate": "Inativar",
+      "reactivate": "Reativar"
+    }
   },
   "status": {
     "forbidden": {
@@ -193,7 +220,20 @@
     "Pending": "Na fila",
     "Running": "Em processamento",
     "Ready": "Pronto",
-    "Failed": "Falhou"
+    "Failed": "Falhou",
+    "Invalidated": "Invalidada",
+    "Issued": "Emitido",
+    "PartiallyReceived": "Recebido parcialmente",
+    "Completed": "Concluído",
+    "Posted": "Lançado",
+    "Available": "Disponível",
+    "Deleted": "Excluído",
+    "Waiting": "Aguardando",
+    "Sent": "Enviada",
+    "NotRequested": "Não solicitado",
+    "Suspended": "Suspenso",
+    "Inactive": "Inativo",
+    "Revoked": "Revogada"
   },
   "problems": {
     "cancelled": "Operação cancelada",
@@ -207,7 +247,110 @@
     "rate-limited": "Muitas tentativas; aguarde",
     "unavailable": "Serviço indisponível",
     "unexpected": "Erro inesperado",
-    "gone": "O recurso não está mais disponível"
+    "gone": "O recurso não está mais disponível",
+    "technicalDetails": "Detalhes técnicos",
+    "code": "Código",
+    "serverDetail": "Mensagem do servidor",
+    "trace": "Rastreamento",
+    "codes": {
+      "auth": {
+        "invalid-credentials": "Usuário ou senha inválidos.",
+        "session-expired": "Sua sessão expirou; entre novamente.",
+        "session-revoked": "Esta sessão foi encerrada; entre novamente.",
+        "forbidden": "Seu perfil não permite esta ação.",
+        "rate-limited": "Muitas tentativas; aguarde e tente novamente."
+      },
+      "concurrency": {
+        "version-mismatch": "Outra pessoa alterou este registro. Recarregue para ver a versão atual.",
+        "precondition-required": "Recarregue o registro antes de alterá-lo."
+      },
+      "idempotency": {
+        "in-progress": "Esta operação já está em andamento; aguarde."
+      },
+      "reason-required": "Informe um motivo de 10 a 500 caracteres.",
+      "organization": {
+        "code-duplicate": "Já existe um cadastro com este código.",
+        "inactive": "O cadastro selecionado está inativo.",
+        "department-has-active-cost-centers": "O departamento ainda possui centros de custo ativos.",
+        "settings-locked": "Moeda base e fuso horário não podem mudar depois da primeira alocação orçamentária."
+      },
+      "supplier": {
+        "tax-id-invalid": "CNPJ inválido.",
+        "tax-id-duplicate": "Já existe um fornecedor com este CNPJ.",
+        "activation-incomplete": "Complete os dados obrigatórios antes de ativar o fornecedor.",
+        "not-eligible": "O fornecedor não está apto para esta operação."
+      },
+      "catalog": {
+        "code-duplicate": "Já existe um item com este código.",
+        "inactive": "O item de catálogo selecionado está inativo."
+      },
+      "integration": {
+        "provider-unavailable": "O serviço de consulta externa está indisponível; tente mais tarde."
+      },
+      "budget": {
+        "period-overlap": "O período se sobrepõe a outro período fiscal.",
+        "period-closed": "O período fiscal está encerrado.",
+        "below-reserved": "O novo valor é menor do que o já reservado e comprometido.",
+        "no-open-allocation": "Não há alocação orçamentária aberta para este centro de custo.",
+        "insufficient": "Saldo orçamentário insuficiente."
+      },
+      "requisition": {
+        "not-submittable": "A requisição ainda não pode ser enviada; verifique itens e dados obrigatórios.",
+        "immutable": "A requisição não pode mais ser alterada."
+      },
+      "file": {
+        "too-large": "O arquivo excede o tamanho máximo permitido.",
+        "type-not-allowed": "Tipo de arquivo não permitido.",
+        "limit-reached": "O limite de anexos foi atingido.",
+        "unavailable": "O arquivo está temporariamente indisponível."
+      },
+      "rfq": {
+        "deadline-invalid": "Prazo de cotação inválido.",
+        "insufficient-invitations": "Convide mais fornecedores antes de publicar.",
+        "deadline-passed": "O prazo da cotação já terminou.",
+        "supplier-already-invited": "O fornecedor já foi convidado.",
+        "already-active": "Já existe uma cotação ativa para esta requisição."
+      },
+      "quote": {
+        "late": "A proposta chegou depois do prazo.",
+        "supplier-not-invited": "O fornecedor não foi convidado para esta cotação."
+      },
+      "award": {
+        "insufficient-quotations": "Não há propostas suficientes para adjudicar.",
+        "non-leading-requires-waiver": "Escolher uma proposta que não é a de menor preço exige uma justificativa de dispensa.",
+        "comparison-incomplete": "O mapa comparativo está incompleto.",
+        "pending-exists": "Já existe uma seleção aguardando aprovação."
+      },
+      "report": {
+        "type-unknown": "Tipo de relatório desconhecido.",
+        "source-not-available": "Os dados de origem ainda não permitem gerar este relatório (por exemplo, a cotação não tem mapa comparativo).",
+        "not-ready": "O relatório ainda não está pronto.",
+        "expired": "O arquivo do relatório expirou; gere novamente."
+      },
+      "approval": {
+        "self-approval": "Você não pode aprovar o próprio pedido.",
+        "step-already-decided": "Esta etapa já foi decidida.",
+        "workflow-unavailable": "O serviço de aprovação está indisponível; tente mais tarde.",
+        "not-assignee": "Esta etapa não está atribuída a você.",
+        "maker-checker": "Quem preparou a solicitação não pode aprová-la."
+      },
+      "purchase-order": {
+        "document-not-ready": "O documento do pedido ainda não está pronto.",
+        "not-issuable": "O pedido ainda não pode ser emitido."
+      },
+      "receipt": {
+        "over-receipt": "A quantidade recebida excede o saldo do pedido.",
+        "order-not-receivable": "Este pedido não está disponível para recebimento.",
+        "correction-out-of-range": "A correção ultrapassa as quantidades recebidas."
+      },
+      "request": {
+        "too-large": "A requisição enviada é grande demais."
+      },
+      "waiver": {
+        "required": "Esta operação exige uma justificativa de dispensa.",
+        "permission-required": "Seu perfil não pode conceder esta dispensa."
+      }
+    }
   },
   "requisition": {
     "new": "Nova requisição",
@@ -238,7 +381,7 @@
     "freeLine": "Item livre (sem catálogo)",
     "linePreview": "Prévia do total do item",
     "attachments": "Anexos",
-    "attachmentsNotice": "Somente metadados nesta fase; o envio do arquivo chega na Fase 30.",
+    "attachmentsNotice": "Nesta versão, a requisição registra apenas os dados do anexo (nome, tipo e tamanho); o arquivo em si não é enviado nem armazenado. Guarde o documento original para consulta.",
     "fileName": "Nome do arquivo",
     "mediaType": "Tipo",
     "length": "Tamanho (bytes)",
@@ -261,7 +404,8 @@
     "reasonHelp": "Informe o motivo (10 a 500 caracteres). A reserva será liberada.",
     "confirmWithdraw": "Retirar submissão",
     "withdrawHelp": "A requisição volta para rascunho com nova revisão e a reserva é liberada.",
-    "linesTable": "Tabela de itens"
+    "linesTable": "Tabela de itens",
+    "lengthHint": "Tamanho do arquivo em bytes."
   },
   "budget": {
     "availability": "Disponibilidade orçamentária",
@@ -291,7 +435,10 @@
     "requisition": "Requisição",
     "releaseReason": "Motivo da liberação",
     "confirmCloseAllocation": "Encerrar alocação",
-    "reservationsTable": "Tabela de reservas"
+    "reservationsTable": "Tabela de reservas",
+    "amountHint": "Use ponto para decimais, sem separador de milhar (ex.: 1800000.00).",
+    "amountPreview": "Valor lido:",
+    "amountFormat": "Formato inválido: use apenas números e ponto decimal, com até 2 casas."
   },
   "sourcing": {
     "queue": "Requisições aguardando cotação",
@@ -448,14 +595,14 @@
     "stillRunning": "Ainda em processamento; volte mais tarde.",
     "downloaded": "Download de {{name}} iniciado.",
     "announce": "{{type}}: {{status}}",
-    "requisitionId": "Requisição (ID)",
-    "rfqId": "Cotação (ID)",
+    "requisitionId": "Requisição",
+    "rfqId": "Cotação (RFQ)",
     "fiscalPeriod": "Período fiscal",
-    "currency": "Moeda (opcional)",
-    "costCenterId": "Centro de custo (ID, opcional)",
+    "currency": "Moeda",
+    "costCenterId": "Centro de custo",
     "from": "Recebidas de",
     "to": "Recebidas até",
-    "supplierId": "Fornecedor (ID, opcional)",
+    "supplierId": "Fornecedor",
     "requisitionPdf": "Gerar PDF da requisição",
     "comparisonPdf": "Gerar mapa comparativo (PDF)",
     "types": {
@@ -474,6 +621,18 @@
       "attempts-exhausted": "A geração falhou após 3 tentativas.",
       "output-invalid": "O arquivo gerado foi rejeitado na verificação.",
       "unexpected": "Falha inesperada na geração."
+    },
+    "baseCurrency": "Moeda base ({{currency}})",
+    "searchRequisition": "Buscar pelo número da requisição",
+    "searchRfq": "Buscar pelo número da cotação ou da requisição",
+    "searchCostCenter": "Buscar por código ou nome",
+    "searchSupplier": "Buscar por razão social ou nome fantasia",
+    "fixFields": "Revise os campos destacados antes de gerar o relatório.",
+    "problems": {
+      "required": "Obrigatório para este tipo de relatório.",
+      "range": "A data final deve ser igual ou posterior à inicial.",
+      "window": "O período pode ter no máximo 366 dias.",
+      "invalid": "Data inválida."
     }
   },
   "approvals": {
@@ -776,5 +935,100 @@
     "budget": "Orçamento",
     "masterData": "Cadastros",
     "insights": "Análises"
+  },
+  "supplierStatuses": {
+    "Draft": "Rascunho",
+    "Active": "Ativo",
+    "Suspended": "Suspenso",
+    "Inactive": "Inativo"
+  },
+  "attachmentStatuses": {
+    "Pending": "somente dados do anexo"
+  },
+  "mediaTypes": {
+    "pdf": "PDF",
+    "png": "Imagem PNG",
+    "jpeg": "Imagem JPEG",
+    "text": "Texto (.txt)",
+    "csv": "Planilha CSV",
+    "xlsx": "Planilha Excel (.xlsx)",
+    "docx": "Documento Word (.docx)"
+  },
+  "problemFields": {
+    "requisitionId": "Requisição",
+    "rfqId": "Cotação",
+    "fiscalPeriodId": "Período fiscal",
+    "costCenterId": "Centro de custo",
+    "currency": "Moeda",
+    "from": "Data inicial",
+    "to": "Data final",
+    "supplierId": "Fornecedor",
+    "reportType": "Tipo de relatório",
+    "code": "Código",
+    "name": "Nome",
+    "reason": "Motivo",
+    "amount": "Valor",
+    "quantity": "Quantidade",
+    "unitPrice": "Preço unitário",
+    "description": "Descrição",
+    "categoryId": "Categoria",
+    "unitOfMeasureId": "Unidade de medida",
+    "neededBy": "Necessário até",
+    "purpose": "Finalidade",
+    "legalName": "Razão social",
+    "tradeName": "Nome fantasia",
+    "taxId": "CNPJ",
+    "email": "E-mail",
+    "fileName": "Nome do arquivo",
+    "length": "Tamanho do arquivo",
+    "mediaType": "Tipo de arquivo",
+    "actorId": "Usuário",
+    "unknown": "Campo informado"
+  },
+  "actors": {
+    "system": "Sistema",
+    "self": "{{name}} (você)",
+    "otherUser": "Outro usuário",
+    "idHint": "ID técnico: {{id}}"
+  },
+  "audit": {
+    "intro": "Trilha somente leitura das ações registradas no sistema. Horários no fuso da organização.",
+    "filters": "Filtros",
+    "action": "Ação",
+    "actionPlaceholder": "ex.: requisition.submitted",
+    "resourceType": "Tipo de recurso",
+    "resourceTypePlaceholder": "ex.: PurchaseRequisition",
+    "resourceId": "ID do recurso",
+    "actorId": "ID do usuário",
+    "from": "De",
+    "to": "Até",
+    "sort": "Ordenação",
+    "newestFirst": "Mais recentes primeiro",
+    "oldestFirst": "Mais antigos primeiro",
+    "technicalFilters": "Filtros por ID (técnicos)",
+    "clear": "Limpar filtros",
+    "results": "Registros encontrados: {{count}}",
+    "empty": "Nenhum registro de auditoria encontrado.",
+    "table": "Tabela de registros de auditoria",
+    "occurredAt": "Quando",
+    "resource": "Recurso",
+    "transition": "Transição",
+    "actor": "Usuário",
+    "details": "Detalhes",
+    "moreDetails": "Ver detalhes",
+    "rules": "Regras",
+    "correlationId": "Correlação",
+    "problems": {
+      "actorFormat": "Informe o ID do usuário no formato GUID.",
+      "range": "A data final deve ser igual ou posterior à inicial."
+    },
+    "detailKeys": {
+      "number": "Número",
+      "revision": "Revisão",
+      "reportType": "Tipo de relatório",
+      "reportJobId": "Relatório",
+      "amount": "Valor",
+      "currency": "Moeda"
+    }
   }
 }

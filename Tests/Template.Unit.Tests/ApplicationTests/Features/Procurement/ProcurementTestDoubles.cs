@@ -91,6 +91,8 @@ internal sealed partial class ProcurementTestDoubles
     public ApprovalTestDoubles.FakeApprovalInstances Approvals { get; }
     public ApprovalTestDoubles.FakeApprovalPolicies Policies { get; } = new();
     public ApprovalTestDoubles.FakeApprovers Approvers { get; } = new();
+
+    public FakeDisplayNames DisplayNames { get; } = new();
     public ApprovalTestDoubles.FakeWorkflow Workflow { get; } = new();
 
     public ProcurementWriter NewWriter() => new(
@@ -155,17 +157,31 @@ internal sealed partial class ProcurementTestDoubles
         return new(Rfqs, new SourcingAccess(writer), writer);
     }
 
-    public RfqQueryHandlers RfqQueries() => new(Rfqs, new SourcingAccess(NewWriter()));
+    public RfqQueryHandlers RfqQueries() => new(Rfqs, new SourcingAccess(NewWriter()), DisplayNames);
 
     public RequisitionQueryHandlers Queries()
     {
         var writer = NewWriter();
-        return new(Requisitions, Allocations, Periods, new RequisitionAccess(writer, Scope), writer);
+        return new(Requisitions, Allocations, Periods, new RequisitionAccess(writer, Scope), writer, DisplayNames);
     }
 
     public void ActAs(Actor actor) => User.Id = actor.Id;
 
     public void ActAsSystem() => User.Id = null;
+
+    /// <summary>Display-name directory with synthetic names; records every lookup so tests can assert one batched call.</summary>
+    internal sealed class FakeDisplayNames : IUserDisplayNames
+    {
+        public Dictionary<Guid, string> Names { get; } = [];
+
+        public List<IReadOnlyCollection<Guid>> Lookups { get; } = [];
+
+        public Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+        {
+            Lookups.Add(userIds);
+            return Task.FromResult<IReadOnlyDictionary<Guid, string>>(userIds.Where(Names.ContainsKey).ToDictionary(id => id, id => Names[id]));
+        }
+    }
 
     internal sealed class Actor
     {

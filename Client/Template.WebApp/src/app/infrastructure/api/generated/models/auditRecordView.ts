@@ -29,4 +29,6 @@ export interface AuditRecordView {
   correlationId?: string | null;
   /** @nullable */
   details?: AuditRecordViewDetails;
+  /** @nullable */
+  actorName?: string | null;
 }

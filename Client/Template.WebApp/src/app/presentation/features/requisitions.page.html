@@ -59,7 +59,7 @@
               {{ item.costCenter.code }} — {{ item.costCenter.name }}
             </td>
             <td hlmTd [attr.data-label]="'requisition.neededBy' | transloco">
-              {{ item.neededBy ?? '—' }}
+              {{ item.neededBy | localDate }}
             </td>
             <td hlmTd [attr.data-label]="'requisition.total' | transloco">
               {{ item.estimatedTotal | money }}

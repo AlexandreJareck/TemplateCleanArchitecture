@@ -1,14 +1,18 @@
 import type { BooleanInput } from '@angular/cdk/coercion';
 import {
+  afterRenderEffect,
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
+  contentChildren,
+  type ElementRef,
   forwardRef,
   inject,
   input,
   linkedSignal,
   output,
+  viewChild,
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -17,6 +21,7 @@ import { BrnFieldControl, provideBrnLabelable } from '@spartan-ng/brain/field';
 import { type ChangeFn, type TouchFn } from '@spartan-ng/brain/forms';
 import { classes, hlm } from '@presentation/shared-ui/utils';
 import type { ClassValue } from 'clsx';
+import { HlmNativeSelectOption } from './hlm-native-select-option';
 
 export const HLM_NATIVE_SELECT_VALUE_ACCESSOR = {
   provide: NG_VALUE_ACCESSOR,
@@ -102,8 +107,20 @@ export class HlmNativeSelect implements ControlValueAccessor {
     () => this.forceInvalid() || this._fieldControl?.spartanInvalid(),
   );
 
+  private readonly _select = viewChild.required<ElementRef<HTMLSelectElement>>('select');
+  private readonly _options = contentChildren(HlmNativeSelectOption, { descendants: true });
+
   constructor() {
     classes(() => 'group/native-select relative w-fit has-[select:disabled]:opacity-50');
+    // Local change: the `[value]` binding is applied once, so a value written before its options exist (lookups that
+    // load asynchronously) left the browser showing the first option. Re-apply the model value whenever the projected
+    // options change so the visible selection always matches the model, whatever the load order.
+    afterRenderEffect(() => {
+      this._options();
+      const value = this.value() ?? '';
+      const select = this._select().nativeElement;
+      if (select.value !== value) select.value = value;
+    });
   }
 
   protected _valueChanged(event: Event): void {

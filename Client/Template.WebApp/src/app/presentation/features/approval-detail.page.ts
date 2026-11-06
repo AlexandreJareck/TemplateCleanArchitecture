@@ -19,6 +19,7 @@ import { APPROVAL_PORT } from '../state/ports';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
 import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
+import { InstantPipe } from '../shared/display';
 
 type Mode = 'Approved' | 'Rejected' | 'delegate' | 'cancel';
 
@@ -32,6 +33,7 @@ type Mode = 'Approved' | 'Rejected' | 'delegate' | 'cancel';
   selector: 'app-approval-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    InstantPipe,
     ...HlmTextareaImports,
     ...HlmTableImports,
     ...HlmNativeSelectImports,
@@ -163,16 +165,5 @@ export class ApprovalDetailPage {
 
   due(dueAt: string | undefined): DueState {
     return ApprovalUseCases.dueState(dueAt, Date.now());
-  }
-
-  instant(value: string | undefined) {
-    if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        }).format(date);
   }
 }

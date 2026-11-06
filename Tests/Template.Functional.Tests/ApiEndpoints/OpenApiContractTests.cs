@@ -11,7 +11,7 @@ namespace Template.Functional.Tests.ApiEndpoints;
 /// </summary>
 public sealed class OpenApiContractTests(CustomWebApplicationFactory<Program> factory) : IClassFixture<CustomWebApplicationFactory<Program>>
 {
-    private const string BaselineDirectory = "docs/refactoring/baseline-phase-32";
+    private const string BaselineDirectory = "docs/refactoring/baseline-f06-actor-names";
 
     private readonly HttpClient client = factory.CreateClient();
 

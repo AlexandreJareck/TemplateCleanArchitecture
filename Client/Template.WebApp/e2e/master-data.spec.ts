@@ -207,7 +207,10 @@ test('login, permission-aware shell, refresh race, conflict, logout and accessib
   await page.getByRole('button', { name: 'Editar' }).click();
   await page.getByLabel('Nome').fill('Financeiro novo');
   await page.getByRole('button', { name: 'Salvar' }).click();
-  await expect(page.getByText('concurrency.version_mismatch')).toBeVisible();
+  // Localized message first; the stable code and trace stay under optional technical details (F-04).
+  await expect(page.getByText('Este registro foi alterado por outra pessoa.')).toBeVisible();
+  await expect(page.getByText('trace-conflict')).toBeHidden();
+  await page.getByText('Detalhes técnicos').click();
   await expect(page.getByText('trace-conflict')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden();
@@ -230,9 +233,9 @@ test('supplier detail/status and enrichment failure remain actionable', async ({
   await page.getByRole('button', { name: 'Ativar', exact: true }).click();
   await page.getByLabel('Motivo').fill('Cadastro conferido para ativação');
   await page.getByRole('button', { name: 'Confirmar' }).click();
-  await expect(page.getByText('Active', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Ativo', { exact: true }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Consultar CNPJ' }).click();
-  await expect(page.getByText('enrichment.unavailable')).toBeVisible();
+  await expect(page.getByText('Serviço indisponível', { exact: true })).toBeVisible();
 });
 
 test('keyboard only: sign in, skip to content, open a page from the menu and use the drawer', async ({
@@ -305,8 +308,8 @@ test('catalog empty, filter and create journey uses the isolated HTTP fixture', 
   await page.getByLabel('ID relacionado').fill('c1');
   await page.getByLabel('ID da unidade').fill('u1');
   await page.getByRole('button', { name: 'Salvar' }).click();
-  await expect(page.getByText('validation')).toBeVisible();
-  await expect(page.getByText('description: Descrição inválida')).toBeVisible();
+  await expect(page.getByText('Revise os campos informados')).toBeVisible();
+  await expect(page.getByText('Descrição: Valor inválido.')).toBeVisible();
   await page.getByRole('button', { name: 'Salvar' }).click();
   await expect(drawer).toBeHidden();
   await expect(page.getByRole('button', { name: 'Cadastrar' })).toBeFocused();

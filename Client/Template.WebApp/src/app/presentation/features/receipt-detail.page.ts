@@ -15,6 +15,7 @@ import { PURCHASING_PORT } from '../state/ports';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
 import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
+import { LocalDatePipe, InstantPipe } from '../shared/display';
 
 /**
  * Receipt detail (Phase 32, `/receiving/receipts/:id`): the posted quantities, discrepancies, corrections and the
@@ -25,6 +26,8 @@ import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
   selector: 'app-receipt-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    LocalDatePipe,
+    InstantPipe,
     ...HlmTextareaImports,
     ...HlmTableImports,
     ...HlmNativeSelectImports,
@@ -101,16 +104,5 @@ export class ReceiptDetailPage {
         status: this.transloco.translate(`purchasing.statuses.${result.value.order.status}`),
       }),
     );
-  }
-
-  instant(value: string | undefined) {
-    if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        }).format(date);
   }
 }

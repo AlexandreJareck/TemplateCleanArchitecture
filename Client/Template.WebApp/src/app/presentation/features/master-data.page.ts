@@ -1,13 +1,15 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { form, FormField, required } from '@angular/forms/signals';
+import { form, FormField, maxLength, required, validate } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import type { ApplicationError } from '@application/common/application-error';
-import type {
-  MasterDataInput,
-  MasterDataItem,
-  MasterDataKind,
-  Page,
+import {
+  MASTER_DATA_CODE_RULES,
+  MASTER_DATA_NAME_MAX_LENGTH,
+  MasterDataUseCases,
+  type MasterDataInput,
+  type MasterDataItem,
+  type MasterDataKind,
+  type Page,
 } from '@application/master-data/master-data';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -19,6 +21,7 @@ import { MASTER_DATA_PORT } from '../state/ports';
 import { SessionFacade } from '../state/session.facade';
 import { ActionConfirmation } from '../shared/action-confirmation';
 import { FormDrawer } from '../shared/form-drawer';
+import { ProblemFeedback } from '../shared/procurement-ui';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
 
@@ -36,7 +39,7 @@ import { HlmTableImports } from '@presentation/shared-ui/table';
     ActionConfirmation,
     FormDrawer,
     NgIcon,
-    NgTemplateOutlet,
+    ProblemFeedback,
   ],
   providers: [provideIcons({ lucidePlus })],
   templateUrl: './master-data.page.html',
@@ -76,10 +79,27 @@ export class MasterDataPage {
     ownerUserId: '',
     kind: 'Good' as 'Good' | 'Service',
   });
+  readonly codeRule = MASTER_DATA_CODE_RULES[this.kind];
   readonly itemForm = form(this.model, (path) => {
     required(path.code);
     required(path.name);
+    maxLength(path.name, MASTER_DATA_NAME_MAX_LENGTH);
+    validate(path.code, ({ value }) => {
+      const problem = MasterDataUseCases.codeProblem(this.kind, value());
+      return problem ? { kind: `code-${problem}` } : undefined;
+    });
   });
+  /** Inline message of the first code/name problem, shown once the field was touched (never before typing). */
+  fieldMessage(field: 'code' | 'name'): string | undefined {
+    const state = this.itemForm[field]();
+    if (!state.touched() && !state.dirty()) return undefined;
+    const error = state.errors()[0];
+    if (!error) return undefined;
+    if (error.kind === 'required') return 'validation.required';
+    if (error.kind === 'maxLength') return 'validation.nameLength';
+    if (error.kind === 'code-length') return 'validation.codeLength';
+    return 'validation.codeFormat';
+  }
   constructor() {
     void this.load();
   }
@@ -141,7 +161,8 @@ export class MasterDataPage {
     event.preventDefault();
     if (this.itemForm().invalid()) return;
     this.saving.set(true);
-    const input: MasterDataInput = this.model();
+    const model = this.model();
+    const input: MasterDataInput = { ...model, code: MasterDataUseCases.normalizeCode(model.code) };
     const selected = this.selected();
     const result = selected
       ? await this.port.update(this.kind, selected, input)
@@ -159,8 +180,5 @@ export class MasterDataPage {
     const result = await this.port.changeActive(this.kind, item, !item.active, reason);
     if (result.ok) await this.load();
     else this.error.set(result.error);
-  }
-  fieldErrors(error: ApplicationError) {
-    return Object.entries(error.fieldErrors ?? {});
   }
 }

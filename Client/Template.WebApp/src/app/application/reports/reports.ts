@@ -87,6 +87,11 @@ export interface ReportPort {
   download(job: ReportJob, signal?: AbortSignal): Promise<Result<void>>;
 }
 
+/** Longest supplier-quotes window the API accepts (`ReportParameters.MaxWindowDays`). */
+export const REPORT_MAX_WINDOW_DAYS = 366;
+
+export type ReportParameterProblem = 'required' | 'range' | 'window' | 'invalid';
+
 /** Client polling policy (api-guidelines §8): 2 s doubling up to 30 s, then "still running" after 10 minutes. */
 export const POLLING = { firstDelayMs: 2_000, maxDelayMs: 30_000, giveUpAfterMs: 600_000 } as const;
 
@@ -169,6 +174,48 @@ export class ReportUseCases {
       onUpdate(current);
     }
     return { kind: 'finished', job: current };
+  }
+
+  /**
+   * Parameter names the type requires, from the catalog (`name` required, `name?` optional, RPT-009); the static
+   * per-type list is used only while the catalog entry is missing.
+   */
+  static requiredParameters(
+    type: ReportType,
+    info: ReportTypeInfo | undefined,
+  ): readonly (keyof ReportParameters)[] {
+    const fallback: Record<ReportType, readonly (keyof ReportParameters)[]> = {
+      RequisitionPdf: ['requisitionId'],
+      QuoteComparisonPdf: ['rfqId'],
+      BudgetConsumptionXlsx: ['fiscalPeriodId'],
+      SupplierQuotesXlsx: ['from', 'to'],
+    };
+    if (!info || info.parameters.length === 0) return fallback[type];
+    return info.parameters
+      .filter((name) => !name.endsWith('?'))
+      .map((name) => name as keyof ReportParameters);
+  }
+
+  /**
+   * Client-side mirror of the request checks (RPT-001): required parameters of the chosen type, the date order and
+   * the 366-day window. The API remains authoritative and re-validates everything.
+   */
+  static validate(
+    type: ReportType,
+    info: ReportTypeInfo | undefined,
+    values: ReportParameters,
+  ): Partial<Record<keyof ReportParameters, ReportParameterProblem>> {
+    const problems: Partial<Record<keyof ReportParameters, ReportParameterProblem>> = {};
+    const parameters = ReportUseCases.parametersFor(type, values);
+    for (const name of ReportUseCases.requiredParameters(type, info))
+      if (parameters[name] === undefined) problems[name] = 'required';
+    if (type === 'SupplierQuotesXlsx' && parameters.from && parameters.to) {
+      const days = (Date.parse(parameters.to) - Date.parse(parameters.from)) / 86_400_000 + 1;
+      if (Number.isNaN(days)) problems.to = 'invalid';
+      else if (days < 1) problems.to = 'range';
+      else if (days > REPORT_MAX_WINDOW_DAYS) problems.to = 'window';
+    }
+    return problems;
   }
 
   /** Translation key of a safe failure code (RPT-005); unknown codes fall back to a generic message. */

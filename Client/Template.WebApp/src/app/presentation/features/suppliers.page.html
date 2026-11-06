@@ -18,22 +18,8 @@
     </button>
   }
 </div>
-<ng-template #problemFeedback>
-  @if (error(); as problem) {
-    <div class="feedback" role="alert">
-      <strong>{{ problem.code }}</strong
-      ><span>{{ problem.detail }}</span>
-      @if (problem.traceId) {
-        <small>Trace: {{ problem.traceId }}</small>
-      }
-      @for (entry of fieldErrors(problem); track entry[0]) {
-        <span>{{ entry[0] }}: {{ entry[1].join(', ') }}</span>
-      }
-    </div>
-  }
-</ng-template>
 @if (!drawerOpen()) {
-  <ng-container [ngTemplateOutlet]="problemFeedback" />
+  <app-problem-feedback [error]="error()" (reload)="load()" />
 }
 <nav class="pager" aria-label="Paginação">
   <button hlmBtn variant="outline" type="button" [disabled]="page().page <= 1" (click)="move(-1)">
@@ -70,11 +56,20 @@
       <tbody hlmTBody>
         @for (item of page().items; track item.id) {
           <tr hlmTr>
-            <td hlmTd>{{ item.legalName }}</td>
-            <td hlmTd>{{ item.taxId }}</td>
-            <td hlmTd>{{ item.status }}</td>
+            <td hlmTd [attr.data-label]="'fields.name' | transloco">{{ item.legalName }}</td>
+            <td hlmTd data-label="CNPJ">{{ item.taxId }}</td>
+            <td hlmTd [attr.data-label]="'fields.status' | transloco">
+              <app-status-badge prefix="supplierStatuses" [status]="item.status" />
+            </td>
             <td hlmTd>
-              <button hlmBtn size="sm" variant="outline" type="button" (click)="open(item.id)">
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                [attr.aria-label]="('common.details' | transloco) + ': ' + item.legalName"
+                (click)="open(item.id)"
+              >
                 {{ 'common.details' | transloco }}
               </button>
             </td>
@@ -84,15 +79,15 @@
     </table>
   </div>
 }
-@if (canManage) {
-  <app-form-drawer
-    [open]="drawerOpen()"
-    [wide]="true"
-    [title]="selected()?.legalName ?? ('common.create' | transloco)"
-    [description]="'nav.suppliers' | transloco"
-    (closed)="close()"
-  >
-    <ng-container [ngTemplateOutlet]="problemFeedback" />
+<app-form-drawer
+  [open]="drawerOpen()"
+  [wide]="true"
+  [title]="selected()?.legalName ?? ('common.create' | transloco)"
+  [description]="'nav.suppliers' | transloco"
+  (closed)="close()"
+>
+  <app-problem-feedback [error]="error()" (reload)="reopen()" />
+  @if (canManage) {
     <form class="drawer-form" (submit)="save($event)" novalidate>
       <label for="legalName">{{ 'supplier.legalName' | transloco }}</label
       ><input id="legalName" hlmInput [formField]="supplierForm.legalName" /><label
@@ -120,22 +115,78 @@
         </button>
       </div>
     }
-    @if (selected(); as detail) {
-      <div class="actions status-actions">
-        <strong>{{ detail.status }}</strong
-        ><span>{{ detail.missingForActivation }}</span>
-        @if (canStatus) {
-          <button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('activate')">
-            Ativar</button
-          ><button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('suspend')">
-            Suspender</button
-          ><button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('inactivate')">
-            Inativar</button
-          ><button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('reactivate')">
-            Reativar
-          </button>
-        }
+  } @else if (selected(); as detail) {
+    <dl class="summary-grid" data-testid="supplier-readonly">
+      <div>
+        <dt>{{ 'supplier.legalName' | transloco }}</dt>
+        <dd>{{ detail.legalName }}</dd>
       </div>
+      <div>
+        <dt>{{ 'supplier.tradeName' | transloco }}</dt>
+        <dd>{{ detail.tradeName || '—' }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'supplier.country' | transloco }}</dt>
+        <dd>{{ detail.country }}</dd>
+      </div>
+      <div>
+        <dt>CNPJ</dt>
+        <dd>{{ detail.taxId }}</dd>
+      </div>
+      @if (detail.contacts[0]; as contact) {
+        <div>
+          <dt>{{ 'supplier.contacts' | transloco }}</dt>
+          <dd>
+            {{ contact.name }}
+            @if (contact.role) {
+              · {{ contact.role }}
+            }
+            @if (contact.email) {
+              <br />{{ contact.email }}
+            }
+            @if (contact.phone) {
+              <br />{{ contact.phone }}
+            }
+          </dd>
+        </div>
+      }
+      @if (detail.addresses[0]; as address) {
+        <div>
+          <dt>{{ 'supplier.addresses' | transloco }}</dt>
+          <dd>
+            {{ address.street }}
+            @if (address.number) {
+              , {{ address.number }}
+            }
+            <br />{{ address.city }}/{{ address.state }} · {{ address.postalCode }}
+          </dd>
+        </div>
+      }
+      <div>
+        <dt>{{ 'supplier.categories' | transloco }}</dt>
+        <dd>{{ 'supplier.categoryCount' | transloco: { count: detail.categoryIds.length } }}</dd>
+      </div>
+    </dl>
+  }
+  @if (selected(); as detail) {
+    <div class="actions status-actions">
+      <app-status-badge prefix="supplierStatuses" [status]="detail.status" />
+      @if (detail.missingForActivation) {
+        <span>{{ detail.missingForActivation }}</span>
+      }
+      @if (canStatus) {
+        <button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('activate')">
+          {{ 'supplier.actions.activate' | transloco }}</button
+        ><button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('suspend')">
+          {{ 'supplier.actions.suspend' | transloco }}</button
+        ><button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('inactivate')">
+          {{ 'supplier.actions.inactivate' | transloco }}</button
+        ><button hlmBtn variant="outline" type="button" (click)="pendingStatus.set('reactivate')">
+          {{ 'supplier.actions.reactivate' | transloco }}
+        </button>
+      }
+    </div>
+    @if (canManage) {
       <div class="related-grid">
         <form (submit)="saveContact($event, detail)" novalidate>
           <h3>{{ 'supplier.contacts' | transloco }}</h3>
@@ -170,8 +221,8 @@
         <button hlmBtn type="submit">{{ 'common.save' | transloco }}</button>
       </form>
     }
-  </app-form-drawer>
-}
+  }
+</app-form-drawer>
 <app-action-confirmation
   [request]="
     pendingStatus()

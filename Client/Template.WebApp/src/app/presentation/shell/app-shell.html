@@ -1,4 +1,6 @@
-<a class="skip-link" href="#main-content">{{ 'shell.skip' | transloco }}</a>
+<a class="skip-link" href="#main-content" (click)="skipToContent($event)">{{
+  'shell.skip' | transloco
+}}</a>
 <div class="layout">
   <aside class="sidebar" [class.open]="open()">
     <div class="sidebar-brand">

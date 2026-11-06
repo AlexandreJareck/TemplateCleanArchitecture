@@ -93,6 +93,16 @@ export class AppShell {
         setTimeout(() => this.document.getElementById('main-content')?.focus());
       });
   }
+  /**
+   * Moves focus to the main content without changing the URL: a native `#main-content` fragment navigation reaches
+   * the router as a late `hashchange` and could cancel the next in-app navigation (WCAG 2.4.1 behavior unchanged).
+   */
+  skipToContent(event: Event) {
+    event.preventDefault();
+    const main = this.document.getElementById('main-content');
+    main?.focus();
+    main?.scrollIntoView({ block: 'start' });
+  }
   async logout(all = false) {
     await this.session.logout(all);
     await this.router.navigateByUrl('/login');

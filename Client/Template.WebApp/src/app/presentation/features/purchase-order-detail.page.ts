@@ -17,6 +17,7 @@ import { MoneyPipe, ProblemFeedback } from '../shared/procurement-ui';
 import { PURCHASING_PORT } from '../state/ports';
 import { HlmTableImports } from '@presentation/shared-ui/table';
 import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
+import { LocalDatePipe, InstantPipe } from '../shared/display';
 
 type Confirmation = 'issue' | 'cancel' | 'short-close';
 
@@ -30,6 +31,8 @@ type Confirmation = 'issue' | 'cancel' | 'short-close';
   selector: 'app-purchase-order-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    LocalDatePipe,
+    InstantPipe,
     ...HlmTextareaImports,
     ...HlmTableImports,
     TranslocoPipe,
@@ -168,17 +171,6 @@ export class PurchaseOrderDetailPage {
     return Object.entries(fields).flatMap(([field, messages]) =>
       messages.map((message) => `${field}: ${message}`),
     );
-  }
-
-  instant(value: string | undefined) {
-    if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        }).format(date);
   }
 
   private show(order: PurchaseOrder) {

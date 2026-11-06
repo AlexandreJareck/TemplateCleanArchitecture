@@ -63,7 +63,7 @@
                 }
               </td>
               <td hlmTd [attr.data-label]="'approvals.dueAt' | transloco">
-                {{ instant(item.dueAt) }}
+                {{ item.dueAt | instant }}
                 @if (due(item.dueAt); as state) {
                   @if (state === 'overdue' || state === 'due-soon') {
                     <span class="warning">{{ 'approvals.due.' + state | transloco }}</span>

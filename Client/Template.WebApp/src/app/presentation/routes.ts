@@ -169,6 +169,13 @@ export const routes: Routes = [
         title: 'Relatórios',
       },
       {
+        path: 'audit',
+        canActivate: [permissionGuard],
+        data: { permission: 'audit.read' },
+        loadComponent: () => import('./features/audit.page').then((module) => module.AuditPage),
+        title: 'Auditoria',
+      },
+      {
         path: 'sourcing',
         canActivate: [permissionGuard],
         data: { anyPermission: ['sourcing.rfqs.manage', 'sourcing.quotes.read'] },

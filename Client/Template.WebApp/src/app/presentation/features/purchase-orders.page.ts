@@ -10,6 +10,7 @@ import { MoneyPipe, ProblemFeedback } from '../shared/procurement-ui';
 import { PURCHASING_PORT } from '../state/ports';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
+import { LocalDatePipe } from '../shared/display';
 
 const EMPTY: Page<PurchaseOrderSummary> = {
   items: [],
@@ -38,6 +39,7 @@ const RECEIVING_FILTERS = ['Issued,PartiallyReceived'] as const;
   selector: 'app-purchase-orders-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    LocalDatePipe,
     ...HlmTableImports,
     ...HlmNativeSelectImports,
     TranslocoPipe,

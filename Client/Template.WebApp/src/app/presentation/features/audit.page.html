@@ -1,0 +1,225 @@
+<header class="page-title">
+  <p>{{ 'shell.breadcrumbHome' | transloco }} / {{ 'nav.audit' | transloco }}</p>
+  <h1>{{ 'nav.audit' | transloco }}</h1>
+  <p>{{ 'audit.intro' | transloco }}</p>
+</header>
+
+<section class="panel" aria-labelledby="audit-filters-title">
+  <h2 id="audit-filters-title">{{ 'audit.filters' | transloco }}</h2>
+  <form class="form-grid" novalidate (submit)="search($event)">
+    <label for="auditAction"
+      >{{ 'audit.action' | transloco }}
+      <input
+        id="auditAction"
+        hlmInput
+        autocomplete="off"
+        [placeholder]="'audit.actionPlaceholder' | transloco"
+        [value]="draft().action"
+        (input)="set('action', $any($event.target).value)"
+      />
+    </label>
+    <label for="auditResourceType"
+      >{{ 'audit.resourceType' | transloco }}
+      <input
+        id="auditResourceType"
+        hlmInput
+        autocomplete="off"
+        [placeholder]="'audit.resourceTypePlaceholder' | transloco"
+        [value]="draft().resourceType"
+        (input)="set('resourceType', $any($event.target).value)"
+      />
+    </label>
+    <label for="auditFrom"
+      >{{ 'audit.from' | transloco }}
+      <input
+        id="auditFrom"
+        hlmInput
+        type="date"
+        [value]="draft().fromDate"
+        (input)="set('fromDate', $any($event.target).value)"
+      />
+    </label>
+    <label for="auditTo"
+      >{{ 'audit.to' | transloco }}
+      <input
+        id="auditTo"
+        hlmInput
+        type="date"
+        [value]="draft().toDate"
+        [attr.aria-invalid]="problem('toDate') ? 'true' : null"
+        (input)="set('toDate', $any($event.target).value)"
+      />
+      @if (problem('toDate'); as message) {
+        <small class="field-error" role="alert">{{ message }}</small>
+      }
+    </label>
+    <label for="auditSort"
+      >{{ 'audit.sort' | transloco }}
+      <hlm-native-select
+        class="w-full"
+        selectId="auditSort"
+        [value]="draft().sort"
+        (valueChange)="set('sort', $any($event))"
+      >
+        <option hlmNativeSelectOption value="-occurredAt">
+          {{ 'audit.newestFirst' | transloco }}
+        </option>
+        <option hlmNativeSelectOption value="occurredAt">
+          {{ 'audit.oldestFirst' | transloco }}
+        </option>
+      </hlm-native-select>
+    </label>
+    <details class="wide audit-technical-filters">
+      <summary>{{ 'audit.technicalFilters' | transloco }}</summary>
+      <div class="form-grid">
+        <label for="auditResourceId"
+          >{{ 'audit.resourceId' | transloco }}
+          <input
+            id="auditResourceId"
+            hlmInput
+            autocomplete="off"
+            [value]="draft().resourceId"
+            (input)="set('resourceId', $any($event.target).value)"
+          />
+        </label>
+        <label for="auditActorId"
+          >{{ 'audit.actorId' | transloco }}
+          <input
+            id="auditActorId"
+            hlmInput
+            autocomplete="off"
+            [value]="draft().actorId"
+            [attr.aria-invalid]="problem('actorId') ? 'true' : null"
+            (input)="set('actorId', $any($event.target).value)"
+          />
+          @if (problem('actorId'); as message) {
+            <small class="field-error" role="alert">{{ message }}</small>
+          }
+        </label>
+      </div>
+    </details>
+    <div class="actions">
+      <button hlmBtn type="submit" [disabled]="loading()">
+        {{ 'common.search' | transloco }}
+      </button>
+      <button hlmBtn variant="outline" type="button" (click)="clear()">
+        {{ 'audit.clear' | transloco }}
+      </button>
+    </div>
+  </form>
+</section>
+
+<app-problem-feedback [error]="error()" [fieldLabels]="fieldLabels" (reload)="load()" />
+
+<section class="panel" aria-labelledby="audit-results-title">
+  <h2 id="audit-results-title">
+    {{ 'audit.results' | transloco: { count: records().totalItems } }}
+  </h2>
+  @if (loading()) {
+    <p role="status">{{ 'common.loading' | transloco }}</p>
+  } @else if (records().items.length === 0) {
+    <div class="empty">
+      <h3>{{ 'audit.empty' | transloco }}</h3>
+      <p>{{ 'common.emptyHelp' | transloco }}</p>
+    </div>
+  } @else {
+    <div
+      class="table-scroll"
+      role="region"
+      tabindex="0"
+      [attr.aria-label]="'audit.table' | transloco"
+    >
+      <table hlmTable class="responsive-table">
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh>{{ 'audit.occurredAt' | transloco }}</th>
+            <th hlmTh>{{ 'audit.action' | transloco }}</th>
+            <th hlmTh>{{ 'audit.resource' | transloco }}</th>
+            <th hlmTh>{{ 'audit.transition' | transloco }}</th>
+            <th hlmTh>{{ 'audit.actor' | transloco }}</th>
+            <th hlmTh>{{ 'audit.details' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          @for (record of records().items; track record.id) {
+            <tr hlmTr data-testid="audit-row">
+              <td hlmTd [attr.data-label]="'audit.occurredAt' | transloco">
+                {{ record.occurredAt | instant: 'seconds' }}
+              </td>
+              <td hlmTd [attr.data-label]="'audit.action' | transloco">
+                <code>{{ record.action }}</code>
+              </td>
+              <td hlmTd [attr.data-label]="'audit.resource' | transloco">
+                {{ record.resourceType }}
+              </td>
+              <td hlmTd [attr.data-label]="'audit.transition' | transloco">
+                @if (record.toState) {
+                  @if (record.fromState) {
+                    <app-status-badge [status]="record.fromState" /> →
+                  }
+                  <app-status-badge [status]="record.toState" />
+                } @else {
+                  —
+                }
+              </td>
+              <td hlmTd [attr.data-label]="'audit.actor' | transloco">
+                <app-actor [actorId]="record.actorId" [actorName]="record.actorName" />
+              </td>
+              <td hlmTd [attr.data-label]="'audit.details' | transloco">
+                @if (record.reason) {
+                  <p>“{{ record.reason }}”</p>
+                }
+                <details>
+                  <summary>{{ 'audit.moreDetails' | transloco }}</summary>
+                  <dl class="audit-details">
+                    @for (entry of record.details; track entry[0]) {
+                      <dt>{{ detailLabel(entry[0]) }}</dt>
+                      <dd>{{ entry[1] }}</dd>
+                    }
+                    @if (record.ruleIds.length > 0) {
+                      <dt>{{ 'audit.rules' | transloco }}</dt>
+                      <dd>{{ record.ruleIds.join(', ') }}</dd>
+                    }
+                    @if (record.resourceId) {
+                      <dt>{{ 'audit.resourceId' | transloco }}</dt>
+                      <dd>
+                        <code>{{ record.resourceId }}</code>
+                      </dd>
+                    }
+                    @if (record.actorId) {
+                      <dt>{{ 'audit.actorId' | transloco }}</dt>
+                      <dd>
+                        <code>{{ record.actorId }}</code>
+                      </dd>
+                    }
+                    @if (record.correlationId) {
+                      <dt>{{ 'audit.correlationId' | transloco }}</dt>
+                      <dd>
+                        <code>{{ record.correlationId }}</code>
+                      </dd>
+                    }
+                  </dl>
+                </details>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  <nav class="pager" [attr.aria-label]="'common.pagination' | transloco">
+    <button hlmBtn variant="outline" type="button" [disabled]="page() <= 1" (click)="move(-1)">
+      ←
+    </button>
+    <span>{{ page() }} / {{ records().totalPages || 1 }}</span>
+    <button
+      hlmBtn
+      variant="outline"
+      type="button"
+      [disabled]="page() >= records().totalPages"
+      (click)="move(1)"
+    >
+      →
+    </button>
+  </nav>
+</section>

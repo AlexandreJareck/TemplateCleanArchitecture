@@ -428,10 +428,14 @@ test('buyer starts an RFQ from the queue, invites, publishes, records quotes aft
   await page.getByLabel('Prazo', { exact: true }).fill('2027-03-04T10:00');
   await page.getByRole('button', { name: 'Publicar' }).click();
   await expect(page.getByText('Cotação publicada; convites enfileirados.')).toBeVisible();
-  await expect(page.getByTestId('deadline')).toContainText('2027-03-04');
+  // Instants render in the organization time zone in pt-BR (F-06).
+  await expect(page.getByTestId('deadline')).toContainText('04/03/2027');
 
   await enterQuote(page, 'Beta Distribuidora SA', '95');
-  await expect(page.getByText('concurrency.version-mismatch')).toBeVisible();
+  await expect(
+    page.getByText('Outra pessoa alterou este registro. Recarregue para ver a versão atual.'),
+  ).toBeVisible();
+  await page.getByText('Detalhes técnicos').click();
   await expect(page.getByText('trace-412')).toBeVisible();
   await page.getByRole('button', { name: 'Recarregar versão atual' }).click();
   await enterQuote(page, 'Beta Distribuidora SA', '95');
@@ -458,7 +462,9 @@ test('buyer starts an RFQ from the queue, invites, publishes, records quotes aft
   await rows.nth(1).getByRole('button', { name: 'Selecionar' }).click();
   await page.getByLabel('Justificativa da seleção').fill('Melhor prazo de garantia');
   await page.getByRole('button', { name: 'Enviar para aprovação' }).click();
-  await expect(page.getByText('award.non-leading-requires-waiver')).toBeVisible();
+  await expect(
+    page.getByText('Escolher uma proposta que não é a de menor preço exige uma justificativa'),
+  ).toBeVisible();
   await page
     .getByLabel('Justificativa: proposta não líder')
     .fill('Fornecedor homologado para esta linha de produtos');

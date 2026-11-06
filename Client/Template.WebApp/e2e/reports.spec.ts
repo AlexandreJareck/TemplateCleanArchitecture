@@ -138,6 +138,29 @@ async function installFixture(
     }
     if (path === '/api/v2/account/me') return json(requester(permissions));
     if (path === '/api/v2/report-jobs/types') return json(types);
+    if (path === '/api/v2/organization-settings')
+      return json({
+        baseCurrency: 'BRL',
+        timeZone: 'America/Sao_Paulo',
+        supportedCurrencies: ['BRL'],
+      });
+    if (path === '/api/v2/purchase-requisitions' && method === 'GET')
+      return json({
+        items: [
+          {
+            id: 'r1',
+            number: 'REQ-2027-000001',
+            costCenter: { id: 'cc1', code: 'TEC-INFRA', name: 'Infraestrutura' },
+            status: 'Draft',
+            estimatedTotal: { amount: '100.00', currency: 'BRL' },
+            version: '1',
+          },
+        ],
+        page: 1,
+        pageSize: 20,
+        totalItems: 1,
+        totalPages: 1,
+      });
     if (path === '/api/v2/report-jobs' && method === 'GET')
       return json({
         items: state.jobs,
@@ -222,7 +245,14 @@ test('requester asks for a requisition PDF, follows the job until ready and down
 
   const typeSelect = page.getByLabel('Tipo de relatório');
   await expect(typeSelect.locator('option')).toHaveCount(1); // only the types the server says are available
-  await page.getByLabel('Requisição (ID)').fill('r1');
+  // An empty request is blocked locally with Portuguese field feedback (F-04).
+  await page.getByRole('button', { name: 'Gerar relatório' }).click();
+  await expect(page.getByText('Obrigatório para este tipo de relatório.')).toBeVisible();
+  expect(state.postedBodies).toHaveLength(0);
+  // The requisition is chosen by its business number; the stable ID is submitted (F-07).
+  await page
+    .getByRole('combobox', { name: 'Requisição' })
+    .selectOption({ label: 'REQ-2027-000001 — TEC-INFRA · Rascunho' });
   await page.getByRole('button', { name: 'Gerar relatório' }).click();
 
   const row = page.locator(`tr[data-job="${JOB_ID}"]`);

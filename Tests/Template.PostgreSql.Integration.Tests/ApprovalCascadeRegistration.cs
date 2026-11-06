@@ -22,7 +22,15 @@ internal static class ApprovalCascadeRegistration
         services.TryAddScoped<ApprovalCascade>();
         services.TryAddSingleton<IApprovalWorkflowClient>(new RunningWorkflowClient());
         services.TryAddSingleton<IPermissionReader>(new NoPermissions());
+        services.TryAddSingleton<IUserDisplayNames>(new NoDisplayNames());
         return services;
+    }
+
+    /// <summary>Query handlers resolve timeline actor names; these fixtures assert no name, so the directory is empty.</summary>
+    private sealed class NoDisplayNames : IUserDisplayNames
+    {
+        public Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, string>>(new Dictionary<Guid, string>());
     }
 
     private sealed class RunningWorkflowClient : IApprovalWorkflowClient

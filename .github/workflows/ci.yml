@@ -45,7 +45,7 @@ jobs:
         run: pwsh Tests/Template.Integration.Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
       - name: Architecture tests
         run: dotnet test Tests/Template.Architecture.Tests/Template.Architecture.Tests.csproj --no-build --maxcpucount:1
-      # The functional suite includes OpenApiContractTests (OpenAPI v1/v2 equal docs/refactoring/baseline-phase-32).
+      # The functional suite includes OpenApiContractTests (OpenAPI v1/v2 equal docs/refactoring/baseline-f06-actor-names).
       - name: Unit, integration, functional, Worker and WorkflowFunctions tests with coverage
         run: |
           for project in Unit Integration Functional WorkflowFunctions; do

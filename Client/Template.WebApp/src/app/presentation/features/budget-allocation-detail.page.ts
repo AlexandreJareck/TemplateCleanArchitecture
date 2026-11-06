@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { form, FormField, required } from '@angular/forms/signals';
+import { form, FormField, pattern, required } from '@angular/forms/signals';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { ApplicationError } from '@application/common/application-error';
 import type { Page } from '@application/master-data/master-data';
@@ -12,12 +12,17 @@ import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-u
 import { SessionFacade } from '../state/session.facade';
 import { BUDGET_PORT } from '../state/ports';
 import { HlmTableImports } from '@presentation/shared-ui/table';
+import { InstantPipe } from '../shared/display';
 
 /** Allocation detail: totals, amount history (BUD-003), reservation visibility and reasoned amount change / close. */
+/** Amounts are typed as plain decimals with a dot and up to two decimals, the format the API accepts. */
+const DECIMAL_INPUT = /^\d{1,15}(\.\d{1,2})?$/;
+
 @Component({
   selector: 'app-budget-allocation-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    InstantPipe,
     ...HlmTableImports,
     FormField,
     RouterLink,
@@ -51,6 +56,17 @@ export class BudgetAllocationDetailPage {
   readonly amountForm = form(this.model, (path) => {
     required(path.amount);
     required(path.reason);
+    pattern(path.amount, DECIMAL_INPUT);
+  });
+  /** Localized reading of the typed amount, so `1800000.00` is confirmed as `R$ 1.800.000,00` before saving. */
+  readonly amountPreview = computed(() => {
+    const amount = this.model().amount.trim();
+    const currency = this.allocation()?.amount.currency;
+    return DECIMAL_INPUT.test(amount) && currency ? { amount, currency } : undefined;
+  });
+  readonly amountInvalid = computed(() => {
+    const state = this.amountForm.amount();
+    return (state.touched() || state.dirty()) && state.errors().some((e) => e.kind === 'pattern');
   });
   readonly closeRequest = computed<ActionConfirmationRequest | undefined>(() =>
     this.closing()

@@ -307,7 +307,10 @@ test('requester creates a draft, resolves a 412 conflict, submits against budget
   await createDraftWithLine(page);
 
   await page.getByRole('button', { name: 'Salvar' }).nth(1).click();
-  await expect(page.getByText('concurrency.version-mismatch')).toBeVisible();
+  await expect(
+    page.getByText('Outra pessoa alterou este registro. Recarregue para ver a versão atual.'),
+  ).toBeVisible();
+  await page.getByText('Detalhes técnicos').click();
   await expect(page.getByText('trace-412')).toBeVisible();
   await page.getByRole('button', { name: 'Recarregar versão atual' }).click();
   await page.getByRole('button', { name: 'Salvar' }).nth(1).click();
@@ -347,7 +350,8 @@ test('insufficient budget is explained, the draft stays editable, and the list c
 
   await page.getByRole('button', { name: 'Submeter' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submeter' }).click();
-  await expect(page.getByText('budget.insufficient')).toBeVisible();
+  await expect(page.getByText('Saldo orçamentário insuficiente.')).toBeVisible();
+  await page.getByText('Detalhes técnicos').click();
   await expect(page.getByText('BUD-005')).toBeVisible();
   await expect(page).toHaveURL(/\/requisitions\/r1\/edit$/);
   await expect(page.getByRole('button', { name: 'Submeter' })).toBeEnabled();

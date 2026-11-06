@@ -221,7 +221,8 @@
     <ul>
       @for (attachment of current.attachments; track attachment.id) {
         <li>
-          {{ attachment.fileName }} ({{ attachment.length }} B, {{ attachment.status }})
+          {{ attachment.fileName }} ({{ attachment.length | fileSize }} ·
+          {{ 'attachmentStatuses.' + attachment.status | transloco }})
           @if (!attachment.locked && editable()) {
             <button
               hlmBtn
@@ -245,15 +246,18 @@
         <label>
           {{ 'requisition.mediaType' | transloco }}
           <hlm-native-select class="w-full" [formField]="attachmentForm.mediaType">
-            @for (type of mediaTypes; track type) {
-              <option hlmNativeSelectOption [value]="type">{{ type }}</option>
+            @for (type of mediaTypes; track type.value) {
+              <option hlmNativeSelectOption [value]="type.value">
+                {{ 'mediaTypes.' + type.key | transloco }}
+              </option>
             }
           </hlm-native-select>
         </label>
         <label
           >{{ 'requisition.length' | transloco
-          }}<input hlmInput inputmode="numeric" [formField]="attachmentForm.length"
-        /></label>
+          }}<input hlmInput inputmode="numeric" [formField]="attachmentForm.length" />
+          <small class="field-hint">{{ 'requisition.lengthHint' | transloco }}</small>
+        </label>
         <div class="actions">
           <button hlmBtn variant="outline" type="submit" [disabled]="attachmentForm().invalid()">
             {{ 'requisition.addAttachment' | transloco }}

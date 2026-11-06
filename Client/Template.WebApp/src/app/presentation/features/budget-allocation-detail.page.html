@@ -36,10 +36,27 @@
     <section class="panel" aria-labelledby="amount-change-title">
       <h2 id="amount-change-title">{{ 'budget.changeAmount' | transloco }}</h2>
       <form class="form-grid" (submit)="changeAmount($event)" novalidate>
-        <label
-          >{{ 'budget.amount' | transloco
-          }}<input hlmInput inputmode="decimal" [formField]="amountForm.amount"
-        /></label>
+        <label for="allocationAmount"
+          >{{ 'budget.amount' | transloco }}
+          <input
+            id="allocationAmount"
+            hlmInput
+            inputmode="decimal"
+            aria-describedby="allocationAmountHint"
+            [attr.aria-invalid]="amountInvalid() ? 'true' : null"
+            [formField]="amountForm.amount"
+          />
+          <small id="allocationAmountHint" class="field-hint">
+            {{ 'budget.amountHint' | transloco }}
+            @if (amountPreview(); as preview) {
+              · {{ 'budget.amountPreview' | transloco }}
+              <strong data-testid="amount-preview">{{ preview | money }}</strong>
+            }
+          </small>
+          @if (amountInvalid()) {
+            <small class="field-error" role="alert">{{ 'budget.amountFormat' | transloco }}</small>
+          }
+        </label>
         <label
           >{{ 'common.reason' | transloco }}<input hlmInput [formField]="amountForm.reason"
         /></label>
@@ -63,7 +80,7 @@
           @if (change.reason) {
             · “{{ change.reason }}”
           }
-          <br /><small>{{ change.at }}</small>
+          <br /><small>{{ change.at | instant }}</small>
         </li>
       }
     </ol>

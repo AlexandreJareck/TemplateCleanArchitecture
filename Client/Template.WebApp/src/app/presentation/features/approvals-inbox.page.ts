@@ -12,6 +12,7 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { MoneyPipe, ProblemFeedback } from '../shared/procurement-ui';
 import { APPROVAL_PORT } from '../state/ports';
 import { HlmTableImports } from '@presentation/shared-ui/table';
+import { InstantPipe } from '../shared/display';
 
 const EMPTY: Page<ApprovalSummary> = {
   items: [],
@@ -29,7 +30,15 @@ const EMPTY: Page<ApprovalSummary> = {
 @Component({
   selector: 'app-approvals-inbox-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [...HlmTableImports, TranslocoPipe, RouterLink, HlmButton, MoneyPipe, ProblemFeedback],
+  imports: [
+    InstantPipe,
+    ...HlmTableImports,
+    TranslocoPipe,
+    RouterLink,
+    HlmButton,
+    MoneyPipe,
+    ProblemFeedback,
+  ],
   templateUrl: './approvals-inbox.page.html',
   styleUrl: './data-pages.css',
 })
@@ -64,16 +73,5 @@ export class ApprovalsInboxPage {
 
   due(dueAt: string | undefined): DueState {
     return ApprovalUseCases.dueState(dueAt, Date.now());
-  }
-
-  instant(value: string | undefined) {
-    if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        }).format(date);
   }
 }

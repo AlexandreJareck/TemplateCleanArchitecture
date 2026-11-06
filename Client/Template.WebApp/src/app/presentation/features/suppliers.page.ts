@@ -1,4 +1,3 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import type { ApplicationError } from '@application/common/application-error';
@@ -20,8 +19,13 @@ import { MASTER_DATA_PORT } from '../state/ports';
 import { SessionFacade } from '../state/session.facade';
 import { ActionConfirmation } from '../shared/action-confirmation';
 import { FormDrawer } from '../shared/form-drawer';
+import { ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
 import { HlmTableImports } from '@presentation/shared-ui/table';
 
+/**
+ * Supplier list and detail drawer. `suppliers.read` opens a read-only detail; editing, enrichment and related data
+ * need `suppliers.manage`, and lifecycle actions need `suppliers.status.change` (the API enforces both).
+ */
 @Component({
   selector: 'app-suppliers-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,7 +38,8 @@ import { HlmTableImports } from '@presentation/shared-ui/table';
     ActionConfirmation,
     FormDrawer,
     NgIcon,
-    NgTemplateOutlet,
+    ProblemFeedback,
+    StatusBadge,
   ],
   providers: [provideIcons({ lucidePlus })],
   templateUrl: './suppliers.page.html',
@@ -140,6 +145,10 @@ export class SuppliersPage {
       this.categoriesModel.set({ ids: result.value.categoryIds.join(', ') });
     } else this.error.set(result.error);
   }
+  reopen() {
+    const item = this.selected();
+    if (item) void this.open(item.id);
+  }
   async save(event: Event) {
     event.preventDefault();
     if (this.supplierForm().invalid()) return;
@@ -211,8 +220,5 @@ export class SuppliersPage {
   private applyDetail(result: Awaited<ReturnType<typeof this.port.getSupplier>>) {
     if (result.ok) this.selected.set(result.value);
     else this.error.set(result.error);
-  }
-  fieldErrors(error: ApplicationError) {
-    return Object.entries(error.fieldErrors ?? {});
   }
 }

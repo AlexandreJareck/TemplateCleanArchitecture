@@ -14,20 +14,22 @@ import { HlmButton } from '@presentation/shared-ui/button';
 import { HlmInput } from '@presentation/shared-ui/input';
 import { ActionConfirmation, type ActionConfirmationRequest } from '../shared/action-confirmation';
 import { MoneyPipe, ProblemFeedback, StatusBadge } from '../shared/procurement-ui';
+import { FileSizePipe } from '../shared/display';
 import { MASTER_DATA_PORT, REQUISITION_PORT } from '../state/ports';
 import { HlmNativeSelectImports } from '@presentation/shared-ui/native-select';
 import { HlmTableImports } from '@presentation/shared-ui/table';
 import { HlmTextareaImports } from '@presentation/shared-ui/textarea';
 
 const CURRENCIES = ['BRL', 'USD', 'EUR'] as const;
+/** Media types FIL-002 accepts, with a translation key for the visible label (MIME types are not shown). */
 const MEDIA_TYPES = [
-  'application/pdf',
-  'image/png',
-  'image/jpeg',
-  'text/plain',
-  'text/csv',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  { value: 'application/pdf', key: 'pdf' },
+  { value: 'image/png', key: 'png' },
+  { value: 'image/jpeg', key: 'jpeg' },
+  { value: 'text/plain', key: 'text' },
+  { value: 'text/csv', key: 'csv' },
+  { value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', key: 'xlsx' },
+  { value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', key: 'docx' },
 ] as const;
 
 type PendingAction = 'submit' | 'discard' | undefined;
@@ -51,6 +53,7 @@ type PendingAction = 'submit' | 'discard' | undefined;
     HlmInput,
     ActionConfirmation,
     MoneyPipe,
+    FileSizePipe,
     ProblemFeedback,
     StatusBadge,
   ],
@@ -68,7 +71,20 @@ export class RequisitionEditorPage {
   readonly requisition = signal<Requisition | undefined>(undefined);
   readonly availability = signal<BudgetAvailability | undefined>(undefined);
   readonly error = signal<ApplicationError | undefined>(undefined);
-  readonly costCenters = signal<readonly MasterDataItem[]>([]);
+  private readonly activeCostCenters = signal<readonly MasterDataItem[]>([]);
+  /**
+   * Active cost centers plus the one the draft already references, so the persisted association is always selectable
+   * (an inactive or not-yet-listed cost center would otherwise render as an empty selection and invite a silent change).
+   */
+  readonly costCenters = computed<readonly MasterDataItem[]>(() => {
+    const options = this.activeCostCenters();
+    const persisted = this.requisition()?.costCenter;
+    if (!persisted || options.some((option) => option.id === persisted.id)) return options;
+    return [
+      { id: persisted.id, code: persisted.code, name: persisted.name, active: false, version: '' },
+      ...options,
+    ];
+  });
   readonly categories = signal<readonly MasterDataItem[]>([]);
   readonly units = signal<readonly MasterDataItem[]>([]);
   readonly catalogItems = signal<readonly MasterDataItem[]>([]);
@@ -318,7 +334,7 @@ export class RequisitionEditorPage {
       load('units'),
       load('catalog-items'),
     ]);
-    this.costCenters.set(costCenters);
+    this.activeCostCenters.set(costCenters);
     this.categories.set(categories);
     this.units.set(units);
     this.catalogItems.set(items);

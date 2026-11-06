@@ -1,0 +1,25 @@
+.wide {
+  grid-column: 1 / -1;
+}
+.audit-technical-filters summary {
+  cursor: pointer;
+  width: fit-content;
+  color: var(--muted-foreground);
+}
+.audit-technical-filters .form-grid {
+  margin-top: var(--space-3);
+}
+.audit-details {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.25rem var(--space-3);
+  margin: var(--space-2) 0 0;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+.audit-details dt {
+  font-weight: 600;
+}
+.audit-details dd {
+  margin: 0;
+}

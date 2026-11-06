@@ -13,6 +13,8 @@ export interface RequisitionTimelineEntryView {
   /** @nullable */
   actorId?: string | null;
   /** @nullable */
+  actorName?: string | null;
+  /** @nullable */
   from?: string | null;
   /** @nullable */
   to?: string | null;

@@ -67,7 +67,7 @@
       </div>
       <div>
         <dt>{{ 'sourcing.deadline' | transloco }}</dt>
-        <dd data-testid="deadline">{{ current.deadline ?? '—' }}</dd>
+        <dd data-testid="deadline">{{ current.deadline | instant }}</dd>
       </div>
       <div>
         <dt>{{ 'sourcing.policy' | transloco }}</dt>
@@ -456,7 +456,7 @@
       <p>
         {{ 'sourcing.validQuotes' | transloco }}: {{ comparison.validQuoteCount }} /
         {{ comparison.requiredValidQuotes }} · {{ 'sourcing.baseCurrency' | transloco }}
-        {{ comparison.baseCurrency }} · {{ comparison.closeLocalDate }}
+        {{ comparison.baseCurrency }} · {{ comparison.closeLocalDate | localDate }}
       </p>
       @for (warning of comparison.warnings; track warning) {
         <p class="warning" data-testid="comparison-warning">{{ warningLabel(warning) }}</p>
@@ -593,7 +593,7 @@
         @for (rate of current.exchangeRates; track $index) {
           <li>
             1 {{ rate.fromCurrency }} = {{ rate.rate }} {{ rate.toCurrency }} · {{ rate.source }} ·
-            {{ rate.quoteDate }} · {{ rate.purpose }}
+            {{ rate.quoteDate | localDate }} · {{ rate.purpose }}
           </li>
         }
       </ul>
@@ -635,8 +635,9 @@
             · “{{ entry.reason }}”
           }
           <br /><small
-            >{{ entry.at }} · {{ entry.actorId ?? ('requisition.systemActor' | transloco) }}</small
-          >
+            >{{ entry.at | instant }} ·
+            <app-actor [actorId]="entry.actorId" [actorName]="entry.actorName"
+          /></small>
         </li>
       }
     </ol>
