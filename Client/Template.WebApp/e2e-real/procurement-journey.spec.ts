@@ -266,8 +266,15 @@ test('SC-01 requisition to receipt, report and history on the real stack', async
     const requisition = page.getByRole('combobox', { name: 'Requisição' });
     await expect(requisition.locator('option', { hasText: requisitionNumber })).toHaveCount(1);
     await requisition.selectOption(requisitionId);
+    // Follow the job this run created; earlier runs leave their own jobs in the list.
+    const created = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        new URL(response.url()).pathname === '/api/v2/report-jobs',
+    );
     await page.getByRole('button', { name: 'Gerar relatório' }).click();
-    const row = page.locator('tr[data-job]').first();
+    const job = (await (await created).json()) as { id: string };
+    const row = page.locator(`tr[data-job="${job.id}"]`);
     await expect(row).toContainText('Pronto', { timeout: 120_000 });
     const download = page.waitForEvent('download');
     await row.getByRole('button', { name: 'Baixar' }).click();
