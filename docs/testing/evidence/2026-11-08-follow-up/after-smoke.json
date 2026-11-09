@@ -1,0 +1,59 @@
+{
+  "requester-desktop": {
+    "auditLinks": 0,
+    "deniedUrl": "/forbidden",
+    "detailHasBusinessDate": true,
+    "detailHasYou": true,
+    "detailRawIsoInstant": false,
+    "detailOverflow": 0,
+    "costCenterValueNonEmpty": true,
+    "costCenterLabel": "TEC-INFRA — Infraestrutura e Cloud",
+    "attachmentNotice": "Nesta versão, a requisição registra apenas os dados do anexo (nome, tipo e tamanho); o arquivo em si não é enviado nem armazenado. Guarde o documento original para consulta.",
+    "writes": [],
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "requester-mobile": {
+    "auditLinks": 0,
+    "deniedUrl": "/forbidden",
+    "detailHasBusinessDate": true,
+    "detailHasYou": true,
+    "detailRawIsoInstant": false,
+    "detailOverflow": 0,
+    "writes": [],
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "admin": {
+    "saveDisabled": true,
+    "focusRestored": true,
+    "writes": [],
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "auditor": {
+    "rawStatusActiveCount": 0,
+    "auditHasActorNames": true,
+    "auditRawIsoInstant": false,
+    "auditAxe": [],
+    "reportTypes": [
+      " Requisição de compra (Pdf) ",
+      " Mapa comparativo de cotações (Pdf) ",
+      " Consumo orçamentário (Xlsx) ",
+      " Cotações de fornecedores (Xlsx) "
+    ],
+    "requisitionOptions": [
+      " Selecione… ",
+      "REQ-2026-000006 — TEC-INFRA · Encerrada",
+      "REQ-2026-000005 — TEC-INFRA · Encerrada",
+      "REQ-2026-000004 — TEC-INFRA · Encerrada",
+      "REQ-2026-000001 — TEC-INFRA · Rascunho"
+    ],
+    "requisitionOptionHasUuid": false,
+    "reportsAxe": [],
+    "loggedOut": true,
+    "writes": [],
+    "consoleErrors": [],
+    "serverErrors": []
+  }
+}

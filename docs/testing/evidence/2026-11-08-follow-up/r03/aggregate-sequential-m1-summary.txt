@@ -1,0 +1,2 @@
+START 2026-11-08T19:34:41.6613904-03:00 dotnet test TemplateCleanArchitecture.App.slnf --no-build --blame-hang-timeout 15m --blame-hang-dump-type none --diag <scratchpad>\r03\sequential-m1\diag\vstest.log --results-directory <scratchpad>\r03\sequential-m1\results --logger trx --logger console;verbosity=normal -m:1
+END 2026-11-08T20:05:00.6581095-03:00 EXIT=1 ELAPSED=00:30:18.9900771

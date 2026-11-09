@@ -1,0 +1,38 @@
+START 2026-11-08T22:55:41.5780252-03:00 dotnet test TemplateCleanArchitecture.App.slnf --no-build --blame-hang-timeout 15m --blame-hang-dump-type none --diag <scratchpad>\r03\final-default\diag\vstest.log --results-directory <scratchpad>\r03\final-default\results --logger trx --logger console;verbosity=normal
+WATCHDOG 2026-11-08T23:40:50.8467777-03:00: still running after 45 min; killing tree
+ÊXITO: o processo com PID 38604 (processo filho de PID 22444) foi finalizado.
+ÊXITO: o processo com PID 26960 (processo filho de PID 47812) foi finalizado.
+ÊXITO: o processo com PID 22444 (processo filho de PID 23636) foi finalizado.
+ÊXITO: o processo com PID 47812 (processo filho de PID 23636) foi finalizado.
+ÊXITO: o processo com PID 23636 (processo filho de PID 26672) foi finalizado.
+ÊXITO: o processo com PID 27940 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 45792 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 21084 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 25344 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 19280 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 16332 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 37028 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 26672 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 39704 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 52504 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 964 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 47056 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 53384 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 54876 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 2448 (processo filho de PID 59140) foi finalizado.
+ÊXITO: o processo com PID 59140 (processo filho de PID 50988) foi finalizado.
+END 2026-11-08T23:40:51.5973699-03:00 EXIT=1 ELAPSED=00:45:10.0041220
+
+template.architecture.tests.dll total=77 passed=77 failed=0
+template.unit.tests.dll total=839 passed=839 failed=0
+template.integration.tests.dll total=268 passed=267 failed=1
+  FAIL Template.Integration.Tests.Reporting.ReportRenderingAdapterTests.T_NFR_PERF_6_a_TenThousandRowWorkbook_IsWrittenWellUnderThirtySeconds duration=00:00:34.9764940 :: Shouldly.ShouldAssertException : stopwatch.Elapsed should be less than 00:00:30 but was 00:00:34.7205005
+template.workflowfunctions.tests.dll total=26 passed=26 failed=0
+template.worker.tests.dll total=5 passed=5 failed=0
+template.rabbitmq.integration.tests.dll total=30 passed=30 failed=0
+template.azurite.integration.tests.dll total=6 passed=6 failed=0
+template.redis.integration.tests.dll total=23 passed=23 failed=0
+template.elasticsearch.integration.tests.dll total=13 passed=13 failed=0
+template.postgresql.integration.tests.dll total=78 passed=78 failed=0
+template.workflowfunctions.integration.tests.dll total=7 passed=7 failed=0
+template.performance.tests.dll total=5 passed=5 failed=0

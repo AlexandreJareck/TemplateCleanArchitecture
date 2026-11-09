@@ -1,0 +1,27 @@
+START 2026-11-08T21:55:35.6480425-03:00 dotnet test TemplateCleanArchitecture.App.slnf --no-build --blame-hang-timeout 15m --blame-hang-dump-type none --diag <scratchpad>\r03\final-m1\diag\vstest.log --results-directory <scratchpad>\r03\final-m1\results --logger trx --logger console;verbosity=normal -m:1
+WATCHDOG 2026-11-08T22:55:41.0046234-03:00: still running after 60 min; killing tree
+ÊXITO: o processo com PID 6876 (processo filho de PID 55324) foi finalizado.
+ÊXITO: o processo com PID 48680 (processo filho de PID 41620) foi finalizado.
+ÊXITO: o processo com PID 55324 (processo filho de PID 35360) foi finalizado.
+ÊXITO: o processo com PID 41620 (processo filho de PID 35360) foi finalizado.
+ÊXITO: o processo com PID 35360 (processo filho de PID 1828) foi finalizado.
+ÊXITO: o processo com PID 1828 (processo filho de PID 50988) foi finalizado.
+END 2026-11-08T22:55:41.4882016-03:00 EXIT=1 ELAPSED=01:00:05.8325027
+
+template.unit.tests.dll total=839 passed=839 failed=0
+template.functional.tests.dll total=392 passed=387 failed=5
+  FAIL Template.Functional.Tests.ApiEndpoints.v2.SourcingFunctionalTests.T_SRC_013_b_ProviderDisabledInTest_GivesAnIncompleteComparison_AndTheManagerRecordsAManualRate duration=00:02:20.6009128 :: Shouldly.ShouldAssertException : manual.StatusCode should be HttpStatusCode.OK but was HttpStatusCode.BadRequest 
+  FAIL Template.Functional.Tests.ApiEndpoints.v2.PurchasingFunctionalTests.T_PUR_008_T_PUR_010_IssuedCancelScope_HasReceiptsGuard_AndShortCloseRelease duration=00:19:20.7284979 :: System.InvalidOperationException : The requested operation requires an element of type 'String', but the target element has type 'Number'.
+  FAIL Template.Functional.Tests.Security.AuthenticationRateLimitFunctionalTests.EleventhLoginForTheSameUserName_Is429_WithRetryAfter_AndOtherEndpointsStayOpen duration=00:05:13.9103615 :: Shouldly.ShouldAssertException : limited.StatusCode should be HttpStatusCode.TooManyRequests but was HttpStatusCode.OK
+  FAIL Template.Functional.Tests.Security.AuthenticationRateLimitFunctionalTests.EleventhRefreshFromTheSameAddress_Is429_AndIsAuditedOnce duration=00:03:08.6444268 :: Shouldly.ShouldAssertException : last should be HttpStatusCode.TooManyRequests but was HttpStatusCode.OK
+  FAIL Template.Functional.Tests.Security.SessionEndpointsFunctionalTests.Refresh_ReplayInsideGrace_Is409_AndTheSessionSurvives duration=00:00:40.1375781 :: Shouldly.ShouldAssertException : replay.StatusCode should be HttpStatusCode.Conflict but was HttpStatusCode.Unauthorized
+template.integration.tests.dll total=268 passed=268 failed=0
+template.architecture.tests.dll total=77 passed=77 failed=0
+template.postgresql.integration.tests.dll total=78 passed=78 failed=0
+template.rabbitmq.integration.tests.dll total=30 passed=30 failed=0
+template.elasticsearch.integration.tests.dll total=13 passed=13 failed=0
+template.redis.integration.tests.dll total=23 passed=23 failed=0
+template.azurite.integration.tests.dll total=6 passed=6 failed=0
+template.worker.tests.dll total=5 passed=5 failed=0
+template.workflowfunctions.tests.dll total=26 passed=26 failed=0
+template.workflowfunctions.integration.tests.dll total=7 passed=7 failed=0
