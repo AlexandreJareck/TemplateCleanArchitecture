@@ -104,17 +104,20 @@ public sealed class SourcingFunctionalTests(ProcurementWebApplicationFactory fac
         Strings(closed.GetProperty("comparison").GetProperty("missingRateCurrencies")).ShouldBe(["USD"]);
         closed.GetProperty("exchangeRates").GetArrayLength().ShouldBe(0); // never guessed
         etag = closing.Headers.ETag!.Tag;
+        // CALC-004 compares the rate date with the close date in the organization time zone; the UTC date is a day
+        // ahead in the evening (America/Sao_Paulo), so the test sends the date the comparison reports.
+        var closeDate = closed.GetProperty("comparison").GetProperty("closeLocalDate").GetString();
 
         using var incomplete = await sourcing.Buyer.PostAsync($"{SourcingRoutes.Rfqs}/{id}/award",
             new { quoteRevisionId = closed.GetProperty("comparison").GetProperty("entries")[0].GetProperty("quoteRevisionId").GetGuid() }, etag);
         incomplete.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         (await ApiUser.CodeAsync(incomplete)).ShouldBe("award.comparison-incomplete");
         using var buyerRate = await sourcing.Buyer.PostAsync($"{SourcingRoutes.Rfqs}/{id}/exchange-rates",
-            new { currency = "USD", rate = "5.4321", quoteDate = Today(), reason = Reason }, etag);
+            new { currency = "USD", rate = "5.4321", quoteDate = closeDate, reason = Reason }, etag);
         buyerRate.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         using var manual = await sourcing.Manager.PostAsync($"{SourcingRoutes.Rfqs}/{id}/exchange-rates",
-            new { currency = "USD", rate = "5.4321", quoteDate = Today(), reason = Reason }, etag);
+            new { currency = "USD", rate = "5.4321", quoteDate = closeDate, reason = Reason }, etag);
         manual.StatusCode.ShouldBe(HttpStatusCode.OK, await manual.Content.ReadAsStringAsync());
         var completed = await ApiUser.ReadAsync(manual);
         completed.GetProperty("comparison").GetProperty("status").GetString().ShouldBe("Complete");
@@ -255,8 +258,6 @@ public sealed class SourcingFunctionalTests(ProcurementWebApplicationFactory fac
         using var list = await sourcing.Buyer.GetAsync($"{SourcingRoutes.Rfqs}?requisitionId={requisition}&sort=roundNumber");
         (await ApiUser.ReadAsync(list)).GetProperty("items").EnumerateArray().Select(item => item.GetProperty("status").GetString()).ShouldBe(["Cancelled", "Draft"]);
     }
-
-    private static string Today() => DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     private static string[] Strings(JsonElement array) => array.EnumerateArray().Select(item => item.GetString()!).ToArray();
 }
