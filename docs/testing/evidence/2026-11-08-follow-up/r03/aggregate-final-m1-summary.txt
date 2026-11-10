@@ -10,7 +10,7 @@ END 2026-11-08T22:55:41.4882016-03:00 EXIT=1 ELAPSED=01:00:05.8325027
 
 template.unit.tests.dll total=839 passed=839 failed=0
 template.functional.tests.dll total=392 passed=387 failed=5
-  FAIL Template.Functional.Tests.ApiEndpoints.v2.SourcingFunctionalTests.T_SRC_013_b_ProviderDisabledInTest_GivesAnIncompleteComparison_AndTheManagerRecordsAManualRate duration=00:02:20.6009128 :: Shouldly.ShouldAssertException : manual.StatusCode should be HttpStatusCode.OK but was HttpStatusCode.BadRequest 
+  FAIL Template.Functional.Tests.ApiEndpoints.v2.SourcingFunctionalTests.T_SRC_013_b_ProviderDisabledInTest_GivesAnIncompleteComparison_AndTheManagerRecordsAManualRate duration=00:02:20.6009128 :: Shouldly.ShouldAssertException : manual.StatusCode should be HttpStatusCode.OK but was HttpStatusCode.BadRequest
   FAIL Template.Functional.Tests.ApiEndpoints.v2.PurchasingFunctionalTests.T_PUR_008_T_PUR_010_IssuedCancelScope_HasReceiptsGuard_AndShortCloseRelease duration=00:19:20.7284979 :: System.InvalidOperationException : The requested operation requires an element of type 'String', but the target element has type 'Number'.
   FAIL Template.Functional.Tests.Security.AuthenticationRateLimitFunctionalTests.EleventhLoginForTheSameUserName_Is429_WithRetryAfter_AndOtherEndpointsStayOpen duration=00:05:13.9103615 :: Shouldly.ShouldAssertException : limited.StatusCode should be HttpStatusCode.TooManyRequests but was HttpStatusCode.OK
   FAIL Template.Functional.Tests.Security.AuthenticationRateLimitFunctionalTests.EleventhRefreshFromTheSameAddress_Is429_AndIsAuditedOnce duration=00:03:08.6444268 :: Shouldly.ShouldAssertException : last should be HttpStatusCode.TooManyRequests but was HttpStatusCode.OK
