@@ -1,0 +1,16 @@
+Command per project: dotnet test Tests\<project>\<project>.csproj --no-build --verbosity minimal --maxcpucount:1 --blame-hang-timeout 15m --blame-hang-dump-type none --logger trx
+START 2026-11-08T23:45:23.2481017-03:00
+Template.Architecture.Tests EXIT=0 ELAPSED=00:05 Aprovado! – Com falha: 0, Aprovado: 77, Ignorado: 0, Total: 77, Duração: 3 s - Template.Architecture.Tests.dll (net10.0)
+Template.Unit.Tests EXIT=0 ELAPSED=00:05 Aprovado! – Com falha: 0, Aprovado: 839, Ignorado: 0, Total: 839, Duração: 3 s - Template.Unit.Tests.dll (net10.0)
+Template.Integration.Tests EXIT=0 ELAPSED=00:19 Aprovado! – Com falha: 0, Aprovado: 268, Ignorado: 0, Total: 268, Duração: 17 s - Template.Integration.Tests.dll (net10.0)
+Template.Functional.Tests EXIT=0 ELAPSED=01:44 Aprovado! – Com falha: 0, Aprovado: 392, Ignorado: 0, Total: 392, Duração: 1 m 40 s - Template.Functional.Tests.dll (net10.0)
+Template.PostgreSql.Integration.Tests EXIT=0 ELAPSED=01:20 Aprovado! – Com falha: 0, Aprovado: 78, Ignorado: 0, Total: 78, Duração: 1 m 9 s - Template.PostgreSql.Integration.Tests.dll (net10.0)
+Template.RabbitMq.Integration.Tests EXIT=0 ELAPSED=00:35 Aprovado! – Com falha: 0, Aprovado: 30, Ignorado: 0, Total: 30, Duração: 33 s - Template.RabbitMq.Integration.Tests.dll (net10.0)
+Template.Elasticsearch.Integration.Tests EXIT=0 ELAPSED=01:45 Aprovado! – Com falha: 0, Aprovado: 13, Ignorado: 0, Total: 13, Duração: 1 m 44 s - Template.Elasticsearch.Integration.Tests.dll (net10.0)
+Template.Redis.Integration.Tests EXIT=0 ELAPSED=00:53 Aprovado! – Com falha: 0, Aprovado: 23, Ignorado: 0, Total: 23, Duração: 49 s - Template.Redis.Integration.Tests.dll (net10.0)
+Template.Azurite.Integration.Tests EXIT=0 ELAPSED=00:30 Aprovado! – Com falha: 0, Aprovado: 6, Ignorado: 0, Total: 6, Duração: 24 s - Template.Azurite.Integration.Tests.dll (net10.0)
+Template.Worker.Tests EXIT=0 ELAPSED=00:03 Aprovado! – Com falha: 0, Aprovado: 5, Ignorado: 0, Total: 5, Duração: 1 s - Template.Worker.Tests.dll (net10.0)
+Template.WorkflowFunctions.Tests EXIT=0 ELAPSED=00:02 Aprovado! – Com falha: 0, Aprovado: 26, Ignorado: 0, Total: 26, Duração: 884 ms - Template.WorkflowFunctions.Tests.dll (net10.0)
+Template.WorkflowFunctions.Integration.Tests EXIT=0 ELAPSED=07:52 Aprovado! – Com falha: 0, Aprovado: 7, Ignorado: 0, Total: 7, Duração: 6 m 52 s - Template.WorkflowFunctions.Integration.Tests.dll (net10.0)
+Template.Performance.Tests EXIT=0 ELAPSED=03:07 Aprovado! – Com falha: 0, Aprovado: 5, Ignorado: 0, Total: 5, Duração: 1 m 8 s - Template.Performance.Tests.dll (net10.0)
+END 2026-11-09T00:03:49.7699113-03:00

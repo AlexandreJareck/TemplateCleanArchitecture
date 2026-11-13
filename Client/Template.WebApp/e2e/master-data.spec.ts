@@ -11,6 +11,7 @@ interface FixtureState {
   permissions: string[];
   catalogCreateAttempts: number;
   lastDepartmentQuery: string | null;
+  longContact: boolean;
 }
 
 const user = {
@@ -39,6 +40,7 @@ async function installApiFixture(page: Page, permissions = user.permissions) {
     permissions,
     catalogCreateAttempts: 0,
     lastDepartmentQuery: null,
+    longContact: false,
   };
   await page.route('**/api/v2/**', async (route) => handleApi(route, state));
   return state;
@@ -168,8 +170,30 @@ function supplier(state: FixtureState) {
     status: state.supplierStatus,
     isEligibleForNewCommitments: false,
     categoryIds: [],
-    contacts: [],
-    addresses: [],
+    contacts: state.longContact
+      ? [
+          {
+            id: 'k1',
+            name: 'Ana Souza',
+            email: 'relacionamento.comercial.fornecedores@alfa-tecnologia-servicos.test',
+            phone: '+55 11 99999-0000',
+            role: 'Vendas',
+          },
+        ]
+      : [],
+    addresses: state.longContact
+      ? [
+          {
+            id: 'a1',
+            street: 'Avenida das Nações Unidas',
+            number: '12901',
+            city: 'São Paulo',
+            state: 'SP',
+            postalCode: '04578-910',
+            country: 'BR',
+          },
+        ]
+      : [],
     statusHistory: [],
     missingForActivation: 'Contato e endereço obrigatórios',
     version: '1',
@@ -237,6 +261,72 @@ test('supplier detail/status and enrichment failure remain actionable', async ({
   await page.getByRole('button', { name: 'Consultar CNPJ' }).click();
   await expect(page.getByText('Serviço indisponível', { exact: true })).toBeVisible();
 });
+
+for (const viewport of [
+  { name: 'desktop', width: 1365, height: 768, columns: 4 },
+  { name: 'mobile', width: 390, height: 844, columns: 1 },
+]) {
+  test(`read-only supplier summary wraps long contact values on ${viewport.name} (F-01)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const state = await installApiFixture(page, ['organization.read', 'suppliers.read']);
+    state.longContact = true;
+    await login(page);
+    await page.goto('/suppliers');
+    const details = page.getByRole('button', { name: /^Detalhes/ });
+    await details.focus();
+    await page.keyboard.press('Enter');
+    const summary = page.getByTestId('supplier-readonly');
+    await expect(summary).toContainText(
+      'relacionamento.comercial.fornecedores@alfa-tecnologia-servicos.test',
+    );
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.locator('input, select, textarea, button[type="submit"]')).toHaveCount(0);
+    await expect(dialog.getByText('Rascunho', { exact: true })).toBeVisible();
+
+    const layout = await summary.evaluate((dl) => ({
+      columns: getComputedStyle(dl).gridTemplateColumns.split(' ').length,
+      cells: [...dl.querySelectorAll<HTMLElement>(':scope > div')].map((cell) => ({
+        label: cell.querySelector('dt')?.textContent?.trim(),
+        overflow: cell.scrollWidth - cell.clientWidth,
+        valueOverflow:
+          cell.querySelector('dd')!.scrollWidth - cell.querySelector('dd')!.clientWidth,
+        rect: cell.getBoundingClientRect().toJSON() as DOMRect,
+      })),
+    }));
+    expect(layout.columns).toBe(viewport.columns);
+    for (const cell of layout.cells) {
+      expect(cell.overflow, `${cell.label} cell overflow`).toBeLessThanOrEqual(0);
+      expect(cell.valueOverflow, `${cell.label} value overflow`).toBeLessThanOrEqual(0);
+    }
+    // No two summary cells overlap.
+    for (const [i, a] of layout.cells.entries())
+      for (const b of layout.cells.slice(i + 1)) {
+        const overlaps =
+          a.rect.left < b.rect.right - 1 &&
+          b.rect.left < a.rect.right - 1 &&
+          a.rect.top < b.rect.bottom - 1 &&
+          b.rect.top < a.rect.bottom - 1;
+        expect(overlaps, `${a.label} overlaps ${b.label}`).toBe(false);
+      }
+    const overflow = await page.evaluate(() => ({
+      page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      dialog: (() => {
+        const d = document.querySelector<HTMLElement>('[role="dialog"]')!;
+        return d.scrollWidth - d.clientWidth;
+      })(),
+    }));
+    expect(overflow).toEqual({ page: 0, dialog: 0 });
+    expect(
+      (await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations,
+    ).toEqual([]);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(details).toBeFocused();
+  });
+}
 
 test('keyboard only: sign in, skip to content, open a page from the menu and use the drawer', async ({
   page,

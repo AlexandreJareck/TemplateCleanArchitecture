@@ -83,6 +83,26 @@ describe('SuppliersPage', () => {
     expect(text(root.querySelector('.toolbar'))).not.toContain('Cadastrar');
   });
 
+  it('renders long contact values in the wrapping read-only summary (F-01)', async () => {
+    const email = 'relacionamento.comercial.fornecedores@alfa-tecnologia-servicos.test';
+    const { root, port, openDetails } = await render(['suppliers.read']);
+    vi.mocked(port.getSupplier).mockResolvedValue(
+      success({
+        ...detail,
+        contacts: [{ id: 'k1', name: 'Ana Souza', email, phone: '+55 11 99999-0000', role: '' }],
+      }),
+    );
+    await openDetails();
+    const readonly = root.querySelector('[data-testid="supplier-readonly"]')!;
+    expect(readonly.tagName).toBe('DL');
+    expect(readonly.classList).toContain('readonly-summary');
+    expect(readonly.querySelectorAll(':scope > div > dt + dd').length).toBe(
+      readonly.querySelectorAll(':scope > div').length,
+    );
+    expect(text(readonly)).toContain(email);
+    expect(text(readonly)).toContain('+55 11 99999-0000');
+  });
+
   it('keeps edit forms for suppliers.manage and status actions for suppliers.status.change', async () => {
     const manager = await render(['suppliers.read', 'suppliers.manage']);
     await manager.openDetails();

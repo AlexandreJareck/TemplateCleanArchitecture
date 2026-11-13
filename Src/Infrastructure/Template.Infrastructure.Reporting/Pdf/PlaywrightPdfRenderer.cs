@@ -32,18 +32,21 @@ public sealed class PlaywrightPdfRenderer(IOptions<ReportRenderingSettings> opti
         var footer = ReportHtmlTemplate.Footer(document);
 
         await renderSlots.WaitAsync(cancellationToken);
+        IBrowserContext? context = null;
         try
         {
+            // Every Playwright call is bounded: when Chromium disappears mid-call the driver may never answer, and an
+            // unbounded await would hold this render slot forever instead of failing the attempt as transient (RPT-005).
             var running = await EnsureBrowserAsync(cancellationToken);
-            await using var context = await running.NewContextAsync(new BrowserNewContextOptions
+            context = await running.NewContextAsync(new BrowserNewContextOptions
             {
                 JavaScriptEnabled = false,
                 Offline = true,
                 Locale = document.Language,
                 BypassCSP = false
             }).WaitAsync(settings.RenderTimeout, cancellationToken);
-            var page = await context.NewPageAsync();
-            await page.RouteAsync("**/*", route => route.AbortAsync());
+            var page = await context.NewPageAsync().WaitAsync(settings.RenderTimeout, cancellationToken);
+            await page.RouteAsync("**/*", route => route.AbortAsync()).WaitAsync(settings.RenderTimeout, cancellationToken);
             var timeout = (float)settings.RenderTimeout.TotalMilliseconds;
             await page.SetContentAsync(html, new PageSetContentOptions { WaitUntil = WaitUntilState.Load, Timeout = timeout })
                 .WaitAsync(settings.RenderTimeout, cancellationToken);
@@ -69,6 +72,8 @@ public sealed class PlaywrightPdfRenderer(IOptions<ReportRenderingSettings> opti
         }
         finally
         {
+            if (context is not null)
+                await CloseQuietlyAsync(context);
             renderSlots.Release();
         }
     }
@@ -91,7 +96,7 @@ public sealed class PlaywrightPdfRenderer(IOptions<ReportRenderingSettings> opti
                 return existing;
             if (browser is not null)
                 await ResetAsync();
-            playwright ??= await Playwright.CreateAsync();
+            playwright ??= await Playwright.CreateAsync().WaitAsync(settings.LaunchTimeout, cancellationToken);
             var launched = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = true,
@@ -121,6 +126,18 @@ public sealed class PlaywrightPdfRenderer(IOptions<ReportRenderingSettings> opti
         catch (Exception exception) when (exception is PlaywrightException or TimeoutException or InvalidOperationException)
         {
             // A crashed browser cannot be closed cleanly; the next render launches a new one.
+        }
+    }
+
+    private static async Task CloseQuietlyAsync(IBrowserContext context)
+    {
+        try
+        {
+            await context.CloseAsync().WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        catch (Exception exception) when (exception is PlaywrightException or TimeoutException or InvalidOperationException)
+        {
+            // The context dies with a crashed or reset browser; nothing is left to release.
         }
     }
 }

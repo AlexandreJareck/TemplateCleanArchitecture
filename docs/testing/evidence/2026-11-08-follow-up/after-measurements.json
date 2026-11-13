@@ -1,0 +1,1086 @@
+{
+  "R01-desktop": {
+    "columns": "170.75px 170.75px 170.75px 170.75px",
+    "cells": [
+      {
+        "label": "Razão social",
+        "ddClientWidth": 171,
+        "ddScrollWidth": 171,
+        "cellClientWidth": 171,
+        "cellScrollWidth": 171,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 622,
+          "y": 120,
+          "w": 171
+        }
+      },
+      {
+        "label": "Nome fantasia",
+        "ddClientWidth": 171,
+        "ddScrollWidth": 171,
+        "cellClientWidth": 171,
+        "cellScrollWidth": 171,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 805,
+          "y": 120,
+          "w": 171
+        }
+      },
+      {
+        "label": "País",
+        "ddClientWidth": 171,
+        "ddScrollWidth": 171,
+        "cellClientWidth": 171,
+        "cellScrollWidth": 171,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 988,
+          "y": 120,
+          "w": 171
+        }
+      },
+      {
+        "label": "CNPJ",
+        "ddClientWidth": 171,
+        "ddScrollWidth": 171,
+        "cellClientWidth": 171,
+        "cellScrollWidth": 171,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 1170,
+          "y": 120,
+          "w": 171
+        }
+      },
+      {
+        "label": "Contato principal",
+        "ddClientWidth": 171,
+        "ddScrollWidth": 171,
+        "cellClientWidth": 171,
+        "cellScrollWidth": 171,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 622,
+          "y": 201,
+          "w": 171
+        }
+      },
+      {
+        "label": "Endereço principal",
+        "ddClientWidth": 171,
+        "ddScrollWidth": 171,
+        "cellClientWidth": 171,
+        "cellScrollWidth": 171,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 805,
+          "y": 201,
+          "w": 171
+        }
+      },
+      {
+        "label": "Categorias",
+        "ddClientWidth": 171,
+        "ddScrollWidth": 171,
+        "cellClientWidth": 171,
+        "cellScrollWidth": 171,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 988,
+          "y": 201,
+          "w": 171
+        }
+      }
+    ],
+    "overflow": {
+      "page": 0,
+      "dialog": 0
+    },
+    "mutationControls": 0,
+    "statusText": "Ativo",
+    "axeViolations": [],
+    "focusRestored": true,
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "R01-mobile": {
+    "columns": "341px",
+    "cells": [
+      {
+        "label": "Razão social",
+        "ddClientWidth": 341,
+        "ddScrollWidth": 341,
+        "cellClientWidth": 341,
+        "cellScrollWidth": 341,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 25,
+          "y": 150,
+          "w": 341
+        }
+      },
+      {
+        "label": "Nome fantasia",
+        "ddClientWidth": 341,
+        "ddScrollWidth": 341,
+        "cellClientWidth": 341,
+        "cellScrollWidth": 341,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 25,
+          "y": 207,
+          "w": 341
+        }
+      },
+      {
+        "label": "País",
+        "ddClientWidth": 341,
+        "ddScrollWidth": 341,
+        "cellClientWidth": 341,
+        "cellScrollWidth": 341,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 25,
+          "y": 264,
+          "w": 341
+        }
+      },
+      {
+        "label": "CNPJ",
+        "ddClientWidth": 341,
+        "ddScrollWidth": 341,
+        "cellClientWidth": 341,
+        "cellScrollWidth": 341,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 25,
+          "y": 321,
+          "w": 341
+        }
+      },
+      {
+        "label": "Contato principal",
+        "ddClientWidth": 341,
+        "ddScrollWidth": 341,
+        "cellClientWidth": 341,
+        "cellScrollWidth": 341,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 25,
+          "y": 378,
+          "w": 341
+        }
+      },
+      {
+        "label": "Endereço principal",
+        "ddClientWidth": 341,
+        "ddScrollWidth": 341,
+        "cellClientWidth": 341,
+        "cellScrollWidth": 341,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 25,
+          "y": 483,
+          "w": 341
+        }
+      },
+      {
+        "label": "Categorias",
+        "ddClientWidth": 341,
+        "ddScrollWidth": 341,
+        "cellClientWidth": 341,
+        "cellScrollWidth": 341,
+        "cellMinWidth": "0px",
+        "ddMinWidth": "0px",
+        "overflowWrap": "anywhere",
+        "wordBreak": "normal",
+        "rect": {
+          "x": 25,
+          "y": 564,
+          "w": 341
+        }
+      }
+    ],
+    "overflow": {
+      "page": 0,
+      "dialog": 0
+    },
+    "mutationControls": 0,
+    "statusText": "Ativo",
+    "axeViolations": [],
+    "focusRestored": true,
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "R02-light": {
+    "runs": [
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 0.5,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            254,
+            254,
+            254
+          ],
+          "effectiveBackground": [
+            155,
+            170,
+            230
+          ],
+          "ratio": 2.24
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            54,
+            85,
+            205
+          ],
+          "ratio": 6.13
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklab(0.5 -0.00663096 -0.189884 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            74,
+            102,
+            210
+          ],
+          "ratio": 4.99
+        }
+      },
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            54,
+            85,
+            205
+          ],
+          "ratio": 6.13
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            54,
+            85,
+            205
+          ],
+          "ratio": 6.13
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklab(0.5 -0.00663096 -0.189884 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            74,
+            102,
+            210
+          ],
+          "ratio": 4.99
+        }
+      },
+      {
+        "immediate": {
+          "text": "",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.21 0.03 265)",
+          "computedBackground": "rgba(0, 0, 0, 0)",
+          "opacity": 1,
+          "transition": "none 0s",
+          "theme": "light",
+          "effectiveForeground": [
+            17,
+            24,
+            38
+          ],
+          "effectiveBackground": [
+            255,
+            255,
+            255
+          ],
+          "ratio": 17.76
+        },
+        "immediateAxe": [
+          "color-contrast"
+        ],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            54,
+            85,
+            205
+          ],
+          "ratio": 6.13
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklab(0.5 -0.00663096 -0.189884 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            74,
+            102,
+            210
+          ],
+          "ratio": 4.99
+        }
+      }
+    ],
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "R02-dark": {
+    "runs": [
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 0.5,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            13,
+            19,
+            33
+          ],
+          "effectiveBackground": [
+            68,
+            88,
+            141
+          ],
+          "ratio": 2.67
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            121,
+            153,
+            245
+          ],
+          "ratio": 7
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklab(0.7 -0.00488597 -0.139915 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            111,
+            140,
+            225
+          ],
+          "ratio": 5.93
+        }
+      },
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": true,
+          "dataDisabled": true,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 0.5,
+          "transition": "none 0s",
+          "theme": "dark",
+          "effectiveForeground": [
+            13,
+            19,
+            33
+          ],
+          "effectiveBackground": [
+            68,
+            88,
+            141
+          ],
+          "ratio": 2.67
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            121,
+            153,
+            245
+          ],
+          "ratio": 7
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklab(0.7 -0.00488597 -0.139915 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            111,
+            140,
+            225
+          ],
+          "ratio": 5.93
+        }
+      },
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": true,
+          "dataDisabled": true,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 0.5,
+          "transition": "none 0s",
+          "theme": "dark",
+          "effectiveForeground": [
+            13,
+            19,
+            33
+          ],
+          "effectiveBackground": [
+            68,
+            88,
+            141
+          ],
+          "ratio": 2.67
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            121,
+            153,
+            245
+          ],
+          "ratio": 7
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklab(0.7 -0.00488597 -0.139915 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            111,
+            140,
+            225
+          ],
+          "ratio": 5.93
+        }
+      }
+    ],
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "R02-system-light": {
+    "runs": [
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 0.516394,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            253,
+            253,
+            253
+          ],
+          "effectiveBackground": [
+            151,
+            167,
+            229
+          ],
+          "ratio": 2.3
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            54,
+            85,
+            205
+          ],
+          "ratio": 6.13
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklab(0.5 -0.00663096 -0.189884 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            74,
+            102,
+            210
+          ],
+          "ratio": 4.99
+        }
+      },
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": true,
+          "dataDisabled": true,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 0.5,
+          "transition": "none 0s",
+          "theme": "light",
+          "effectiveForeground": [
+            254,
+            254,
+            254
+          ],
+          "effectiveBackground": [
+            155,
+            170,
+            230
+          ],
+          "ratio": 2.24
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            54,
+            85,
+            205
+          ],
+          "ratio": 6.13
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklab(0.5 -0.00663096 -0.189884 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            74,
+            102,
+            210
+          ],
+          "ratio": 4.99
+        }
+      },
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": true,
+          "dataDisabled": true,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 0.5,
+          "transition": "none 0s",
+          "theme": "light",
+          "effectiveForeground": [
+            254,
+            254,
+            254
+          ],
+          "effectiveBackground": [
+            155,
+            170,
+            230
+          ],
+          "ratio": 2.24
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklch(0.5 0.19 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            54,
+            85,
+            205
+          ],
+          "ratio": 6.13
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.99 0 0)",
+          "computedBackground": "oklab(0.5 -0.00663096 -0.189884 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "light",
+          "effectiveForeground": [
+            252,
+            252,
+            252
+          ],
+          "effectiveBackground": [
+            74,
+            102,
+            210
+          ],
+          "ratio": 4.99
+        }
+      }
+    ],
+    "consoleErrors": [],
+    "serverErrors": []
+  },
+  "R02-system-dark": {
+    "runs": [
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 0.5,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            13,
+            19,
+            33
+          ],
+          "effectiveBackground": [
+            68,
+            88,
+            141
+          ],
+          "ratio": 2.67
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            121,
+            153,
+            245
+          ],
+          "ratio": 7
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklab(0.7 -0.00488597 -0.139915 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            111,
+            140,
+            225
+          ],
+          "ratio": 5.93
+        }
+      },
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": true,
+          "dataDisabled": true,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 0.5,
+          "transition": "none 0s",
+          "theme": "dark",
+          "effectiveForeground": [
+            13,
+            19,
+            33
+          ],
+          "effectiveBackground": [
+            68,
+            88,
+            141
+          ],
+          "ratio": 2.67
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            121,
+            153,
+            245
+          ],
+          "ratio": 7
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklab(0.7 -0.00488597 -0.139915 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            111,
+            140,
+            225
+          ],
+          "ratio": 5.93
+        }
+      },
+      {
+        "immediate": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            121,
+            153,
+            245
+          ],
+          "ratio": 7
+        },
+        "immediateAxe": [],
+        "settled": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklch(0.7 0.14 268)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            121,
+            153,
+            245
+          ],
+          "ratio": 7
+        },
+        "settledAxe": [],
+        "hover": {
+          "text": "Pesquisar",
+          "disabled": false,
+          "dataDisabled": false,
+          "computedColor": "oklch(0.17 0.03 268)",
+          "computedBackground": "oklab(0.7 -0.00488597 -0.139915 / 0.9)",
+          "opacity": 1,
+          "transition": "all 0.15s",
+          "theme": "dark",
+          "effectiveForeground": [
+            10,
+            15,
+            29
+          ],
+          "effectiveBackground": [
+            111,
+            140,
+            225
+          ],
+          "ratio": 5.93
+        }
+      }
+    ],
+    "consoleErrors": [],
+    "serverErrors": []
+  }
+}

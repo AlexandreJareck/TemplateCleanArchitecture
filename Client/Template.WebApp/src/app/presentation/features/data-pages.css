@@ -129,6 +129,7 @@
   margin-top: var(--space-4);
 }
 @media (max-width: 48rem) {
+  .summary-grid.readonly-summary,
   .editor form {
     grid-template-columns: 1fr;
   }
@@ -199,6 +200,13 @@
 .summary-grid dd {
   margin: 0;
   font-weight: 700;
+}
+/* Read-only supplier summary (F-01): long e-mails, phones and addresses wrap inside their cell. */
+.readonly-summary > div {
+  min-width: 0;
+}
+.readonly-summary dd {
+  overflow-wrap: anywhere;
 }
 .form-grid {
   display: grid;

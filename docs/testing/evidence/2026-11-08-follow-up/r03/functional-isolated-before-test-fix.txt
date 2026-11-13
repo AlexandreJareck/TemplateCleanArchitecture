@@ -1,0 +1,2 @@
+﻿functional isolated (before the test fix, 23:41 BRT): EXIT=1 ELAPSED=00:01:47.0470529
+ total=392 passed=391 failed=1 :: T_SRC_013_b manual.StatusCode 400 'The rate date cannot be later than the close date.' (test sent the UTC date 2026-11-09; close date in America/Sao_Paulo was 2026-11-08)

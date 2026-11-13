@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Playwright;
 using Shouldly;
 using Template.Application.Features.Reporting;
 using Template.Application.Interfaces;
@@ -93,28 +94,30 @@ public sealed class ReportRenderingAdapterTests(ChromiumFixture chromium)
         var document = SmallDocument();
         (await RenderAsync(document)).Length.ShouldBeGreaterThan(0);
 
-        // Crash: the browser process disappears between renders; the next render launches a new browser.
+        // Crash: the browser process disappears between renders; the renderer launches a new browser.
         var browser = renderer.Browser.ShouldNotBeNull();
-        await browser.CloseAsync();
-        browser.IsConnected.ShouldBeFalse();
-        (await RenderAsync(document)).Length.ShouldBeGreaterThan(0);
+        await CrashAsync(browser);
+        (await RenderRecoveringAsync(document)).Length.ShouldBeGreaterThan(0);
         renderer.Browser!.IsConnected.ShouldBeTrue();
+        if (!browser.IsConnected)
+            renderer.Browser.ShouldNotBeSameAs(browser);
 
-        // Crash during a render.
+        // Crash during a render: the pending render either completes first or fails as transient, never hangs.
         var crashing = renderer.Browser!;
         var pending = RenderAsync(LargeDocument(4000));
         await Task.Delay(50);
-        await crashing.CloseAsync();
+        await CrashAsync(crashing);
         try
         {
-            await pending;
+            await pending.WaitAsync(TimeSpan.FromMinutes(2));
         }
         catch (ReportRendererUnavailableException)
         {
             // Expected when the close wins the race; a fast render may also complete first.
         }
 
-        (await RenderAsync(document)).Length.ShouldBeGreaterThan(0);
+        (await RenderRecoveringAsync(document)).Length.ShouldBeGreaterThan(0);
+        renderer.Browser!.IsConnected.ShouldBeTrue();
 
         await using var slow = new PlaywrightPdfRenderer(Options(new ReportRenderingSettings { RenderTimeout = TimeSpan.FromMilliseconds(1) }), NullLogger<PlaywrightPdfRenderer>.Instance);
         await Should.ThrowAsync<ReportRendererUnavailableException>(() => slow.RenderAsync(LargeDocument(500), new MemoryStream(), CancellationToken.None));
@@ -361,6 +364,35 @@ public sealed class ReportRenderingAdapterTests(ChromiumFixture chromium)
         using var output = new MemoryStream();
         await chromium.Renderer.RenderAsync(document, output, CancellationToken.None);
         return output.ToArray();
+    }
+
+    /// <summary>
+    /// Makes the browser disappear. Chromium does not always finish closing on request, and Playwright then waits for
+    /// the process without a bound, so the request is bounded and what the test asserts is the renderer's recovery.
+    /// </summary>
+    private static async Task CrashAsync(IBrowser browser)
+    {
+        try
+        {
+            await browser.CloseAsync().WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        catch (TimeoutException)
+        {
+            // The close is still pending; the renderer must recover from a browser in this state too.
+        }
+    }
+
+    /// <summary>The attempt that meets the crashed browser may fail as transient (RPT-005); the retry must succeed.</summary>
+    private async Task<byte[]> RenderRecoveringAsync(ReportDocument document)
+    {
+        try
+        {
+            return await RenderAsync(document);
+        }
+        catch (ReportRendererUnavailableException)
+        {
+            return await RenderAsync(document);
+        }
     }
 
     private static async Task<byte[]> WriteAsync(WorkbookDocument workbook)

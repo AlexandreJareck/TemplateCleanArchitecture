@@ -1,0 +1,35 @@
+Loading core dump: <scratchpad>\r03\stress-full\iter5\f8ab4024-ba45-4e18-9656-dc565c14abfe\testhost_25504_20261108T205706_hangdump.dmp ...
+STACKS 1
+[2] 00007ffd6b6b9ae8 (1) System.IO.Strategies.BufferedFileStreamStrategy+<ReadFromNonSeekableAsync>d__36
+  [1] 00007ffd6b6b3920 (1) System.Diagnostics.AsyncStreamReader+<ReadBufferAsync>d__16
+  [1] 00007ffd6b6bcfe0 (0) Microsoft.Playwright.Transport.StdIOTransport+<GetResponseAsync>d__30
+
+STACKS 2
+[1] 00007ffd6b6bec68 System.Threading.Tasks.Task<System.Nullable<System.Text.Json.JsonElement>>
+  [1] 00007ffd6b99fc18 (1) Microsoft.Playwright.Transport.Connection+<InnerSendMessageToServerAsync>d__44<Microsoft.Playwright.Core.Page>
+    [1] 00007ffd6b9c01c8 (1) Microsoft.Playwright.Transport.Connection+<WrapApiCallAsync>d__57<Microsoft.Playwright.Core.Page>
+      [1] 00007ffd6b9c0d90 (0) Microsoft.Playwright.Core.BrowserContext+<NewPageAsync>d__153
+        [1] 00007ffd6b764a18 (3) Template.Infrastructure.Reporting.Pdf.PlaywrightPdfRenderer+<RenderAsync>d__9
+          [1] 00007ffd6b764f88 (0) Template.Integration.Tests.Reporting.ReportRenderingAdapterTests+<RenderAsync>d__10
+            [1] 00007ffd6b7653f8 (5) Template.Integration.Tests.Reporting.ReportRenderingAdapterTests+<T_RPT_005_l_BrowserCrash_Timeout_AndLaunchFailure_AreTransient_AndTheRendererRecovers>d__4
+              [1] 00007ffd6b765fc8 (0) Xunit.Sdk.TestInvoker<Xunit.Sdk.IXunitTestCase>+<>c__DisplayClass47_0+<<InvokeTestMethodAsync>b__1>d
+                [1] 00007ffd6b766390 (0) Xunit.Sdk.ExecutionTimer+<AggregateAsync>d__4
+                  [1] 00007ffd6b766818 (0) Xunit.Sdk.ExceptionAggregator+<RunAsync>d__9
+                    [1] 00007ffd6b767820 (0) Xunit.Sdk.TestInvoker<Xunit.Sdk.IXunitTestCase>+<InvokeTestMethodAsync>d__47
+                      [1] 00007ffd6b7684e0 (2) Xunit.Sdk.TestInvoker<Xunit.Sdk.IXunitTestCase>+<<RunAsync>b__46_0>d
+                        [1] 00007ffd6b7688f8 (0) Xunit.Sdk.ExceptionAggregator+<RunAsync>d__10<System.Decimal>
+                          [1] 00007ffd6b769468 (0) Xunit.Sdk.XunitTestRunner+<InvokeTestAsync>d__4
+                            [1] 00007ffd6b76a0c0 (0) Xunit.Sdk.ExceptionAggregator+<RunAsync>d__10<System.Tuple<System.Decimal, System.String>>
+                              [1] 00007ffd6b76ab70 (0) Xunit.Sdk.TestRunner<Xunit.Sdk.IXunitTestCase>+<RunAsync>d__43
+                                [1] 00007ffd6b76b640 (1) Xunit.Sdk.TestCaseRunner<Xunit.Sdk.IXunitTestCase>+<RunAsync>d__19
+                                  [1] 00007ffd6b76c068 (0) Xunit.Sdk.TestMethodRunner<Xunit.Sdk.IXunitTestCase>+<RunTestCasesAsync>d__32
+                                    [1] 00007ffd6b76ca90 (0) Xunit.Sdk.TestMethodRunner<Xunit.Sdk.IXunitTestCase>+<RunAsync>d__31
+                                      [1] 00007ffd6b76d4b8 (0) Xunit.Sdk.TestClassRunner<Xunit.Sdk.IXunitTestCase>+<RunTestMethodsAsync>d__38
+                                        [1] 00007ffd6b76df00 (1) Xunit.Sdk.TestClassRunner<Xunit.Sdk.IXunitTestCase>+<RunAsync>d__37
+                                          [1] 00007ffd6b76e928 (0) Xunit.Sdk.TestCollectionRunner<Xunit.Sdk.IXunitTestCase>+<RunTestClassesAsync>d__28
+                                            [1] 00007ffd6b76f370 (1) Xunit.Sdk.TestCollectionRunner<Xunit.Sdk.IXunitTestCase>+<RunAsync>d__27
+                                              [1] 00007ffd6b76fd28 (1) Xunit.Sdk.XunitTestAssemblyRunner+<RunTestCollectionAsync>d__18
+                                                [1] 00007ffd6b595418 System.Threading.Tasks.UnwrapPromise<Xunit.Sdk.RunSummary>
+                                                  [1] 00007ffd6b596750 (1) Xunit.Sdk.XunitTestAssemblyRunner+<RunTestCollectionsAsync>d__16
+                                                    [1] 00007ffd6b598c08 (1) Xunit.Sdk.TestAssemblyRunner<Xunit.Sdk.IXunitTestCase>+<RunAsync>d__41
+                                                      [1] 00007ffd6b599788 (0) Xunit.Sdk.XunitTestFrameworkExecutor+<RunTestCases>d__8

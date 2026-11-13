@@ -508,3 +508,225 @@ Run from `Client/Template.WebApp` with the pinned Node 24.22.0 and pnpm 12.14.0.
 - F-09: uploading real attachment bytes for requisitions remains a backend feature (FIL-002 metadata-only contract).
 - The deterministic transactional scenario recommended above (requisition → RFQ → approval → PO → receipt) was not added here; it is covered by the existing real-stack SC-01 journey (`e2e-real`), which was not rerun.
 - `pnpm validate`'s `format:check` fails on Windows checkouts with `core.autocrlf=true`; CI on Linux is unaffected.
+
+## Post-remediation validation (2026-11-08)
+
+### Scope and source identity
+
+- Validation window: 2026-11-07 through 2026-11-08, `America/Sao_Paulo`; final container/browser evidence captured on 2026-11-08.
+- Validated commit: `660438b9af8b87a7d0d30397076b81e003623296` (`docs: document the real-journey script and the line-ending setting`).
+- Initial worktree: clean except for the user-provided, untracked `docs/testing/execute-functional-ui-ux-validation-handoff.md`; it was preserved unchanged.
+- Remediation baseline: `e9cc87ffacc2ec661618545b66686bc2d2977907`; changes through `HEAD` affect the Angular client, Application contracts/views, Identity registration, functional/unit tests, generated OpenAPI client/baseline and release-journey tooling.
+- Affected service mapping: `webapp` directly; `webapi` through Application and Identity; `worker` through Application; `workflow-functions` through Application and Identity. All four application images were therefore rebuilt.
+- No production code or business data was changed during this pass. Authentication created the expected demo session/audit records. Temporary validation specs and toolchain shims were removed after execution; only this report and sanitized screenshots remain.
+
+### Automated validation
+
+The exact repository-pinned tools were used: Node `24.22.0`, pnpm `12.14.0` and .NET SDK `10.0.402`. The host initially had Node `24.22.1`, pnpm `11.25.0` and .NET SDK `10.0.401`; exact versions were installed in temporary directories rather than weakening `engines` or changing `global.json`.
+
+| Command | Result |
+|---|---|
+| `pnpm install --frozen-lockfile` | Passed; lockfile policy verified, no lockfile change. |
+| `pnpm validate` | Passed: Prettier, ESLint, typecheck, Vitest **37 files / 132 tests**, dependency-cruiser **225 modules / 548 dependencies**, **5/5** architecture mutations rejected, **211** generated OpenAPI files matched, production build succeeded without a budget warning. |
+| `pnpm e2e` | First parallel run: **16 passed / 5 timed out** under six-worker resource contention. The same complete suite with `pnpm exec playwright test --workers=1`: **21/21 passed** in 1.9 minutes. The five failures all passed serially (approvals, purchasing, reports, requisitions and sourcing). Mock-fixture console warnings for three intentionally unmapped problem codes and one sourcing warning remain test-fixture noise; the real-stack console was clean. |
+| `dotnet restore TemplateCleanArchitecture.App.slnf` | Passed for all projects. |
+| `dotnet build TemplateCleanArchitecture.App.slnf --no-restore` | Passed, **0 errors / 1 warning**: existing nullable warning `CS8604` at `Tests/Template.WorkflowFunctions.Tests/HostBoundaryTests.cs:106`. |
+| `dotnet test TemplateCleanArchitecture.App.slnf --no-build` | All completed projects passed, but the aggregate process left `Template.Integration.Tests` waiting after the other hosts exited and was interrupted after more than 20 quiet minutes. Counts completed in the aggregate: Unit 839, Functional/OpenAPI 392, Architecture 77, PostgreSQL 78, Redis 23, RabbitMQ 30, Azurite 6, Elasticsearch 13, Workflow Functions 26, Workflow Functions Integration 7, Worker 5, Performance 5. |
+| `dotnet test Tests/Template.Integration.Tests/Template.Integration.Tests.csproj --no-build --verbosity normal --blame-hang-timeout 5m` | Isolated rerun passed **268/268** in 21.16 seconds with no hang dump. Across the aggregate plus isolated rerun, **1,769/1,769** tests passed and no test failed. The aggregate-host wait is recorded as a harness/concurrency risk, not hidden as a green aggregate exit. |
+
+The functional suite includes the actor-name authorization cases and the approved OpenAPI v1/v2 baseline. The architecture suite passed. No migration was introduced by the remediation. The legacy VSIX was not run because no VSIX file or dependency changed.
+
+### Docker rebuild and infrastructure evidence
+
+`docker compose config --quiet` passed. Pinned third-party services were pulled by digest (`db`, Elasticsearch, Kibana, RabbitMQ, Redis, Redis Insight, both Azurite services and Workflow Monitor); the repository pins were preserved and no volume was removed or recreated.
+
+| Service | Pre-rebuild image ID / created | Post-rebuild image ID / created | Result |
+|---|---|---|---|
+| `webapp` | `296897730889` / `2026-11-06T16:07:50Z` | `863da586f55c` / cached config timestamp `2026-11-06T16:07:50Z` | Rebuilt with `--pull`; manifest ID changed. |
+| `webapi` | `fba2e6d540cd` / `2026-11-06T16:09:38Z` | `6502a442f72b` / `2026-11-08T19:43:40Z` | Rebuilt and recreated. |
+| `worker` | `975f7d9d2e86` / `2026-11-06T16:10:14Z` | `5d0ff4a48086` / `2026-11-08T19:44:16Z` | Rebuilt and recreated; Chromium headless shell was freshly downloaded during the image build. |
+| `workflow-functions` | `751dd7c1e0f0` / `2026-11-06T16:09:38Z` | `e68171deab2a` / cached config timestamp `2026-11-08T19:14:41Z` | Rebuilt and recreated; manifest ID changed. |
+
+Commands: `docker compose pull ...`, `docker compose up -d` for pinned infrastructure, `docker compose build --pull webapp webapi worker workflow-functions`, then `docker compose up -d --no-deps webapp webapi worker workflow-functions`.
+
+Final state:
+
+- `webapp`, `worker` and `workflow-functions`: running and Docker `healthy`; `webapi`: running, with both HTTP health endpoints healthy (the Compose service has no container health check).
+- PostgreSQL, Redis, RabbitMQ, Elasticsearch, Kibana, Redis Insight, file Azurite and workflow Azurite: running and Docker `healthy` where configured. Workflow Monitor has no Compose health check and returned HTTP 200.
+- HTTP 200: WebApp `:4200`, WebApi `/health/live`, `/health/ready`, Swagger UI and OpenAPI v2, Worker liveness/readiness, Workflow Functions liveness/readiness, Workflow Monitor, Redis Insight, RabbitMQ management, Elasticsearch and Kibana.
+- Anonymous Azurite REST list probes returned HTTP 404 as expected without a signed storage request; both Azurite health checks passed and WebApi file-storage readiness was healthy.
+- Error-level scan of the rebuilt service logs (`[ERR]`, `[FTL]`, `fail:` and unhandled exceptions): no matches. The broader scan showed two harmless Azure Functions first-use blob-not-found probes and no persistent reconnect loop, migration failure, asset 404 or HTTP 5xx.
+
+### Browser and UI/UX evidence
+
+The containerized application at `http://localhost:4200` was exercised with `demo.auditor`, `demo.requester` and `demo.admin`. The password was read inside the process from the git-ignored `.env`, was never printed, and was cleared from the process environment afterward. The focused real-stack run performed no supplier, requisition, report or master-data write.
+
+- Focused real-stack Playwright: final **4/4 passed** plus a separate F-01 mobile check **1/1 passed**. Assertions covered permissions/direct routes, labels versus stable IDs, no POST for invalid forms, console errors, HTTP 5xx, axe, keyboard focus, focus restoration, three theme preferences, 1365×768 desktop and 390×844 mobile overflow.
+- Independent in-app-browser check: rebuilt login loaded on desktop and 390×844, `scrollWidth = clientWidth = 390`, keyboard Tab focused **Usuário** with a visible focus ring, and the browser console contained no warnings or errors.
+- Real-stack console errors: none. Real-stack HTTP 5xx responses: none. No unexpected duplicate write was observed; the invalid report and invalid master-data cases sent zero POST requests.
+- Screenshots:
+  - [`f01-supplier-readonly-desktop.png`](evidence/2026-11-08-post-remediation/f01-supplier-readonly-desktop.png)
+  - [`f01-supplier-readonly-mobile.png`](evidence/2026-11-08-post-remediation/f01-supplier-readonly-mobile.png)
+  - [`f02-f09-requisition-editor.png`](evidence/2026-11-08-post-remediation/f02-f09-requisition-editor.png)
+  - [`f03-audit-mobile.png`](evidence/2026-11-08-post-remediation/f03-audit-mobile.png)
+  - [`f04-f07-reports-desktop.png`](evidence/2026-11-08-post-remediation/f04-f07-reports-desktop.png)
+  - [`f06-requisition-mobile.png`](evidence/2026-11-08-post-remediation/f06-requisition-mobile.png)
+  - [`f08-master-data-validation.png`](evidence/2026-11-08-post-remediation/f08-master-data-validation.png)
+
+### Final finding matrix
+
+| Finding | Final status | Persona / route | Final evidence |
+|---|---|---|---|
+| F-01 — Supplier details | **Partially passed** | `demo.auditor`, `/suppliers` | The action opens, the read-only summary is present, and Save/status/input controls are absent. Status is localized. However, the primary-contact value has `scrollWidth 255 px` in a `171 px` grid cell and visibly overlaps the address on desktop and 390×844; see both F-01 screenshots. |
+| F-02 — Requisition cost center | **Passed** | `demo.requester`, `REQ-2026-000001` detail → edit | Selected option is `TEC-INFRA — Infraestrutura e Cloud`, its stable value is non-empty, and no save was performed. Unit/component coverage still verifies that a no-change save preserves the ID/version. |
+| F-03 — Audit UI | **Passed** | `demo.auditor`, `/audit`; `demo.requester`, direct `/audit` | Auditor menu/route listed real records and human actor names; requester had no menu item and direct routing showed **Acesso negado**. Mobile cards had no horizontal page overflow. |
+| F-04 — Report validation | **Passed** | `demo.auditor`, `/reports` | Empty requisition report blocked locally with **Obrigatório para este tipo de relatório.** and the summary prompt; zero report POSTs; no raw `requisitionId` or trace ID in the primary message. |
+| F-05 — Supplier status | **Passed** | `demo.auditor`, `/suppliers` | **Ativo** displayed; raw `Active` absent; badge retained visible meaning. |
+| F-06 — Human-readable values | **Passed** | `demo.requester`, `REQ-2026-000001` | `17/12/2026`, localized BRL values and `Lucas Almeida (você)` appeared; no raw ISO instant in rendered main content. Desktop/mobile presentation passed without page-level horizontal overflow. |
+| F-07 — Report selectors | **Passed** | `demo.auditor`, `/reports` | Requisition selected by `REQ-2026-000001` plus `TEC-INFRA`; UUID absent from option label. Budget report used controlled currency options including BRL and a business-label cost-center picker. |
+| F-08 — Master-data validation | **Passed** | `demo.admin`, `/organization/departments` | Code `x` produced **O código deve ter de 2 a 20 caracteres.**, Save stayed disabled and zero department POSTs were sent. Drawer Escape restored focus to **Cadastrar**. |
+| F-09 — Attachment copy | **Passed** | `demo.requester`, requisition editor | Copy explicitly says only name/type/size metadata are recorded and the file is not uploaded or stored; obsolete phase language is absent. |
+
+### New regressions, residual risks and next actions
+
+1. **New UI regression — supplier read-only field overlap (blocks full F-01 pass).** The contact value overflows its grid cell on desktop and overlaps the address; the same overlap is visible at 390×844 because the drawer retains two summary columns. Smallest action: add `min-width: 0` and safe wrapping such as `overflow-wrap: anywhere` to summary cells/values, and collapse the read-only summary to one column at the mobile breakpoint. Re-run the two F-01 screenshots, overflow measurement, axe and focus restoration.
+2. **Intermittent accessibility signal — primary-button contrast.** One real-stack axe run after Audit data loaded reported `color-contrast: .bg-primary` (the enabled **Pesquisar** button); the next two equivalent runs reported no violation. Smallest action: add a deterministic light/system-theme axe case after the button is enabled, record computed foreground/background and ensure at least 4.5:1 by adjusting the light primary token or button foreground. Treat this as unresolved flakiness until that deterministic check is green.
+3. **Aggregate .NET test-host wait.** Every suite passed, and `Template.Integration.Tests` passed 268/268 immediately in isolation, but the all-project command did not exit after parallel Testcontainers hosts completed. Smallest action: reproduce once with a binary log/diagnostic trace or run the solution filter with bounded project parallelism in CI; do not infer a product failure from this run.
+4. F-09's underlying FIL-002 limitation is unchanged by design: requisition attachments remain metadata-only. Implementing stored bytes is a separate backend/API feature, not part of this validation.
+
+Overall release-validation result: application build, backend contracts, container health and F-02–F-09 are green. F-01 remains partially passed because of the reproducible responsive text overlap, and the intermittent primary-button contrast signal remains a cross-cutting accessibility risk.
+
+## Follow-up remediation and validation (2026-11-08)
+
+This section executes `docs/testing/functional-ui-ux-follow-up-remediation-handoff.md` for the three items left open above (R-01 supplier summary overlap, R-02 intermittent primary-button contrast, R-03 aggregate .NET test-host wait). Earlier sections are unchanged.
+
+### Scope and source identity
+
+- Window: 2026-11-08 18:40 – 2026-11-09 00:10 `America/Sao_Paulo`.
+- Validated revision: `bb2c15325c0accc42ea9c969a7a0b24a5cf8cc06` (`main`) plus the working-tree changes listed below. The uncommitted 2026-11-08 post-remediation section and its evidence, and the three untracked handoff documents, were preserved unchanged.
+- Toolchain: Node `24.22.0` and pnpm `12.14.0` from temporary directories (the host PATH has Node 22.20 and no pnpm), .NET SDK `10.0.402` from `C:\Users\<user>\.dotnet` (the default `dotnet` is 10.0.401). No `engines`, lockfile or `global.json` change.
+- Business data: the only writes were the expected login session/audit records and one requisition PDF report job (`demo.auditor`, `REQ-2026-000001`) to exercise the rebuilt Worker renderer. No supplier, requisition, master-data or seed record was changed; no volume was removed or recreated.
+
+| File | Change | Service |
+|---|---|---|
+| `Client/Template.WebApp/src/app/presentation/features/data-pages.css` | `.readonly-summary` cells get `min-width: 0` and values `overflow-wrap: anywhere`; the summary collapses to one column at the existing `48rem` breakpoint. The shared `.summary-grid` used by eight other pages is unchanged. | `webapp` |
+| `Client/Template.WebApp/src/app/presentation/features/suppliers.page.html` | The read-only `<dl>` gets the `readonly-summary` class (one line). | `webapp` |
+| `Client/Template.WebApp/src/app/presentation/features/suppliers.page.spec.ts` | Vitest: long contact values render in the wrapping read-only summary. | test |
+| `Client/Template.WebApp/e2e/master-data.spec.ts` | Playwright desktop 1365×768 (4 columns) and mobile 390×844 (1 column): long e-mail/phone/address wrap, per-cell and per-value `scrollWidth ≤ clientWidth`, no overlapping cells, no page/dialog overflow, no mutation controls, dialog axe clean, Escape restores focus to **Detalhes**. | test |
+| `Client/Template.WebApp/e2e/audit.spec.ts` (new) | Deterministic contrast regression for **Pesquisar** in light, dark, system/light-host and system/dark-host preferences; waits for enable and the end of the button transition; asserts opaque background, opacity 1, ratio ≥ 4.5:1, full-page axe with no exclusion, hover ≥ 4.5:1 and a visible `:focus-visible` ring. | test |
+| `Src/Infrastructure/Template.Infrastructure.Reporting/Pdf/PlaywrightPdfRenderer.cs` | Every Playwright call of a render is bounded (`NewPageAsync`, `RouteAsync`, context close, driver creation); the context is closed with a 5 s bound in `finally`. | `worker` |
+| `Tests/Template.Functional.Tests/ApiEndpoints/v2/SourcingFunctionalTests.cs` | `T_SRC_013_b` sends the comparison's `closeLocalDate` instead of the UTC date (evening time-zone defect found by the final run). | test |
+| `Tests/Template.Integration.Tests/Reporting/ReportRenderingAdapterTests.cs` | `T_RPT_005_l` simulates the crash with a bounded close and asserts recovery (transient failure at most once, then a valid render on a connected browser). | test |
+| `docs/testing/functional-ui-ux-test-report-2026-11-05.md`, `docs/testing/evidence/2026-11-08-follow-up/` | This section and sanitized evidence. | docs |
+
+`webapi` and `workflow-functions` were not rebuilt: neither references the changed client or `Template.Infrastructure.Reporting` (only `Template.Worker` and the integration tests do).
+
+### R-01 — supplier read-only summary
+
+Root cause: the summary grid cells kept the default `min-width: auto`, so the longest unbroken value (the contact e-mail) set the column's minimum width and painted over the neighbouring address; at 390×844 the drawer still used two columns.
+
+Real stack, `demo.auditor`, `/suppliers` → keyboard **Detalhes** on the seeded supplier (`after-measurements.json`, `before-measurements.json`):
+
+| Viewport | Before | After |
+|---|---|---|
+| 1365×768 | 4 × 170.75 px; **Contato principal** value `scrollWidth 255` in a `171 px` cell | 4 × 170.75 px; every value `scrollWidth = clientWidth = 171`; `overflow-wrap: anywhere` |
+| 390×844 | 2 × 164.5 px; value `255` in `165 px` | 1 × 341 px; every value `341 = 341`, cells stacked without overlap |
+
+In both runs and both viewports: page and dialog horizontal overflow 0, zero input/select/textarea/submit controls, status **Ativo**, focused dialog axe clean, Escape closed the drawer and restored focus to **Detalhes**, no console error and no HTTP 5xx. Mutation check of the mocked regression: without the class it fails with 176 px overflow and two mobile columns.
+
+Screenshots: [before desktop](evidence/2026-11-08-follow-up/before-f01-supplier-readonly-desktop.png), [before mobile](evidence/2026-11-08-follow-up/before-f01-supplier-readonly-mobile.png), [after desktop](evidence/2026-11-08-follow-up/after-f01-supplier-readonly-desktop.png), [after mobile](evidence/2026-11-08-follow-up/after-f01-supplier-readonly-mobile.png).
+
+### R-02 — primary-button contrast
+
+Root cause: timing, not tokens. `hlmBtn` animates every property for 150 ms (`transition-all`) and the disabled state is `opacity: 0.5`. While the Audit search loads, **Pesquisar** is disabled; an axe scan taken in the first frames after it is enabled measures the half-faded blend. No theme token was changed and no rule or selector was excluded.
+
+Real stack, `demo.auditor`, `/audit`, three repetitions per preference with in-app navigation (`after-measurements.json`; computed colors converted to sRGB by the browser):
+
+| Preference / host | Settled enabled ratio | Hover | Immediately after enable | Settled full-page axe |
+|---|---|---|---|---|
+| Light | **6.13:1** (`oklch(0.5 0.19 268)` on `oklch(0.99 0 0)`) | 4.99:1 | opacity 0.5 → 2.24:1 (transient) | 0 violations in 3/3 |
+| Dark | **7.00:1** (`oklch(0.17 0.03 268)` on `oklch(0.7 0.14 268)`) | 5.93:1 | opacity 0.5 → 2.67:1 (transient) | 0 in 3/3 |
+| System, light host | **6.13:1**, `data-theme=light` | 4.99:1 | 0.5–0.52 → 2.24–2.30:1 | 0 in 3/3 |
+| System, dark host | **7.00:1**, `data-theme=dark` | 5.93:1 | 0.5 → 2.67:1 | 0 in 3/3 |
+
+Across both the before and after real-stack runs, the immediate (mid-transition) `color-contrast` scan reported a violation in 3 of 18 samples and the settled scan in 0 of 24, which reproduces the earlier intermittent signal and confirms its cause. The disabled state itself (opacity 0.5) is an inactive control, exempt from WCAG 1.4.3, and its label remains legible. The new deterministic Playwright regression (`e2e/audit.spec.ts`, four preferences) waits for `getAnimations().length === 0` and `opacity === 1` before measuring; it passed in the full mocked suite.
+
+### R-03 — aggregate .NET test-host wait
+
+Reproduction and diagnostics (summaries in `evidence/2026-11-08-follow-up/r03/`):
+
+| Run | Command | Exit / duration | Result |
+|---|---|---|---|
+| Default 1 | `dotnet test TemplateCleanArchitecture.App.slnf --no-build --blame-hang-timeout 15m --blame-hang-dump-type none --diag … --logger trx` | not captured (wrapper bug, fixed) / 18.5 min | 1,769/1,769 passed; no host lingered. |
+| Sequential | same + `-m:1` | 1 / 30.3 min | 1,768/1,769: every project passed except NFR-PERF-5 (Outbox drain 85.9 s against the 60 s budget; passed in every other run). |
+| Default 2 | same as Default 1 | 1 / 35.7 min | **Hang reproduced**: `Template.Integration.Tests` stopped at 261 of 268 and the 15 min blame-hang collector fired on `T_RPT_005_l_BrowserCrash_Timeout_AndLaunchFailure_AreTransient_AndTheRendererRecovers`. Two wall-clock Functional tests also failed under the 13-project load (`EleventhRefreshFromTheSameAddress_Is429` took 3 min 28 s against a 60 s rate-limit window; `Refresh_ReplayInsideGrace_Is409` took 50 s against the 10 s grace window); both pass sequentially. |
+
+Isolation: `T_RPT_005_l` alone in a loop under CPU load hung at iteration 9 (minidump) and again at iteration 5 (full dump). The full dump's only pending async chain was `ReportRenderingAdapterTests.T_RPT_005_l` → `PlaywrightPdfRenderer.RenderAsync` → `BrowserContext.NewPageAsync` → `Connection.InnerSendMessageToServerAsync` → `StdIOTransport.GetResponseAsync` (`r03/hang-dump-async-chain.txt`): when Chromium closes while a page is being created, the Playwright driver never answers, and `NewPageAsync` (also `RouteAsync`, the context dispose and `Playwright.CreateAsync`) had no bound. This is a product defect, not only a test one: in the Worker the same race would hold a render slot forever instead of failing the attempt as transient (RPT-005).
+
+Fix: bound every renderer call with `RenderTimeout`/`LaunchTimeout` and close the context with a 5 s bound. After the fix the test's own `Browser.CloseAsync()` (its crash simulator) was the next unbounded call: once bounded, it failed visibly at 30 s in 1 of 2 iterations, because Chromium sometimes does not finish closing on request. The test now bounds the close at 10 s and asserts the renderer's recovery (the attempt that meets the crashed browser may fail as transient once; the retry renders a valid PDF on a connected, relaunched browser). Result: 40/40 iterations under the same load, 5 s–96 s, no hang dump (`r03/stress-fixed2-iterations.txt`). The rebuilt Worker rendered a real requisition PDF in 6.5 s (HTTP 200, `application/pdf`, `%PDF-`, 44,043 bytes; `after-worker-pdf.json`).
+
+Final aggregates with the fix (same command; TRX, console and VSTest diagnostics kept outside the repository):
+
+| Run | Command | Exit / duration | Result |
+|---|---|---|---|
+| Final `-m:1` | aggregate + `-m:1`, 60 min watchdog | killed by the watchdog at 60 min (exit 1) | No hang dump; 11 projects completed (Unit 839, Integration 268 incl. `T_RPT_005_l`, Architecture 77, PostgreSQL 78, RabbitMQ 30, Elasticsearch 13, Redis 23, Azurite 6, Worker 5, WorkflowFunctions 26, WorkflowFunctions.Integration 7, all passed). Functional 387/392 took 42 min instead of under 2 min: four wall-clock tests failed on a slowed host (`T_PUR_008_T_PUR_010` ran 19 min and got a numeric Problem Details `status` once its access token had expired; the two rate-limit tests and the refresh-grace test missed their windows) plus `T_SRC_013_b` (below). Performance was still running when the watchdog fired. |
+| Final default | aggregate, 45 min watchdog | killed by the watchdog at 45 min (exit 1) | 11 projects completed; 1 failure: `T_NFR_PERF_6_a` 10,000-row workbook 34.9 s against 30 s under the 13-project parallel load (7.7 s in the Phase 33 run and passed in every other run). Functional had not finished when the watchdog fired (no hang-dump trigger, no TRX). |
+| Functional alone | `dotnet test Tests/Template.Functional.Tests/… --no-build -m:1` at 23:41 | 1 / 1.8 min | 391/392: **`T_SRC_013_b` is a time-of-day test defect**, independent of this change: it sent the UTC date (`2026-11-09`) as the manual rate date, while CALC-004 compares it with the close date in the organization time zone (`2026-11-08` in `America/Sao_Paulo`), so it fails every evening from 21:00 local. Fixed in the test (it now sends the `closeLocalDate` the comparison returns); no production change. |
+| **Final sequential gate** | every project one at a time per `AGENTS.md`: `dotnet test Tests/<project>/<project>.csproj --no-build --verbosity minimal --maxcpucount:1 --blame-hang-timeout 15m` (23:45–00:03) | **0 for all 13 / 18.4 min** | **1,769/1,769 passed**: Architecture 77, Unit 839, Integration 268, Functional 392 (run at 23:47, inside the window where `T_SRC_013_b` had failed), PostgreSQL 78, RabbitMQ 30, Elasticsearch 13, Redis 23, Azurite 6, Worker 5, WorkflowFunctions 26, WorkflowFunctions.Integration 7, Performance 5. No hang, no lingering host (`r03/final-sequential-per-project-summary.txt`). |
+
+The renderer wait (R-03) did not recur in any run after the fix. Running all 13 projects at once (or through one `dotnet test` of the solution filter) on this workstation still slows the host enough to break wall-clock budgets in Functional and Performance; those are load effects, visible as assertion failures rather than waits, and the supported gate remains the sequential per-project run.
+
+### Automated results
+
+| Command | Result |
+|---|---|
+| `pnpm install --frozen-lockfile` | Passed; no lockfile change. |
+| `pnpm validate` | Passed in 38.7 s: Prettier, ESLint, typecheck, Vitest **37 files / 133 tests**, dependency-cruiser **225 modules / 548 dependencies**, **5/5** mutations rejected, **211** generated files matched, production build without a budget warning (the CSS stays under the 4 kB `anyComponentStyle` budget). |
+| `pnpm exec playwright test --workers=1` | **27/27** passed in 1.8 min (21 previous + 2 F-01 + 4 contrast). Run against a stopped Compose `webapp` because both bind `127.0.0.1:4200`. |
+| `pnpm audit:licenses` | 458 packages OK. |
+| `pnpm audit:security` | Exit 0; 2 low and 3 moderate advisories, unchanged and below the high/critical policy. |
+| `dotnet restore TemplateCleanArchitecture.App.slnf` | Passed. |
+| `dotnet build TemplateCleanArchitecture.App.slnf --no-restore` | Passed, 0 errors; only the existing `CS8604` at `Tests/Template.WorkflowFunctions.Tests/HostBoundaryTests.cs:106`. |
+| `dotnet test Tests/Template.Integration.Tests/… --no-build` (isolated) | 268/268 in 42.5 s before the fix. |
+| `T_RPT_005_l` stress (6 CPU-bound jobs, 2 min blame-hang, full dump) | Before: hang at iterations 9 and 5. After: 40/40. |
+| Per-project sequential gate (13 projects) | **1,769/1,769** passed in 18.4 min; aggregate runs in R-03. |
+
+### Docker rebuild and health
+
+`docker compose config --quiet` passed.
+
+| Service | Pre-rebuild image ID / created | Post-rebuild image ID / created | Command |
+|---|---|---|---|
+| `webapp` | `863da586f55c` / `2026-11-06T16:07:50Z` | `56bc1cddef33` / `2026-11-08T23:44:08Z` | `docker compose build --pull webapp`, `docker compose up -d --no-deps webapp` |
+| `worker` | `5d0ff4a48086` / `2026-11-08T19:44:16Z` | `05b0a1ac002c` / `2026-11-09T00:54:16Z` | `docker compose build --pull worker`, `docker compose up -d --no-deps worker` |
+
+Health after the rebuilds: `webapp`, `worker`, `workflow-functions`, PostgreSQL, Redis, RabbitMQ, Elasticsearch, Kibana, Redis Insight and both Azurite services `healthy`; `webapi` running with `/health/live`, `/health/ready` (database, cache, Elasticsearch) and `/health` HTTP 200; WebApp `:4200` HTTP 200. Error scan of the last 30 minutes of `webapi`, `worker`, `workflow-functions` and `webapp` logs (`ERR`/`FTL`/`fail:`/unhandled exceptions/5xx/asset 404): no match. Volumes untouched.
+
+### Real-stack retest of F-01 to F-09
+
+Containerized application at `http://localhost:4200`, personas `demo.auditor`, `demo.requester` and `demo.admin` (password read from `.env` inside the process, never printed, removed from the environment afterwards). Every check recorded console errors, HTTP 5xx and non-GET API requests other than session calls (`after-smoke.json`): none in any run.
+
+| Finding | Final status | Evidence |
+|---|---|---|
+| F-01 — Supplier details | **Passed** | R-01 above: wraps in 4 desktop columns and 1 mobile column, no overflow or overlap, read-only, **Ativo**, axe clean, keyboard open and Escape focus restoration. |
+| F-02 — Requisition cost center | **Passed** | `demo.requester`, `REQ-2026-000001` → **Editar**: `TEC-INFRA — Infraestrutura e Cloud` selected with a non-empty stable value; nothing saved. |
+| F-03 — Audit UI | **Passed** | Auditor menu → **Auditoria** lists records with human actor names, no raw ISO instant, full-page axe clean; requester has no menu entry and direct `/audit` lands on `/forbidden` (**Acesso negado**) on desktop and mobile. |
+| F-04 — Report validation | **Passed** | Empty requisition report blocked locally with **Obrigatório para este tipo de relatório.**; zero report POSTs in that check; axe clean. |
+| F-05 — Supplier status | **Passed** | **Ativo** shown; raw `Active` absent from the list. |
+| F-06 — Human-readable values | **Passed** | Requisition detail shows `dd/mm/yyyy` dates and `(você)`, no raw ISO instant; page overflow 0 on desktop and 390×844. |
+| F-07 — Report selectors | **Passed** | Requisition options are business labels (`REQ-2026-000001 — TEC-INFRA · Rascunho`), no UUID; four localized report types. |
+| F-08 — Master-data validation | **Passed** | `demo.admin`, **Departamentos** → **Cadastrar**, code `x`: **O código deve ter de 2 a 20 caracteres.**, **Salvar** disabled, zero POSTs, Escape restores focus to **Cadastrar**. |
+| F-09 — Attachment copy | **Passed** | Editor notice: only name/type/size metadata are recorded; the file is not uploaded or stored. |
+
+Also verified: login and logout (**Sair** returns to the login form), main navigation through the menu, and the mocked suite's keyboard, focus and axe cases.
+
+Screenshots (new; earlier evidence untouched): [F-01 desktop](evidence/2026-11-08-follow-up/after-f01-supplier-readonly-desktop.png), [F-01 mobile](evidence/2026-11-08-follow-up/after-f01-supplier-readonly-mobile.png), [F-02/F-09 editor](evidence/2026-11-08-follow-up/after-f02-f09-requisition-editor.png), [F-04/F-07 reports](evidence/2026-11-08-follow-up/after-f04-f07-reports-desktop.png), [F-06 desktop](evidence/2026-11-08-follow-up/after-f06-requisition-desktop.png), [F-06 mobile](evidence/2026-11-08-follow-up/after-f06-requisition-mobile.png), [F-08](evidence/2026-11-08-follow-up/after-f08-master-data-validation.png).
+
+### Remaining blockers, risks and next actions
+
+- No blocker remains for R-01, R-02 or R-03; F-01 to F-09 pass on the rebuilt containers.
+- **Aggregate parallel load (risk).** A single `dotnet test` of the whole solution filter on this workstation exceeds wall-clock budgets: Functional rate-limit/refresh-grace windows and the expiring access token in a 19-minute purchasing test, `T_NFR_PERF_6_a` (34.9 s against 30 s) and earlier NFR-PERF-5 (85.9 s against 60 s). They pass in the sequential per-project gate and fail visibly (never hang). Next action: keep the per-project sequential command as the gate; optionally give the time-sensitive Functional classes their own xUnit collection or larger windows in a separate change.
+- **Test time-zone defect fixed.** `T_SRC_013_b` failed every evening from 21:00 `America/Sao_Paulo` (UTC date ahead of the organization date); fixed in `Tests/Template.Functional.Tests/ApiEndpoints/v2/SourcingFunctionalTests.cs`. Other functional helpers that use `DateTime.UtcNow` dates (for example `validUntil` 60 days ahead) were not affected in the evening run.
+- **Chromium close (risk).** Chromium sometimes does not exit when the driver asks it to close; the renderer and the test now bound that call, so it costs one transient attempt instead of a stuck slot.
+- **Cosmetic follow-up (not in scope).** The supplier address renders `Avenida Paulista , 1000` (a space before the comma from template whitespace); pre-existing, not changed here.
+- **Not rerun.** FIL-002 (attachment byte upload) remains out of product scope as before; the VSIX gate, the infrastructure rehearsals and `compose-baseline.ps1` were not run (no scope change); `webapi` and `workflow-functions` images were not rebuilt (unaffected).
