@@ -103,6 +103,36 @@ describe('SuppliersPage', () => {
     expect(text(readonly)).toContain('+55 11 99999-0000');
   });
 
+  it('joins street and number without a space before the comma', async () => {
+    const address = {
+      type: 'Headquarters' as const,
+      postalCode: '01310-100',
+      street: 'Avenida Paulista',
+      number: '1000',
+      complement: '',
+      district: 'Bela Vista',
+      city: 'São Paulo',
+      state: 'SP',
+      country: 'BR',
+    };
+    const { root, port, openDetails } = await render(['suppliers.read']);
+    vi.mocked(port.getSupplier).mockResolvedValue(success({ ...detail, addresses: [address] }));
+    await openDetails();
+    const readonly = root.querySelector('[data-testid="supplier-readonly"]');
+    expect(text(readonly)).toContain('Avenida Paulista, 1000 São Paulo/SP · 01310-100');
+    expect(text(readonly)).not.toContain(' ,');
+
+    TestBed.resetTestingModule();
+    const withoutNumber = await render(['suppliers.read']);
+    vi.mocked(withoutNumber.port.getSupplier).mockResolvedValue(
+      success({ ...detail, addresses: [{ ...address, number: '' }] }),
+    );
+    await withoutNumber.openDetails();
+    const summaryText = text(withoutNumber.root.querySelector('[data-testid="supplier-readonly"]'));
+    expect(summaryText).toContain('Avenida Paulista São Paulo/SP');
+    expect(summaryText).not.toContain(',');
+  });
+
   it('keeps edit forms for suppliers.manage and status actions for suppliers.status.change', async () => {
     const manager = await render(['suppliers.read', 'suppliers.manage']);
     await manager.openDetails();

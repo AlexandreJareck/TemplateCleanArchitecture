@@ -154,10 +154,7 @@
         <div>
           <dt>{{ 'supplier.addresses' | transloco }}</dt>
           <dd>
-            {{ address.street }}
-            @if (address.number) {
-              , {{ address.number }}
-            }
+            {{ address.number ? address.street + ', ' + address.number : address.street }}
             <br />{{ address.city }}/{{ address.state }} · {{ address.postalCode }}
           </dd>
         </div>
